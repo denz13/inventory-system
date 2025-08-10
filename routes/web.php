@@ -32,13 +32,21 @@ Route::controller(AuthController::class)->middleware('loggedin')->group(function
     Route::post('login', 'login')->name('login.check');
 });
 
+// Root redirect
+Route::get('/', function () {
+    if (auth()->check()) {
+        return redirect('/dashboard');
+    }
+    return redirect('/login');
+});
+
 // Protected routes
 Route::middleware('auth')->group(function() {
     Route::get('logout', [AuthController::class, 'logout'])->name('logout');
     
-    // Homepage route
-    Route::get('/', [RouteController::class, 'index'])->name('dashboard');
-    
+    // Dashboard route (specific route before wildcard)
+    Route::get('dashboard', [RouteController::class, 'index'])->name('dashboard');
+        
     // Named route for menu system
     Route::get("{page}", [RouteController::class, 'routes'])->name('page.show')->where('page', '.*');
 });
