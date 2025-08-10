@@ -1,0 +1,13 @@
+Header:
+
+CSS:
+
+<link href="{{url('')}}/assets/filepond-master/dist/filepond.css" rel="stylesheet">
+<link href="{{url('')}}/assets/filepond-master/dist/filepond.min.css" rel="stylesheet">
+
+
+JS:
+
+<script src="{{url('')}}/assets/filepond-master/dist/filepond.js"></script>
+<script src="{{url('')}}/assets/filepond-master/dist/filepond.min.js"></script>
+<script src="{{url('')}}/assets/filepond-master/dist/file-size-validation/filepond-plugin-file-validate-size.min.js"></script>

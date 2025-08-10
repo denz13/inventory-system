@@ -1,0 +1,251 @@
+/*
+// Imports
+// 
+@import url(https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css);
+@import url('https://fonts.googleapis.com/css?family=Roboto');
+
+// Vars and Reset
+// 
+$theme:       #454cad;
+$dark-text:   #5f6982;
+*/
+/*
+html,body,* { box-sizing: border-box; font-size: 16px;}
+html,body   { height: 100%; text-align: center;}
+body        { padding: 2rem; background: #f8f8f8;}
+
+h2 {
+  font-family: "Roboto", sans-serif;
+  font-size: 26px;
+  line-height: 1;
+  color: $theme;
+  margin-bottom: 0;
+}
+p {
+  font-family: "Roboto", sans-serif;
+  font-size: 18px;
+  color: $dark-text;
+}
+*/
+/*
+// Upload Demo
+// 
+.uniupload_uploader {
+  display: block;
+  clear: both;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 600px;
+  color: #5f6982;
+
+  label {
+    float: left;
+    clear: both;
+    width: 100%;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    background: #fff;
+    border-radius: 7px;
+    border: 3px solid #eee;
+    transition: all .2s ease;
+    user-select: none;
+
+    &:hover {
+      border-color: $theme;
+    }
+    &.hover {
+      border: 3px solid $theme;
+      box-shadow: inset 0 0 0 6px #eee;
+      
+      #start {
+        i.fa {
+          transform: scale(0.8);
+          opacity: 0.3;
+        }
+      }
+    }
+  }
+
+  #start {
+    float: left;
+    clear: both;
+    width: 100%;
+    &.hidden {
+      display: none;
+    }
+    i.fa {
+      font-size: 50px;
+      margin-bottom: 1rem;
+      transition: all .2s ease-in-out;
+    }
+  }
+  #response {
+    float: left;
+    clear: both;
+    width: 100%;
+    &.hidden {
+      display: none;
+    }
+    #messages {
+      margin-bottom: .5rem;
+    }
+  }
+
+  #file-image {
+    display: inline;
+    margin: 0 auto .5rem auto;
+    width: auto;
+    height: auto;
+    max-width: 180px;
+    &.hidden {
+      display: none;
+    }
+  }
+  
+  #notimage {
+    display: block;
+    float: left;
+    clear: both;
+    width: 100%;
+    &.hidden {
+      display: none;
+    }
+  }
+
+  progress,
+  .uniupload_progress {
+    // appearance: none;
+    display: inline;
+    clear: both;
+    margin: 0 auto;
+    width: 100%;
+    max-width: 180px;
+    height: 8px;
+    border: 0;
+    border-radius: 4px;
+    background-color: #eee;
+    overflow: hidden;
+  }
+
+  .uniupload_progress[value]::-webkit-progress-bar {
+    border-radius: 4px;
+    background-color: #eee;
+    background-color: #f0f0f0;
+  }
+
+  .uniupload_progress[value]::-webkit-progress-value {
+    background: linear-gradient(to right, darken($theme,8%) 0%, $theme 50%);
+    border-radius: 4px; 
+  }
+  .uniupload_progress[value]::-moz-progress-bar {
+    background: linear-gradient(to right, darken($theme,8%) 0%, $theme 50%);
+    border-radius: 4px; 
+  }
+*/
+  /*
+  input[type="file"] {
+    display: none;
+  }
+  */
+
+  /*
+  div {
+    margin: 0 0 .5rem 0;
+    color: $dark-text;
+  }
+  */
+/*
+  .uniupload_btn {
+    display: inline-block;
+    margin: .5rem .5rem 1rem .5rem;
+    clear: both;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 14px;
+    text-decoration: none;
+    text-transform: initial;
+    border: none;
+    border-radius: .2rem;
+    outline: none;
+    padding: 0 1rem;
+    height: 36px;
+    line-height: 36px;
+    color: #fff;
+    transition: all 0.2s ease-in-out;
+    box-sizing: border-box;
+    background: $theme;
+    border-color: $theme;
+    cursor: pointer;
+  }
+}
+.uniupload_uploader input[type="file"] {
+  display: none !important;
+}
+.uniupload_uploader div, .uniupload_uploader i {
+  color: #5f6982;
+}
+.uniupload_uploader div {
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+.uniupload_uploader .fa {
+  font-size: 2rem;
+}
+.uniupload_uploader {
+  background: #fff;
+  border-radius: 7px;
+  border: 3px solid #eee;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  text-align: center;
+}
+.uniupload_uploader .uniupload_progress, .uniupload_progress {
+  border-radius: 1rem;
+  background-color: #f0f0f0;
+  height: 10px;
+}
+
+.uniupload_progress[value]::-webkit-progress-bar {
+  border-radius: 1rem;
+  background-color: #eee;
+  background-color: #f0f0f0;
+}
+
+.uniupload_progress[value]::-webkit-progress-value {
+  background: #f0f0f0;
+  border-radius: 1rem; 
+}
+.uniupload_progress[value]::-moz-progress-bar {
+  background: #f0f0f0;
+  border-radius: 1rem; 
+}
+.uniupload_uploader .img {
+  max-width: 100px;
+}
+*/
+
+.uniupload {
+  border: 1px dashed rgba(255,255,255,0.4);
+  border: 2px dashed #e0e0e0;
+  border-radius: 3px;
+  transition: .2s;
+  padding: 0rem;
+  text-align: center;
+}
+
+.uniupload .trigger {
+  display: block;
+  padding: 1rem;
+}
+
+.uniupload input[type="file"] {
+  display: block;
+  display: none;
+}
+
+.uniupload .img_preview {
+  border-radius: 6px;
+  max-width: 100px;
+  display: inline-block;
+  margin: 4px;
+}
