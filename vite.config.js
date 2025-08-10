@@ -3,6 +3,15 @@ import laravel from "laravel-vite-plugin";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 
 export default defineConfig({
+    build: {
+        rollupOptions: {
+            output: {
+                entryFileNames: 'assets/main-[hash].js',
+                chunkFileNames: 'assets/chunk-[hash].js',
+                assetFileNames: 'assets/style-[hash].[ext]'
+            }
+        }
+    },
     plugins: [
         viteStaticCopy({
             targets: [
@@ -28,5 +37,15 @@ export default defineConfig({
             ],
             refresh: true,
         }),
+        
     ],
+    server: {
+        host: '127.0.0.1',
+        port: 3000,
+        strictPort: true,
+        hmr: {
+            host: '127.0.0.1',
+            port: 3000,
+        },
+    },
 });
