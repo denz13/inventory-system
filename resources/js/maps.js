@@ -4,7 +4,7 @@ import axios from "axios";
     "use strict";
 
     // Google Maps
-    if ($(".report-maps").length) {
+    if ($(".report-maps").length && typeof google !== 'undefined' && google.maps) {
         function initMap(el) {
             var iconBase = {
                 url: $("html").hasClass("dark")
@@ -643,7 +643,9 @@ import axios from "axios";
         }
 
         $(".report-maps").each(function (key, el) {
-            google.maps.event.addDomListener(window, "load", initMap(el));
+            if (typeof google !== 'undefined' && google.maps) {
+                google.maps.event.addDomListener(window, "load", initMap(el));
+            }
         });
     }
 })();

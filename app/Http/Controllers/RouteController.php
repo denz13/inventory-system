@@ -7,30 +7,22 @@ use Illuminate\Http\Request;
 class RouteController extends Controller
 {
     public function index() {
-        return view('pages.dashboard.dashboard-overview-1', [
-            'layout' => 'side-menu'
-        ]);
+        return view('dashboard.index-dashboard');
     }
 
     public function routes($route)
     {
-        // Clean the route parameter
-        $route = trim($route, '/');
-        
-        // Try different view path patterns
-        $viewPaths = [
-            $route,                    // Direct match
-            'pages.' . $route,         // Pages folder
-            'pages.' . str_replace('/', '.', $route), // Convert slashes to dots
-        ];
-        
-        foreach ($viewPaths as $viewPath) {
-            if (view()->exists($viewPath)) {
-                return view($viewPath);
-            }
+        // First try the exact route name
+        if (view()->exists($route)) {
+            return view($route);
         }
         
-        // If no view found, return 404
+        // Then try route/index-route pattern for subdirectories
+        $indexView = $route . '/index-' . $route;
+        if (view()->exists($indexView)) {
+            return view($indexView);
+        }
+        
         return abort(404);
     }
 }
