@@ -24,36 +24,8 @@
                 </li>
             </ul>
         </li>
-        <li>
-            <a href="javascript:;" class="side-menu">
-                <div class="side-menu__icon"> <i data-lucide="box"></i> </div>
-                <div class="side-menu__title">
-                    Menu Layout 
-                    <div class="side-menu__sub-icon "> <i data-lucide="chevron-down"></i> </div>
-                </div>
-            </a>
-            <ul class="">
-                <li>
-                    <a href="side-menu-light-dashboard-overview-1.html" class="side-menu">
-                        <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
-                        <div class="side-menu__title"> Side Menu </div>
-                    </a>
-                </li>
-                <li>
-                    <a href="simple-menu-light-dashboard-overview-1.html" class="side-menu">
-                        <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
-                        <div class="side-menu__title"> Simple Menu </div>
-                    </a>
-                </li>
-                <li>
-                    <a href="top-menu-light-dashboard-overview-1.html" class="side-menu">
-                        <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
-                        <div class="side-menu__title"> Top Menu </div>
-                    </a>
-                </li>
-            </ul>
-        </li>
-        <li>
+       
+        {{-- <li>
             <a href="javascript:;" class="side-menu">
                 <div class="side-menu__icon"> <i data-lucide="shopping-bag"></i> </div>
                 <div class="side-menu__title">
@@ -150,7 +122,7 @@
                     </a>
                 </li>
             </ul>
-        </li>
+        </li> --}}
         
         <li class="side-nav__devider my-6"></li>
         <li>
@@ -185,7 +157,6 @@
                 </div>
             </a>
             <ul class="">
-                <x-menu.sidebar-single-item key="user-management" href="{{ url('user-management') }}" icon="users" text="{{ __('User Management') }}" />
                 <li>
                     <a href="side-menu-light-users-layout-2.html" class="side-menu">
                         <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
@@ -204,27 +175,27 @@
             <a href="javascript:;" class="side-menu">
                 <div class="side-menu__icon"> <i data-lucide="trello"></i> </div>
                 <div class="side-menu__title">
-                    Profile 
+                    Information 
                     <div class="side-menu__sub-icon "> <i data-lucide="chevron-down"></i> </div>
                 </div>
             </a>
             <ul class="">
                 <li>
-                    <a href="side-menu-light-profile-overview-1.html" class="side-menu">
+                        <a href="{{ route('usermanagement.index') }}" class="side-menu">
                         <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
-                        <div class="side-menu__title"> Overview 1 </div>
+                        <div class="side-menu__title"> User Management </div>
                     </a>
                 </li>
                 <li>
-                    <a href="side-menu-light-profile-overview-2.html" class="side-menu">
+                    <a href="{{ route('businessmanagement.index') }}" class="side-menu">
                         <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
-                        <div class="side-menu__title"> Overview 2 </div>
+                        <div class="side-menu__title"> Business Management </div>
                     </a>
                 </li>
                 <li>
-                    <a href="side-menu-light-profile-overview-3.html" class="side-menu">
+                    <a href="{{ route('vehiclemanagement.index') }}" class="side-menu">
                         <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
-                        <div class="side-menu__title"> Overview 3 </div>
+                        <div class="side-menu__title"> Vehicle Management </div>
                     </a>
                 </li>
             </ul>
@@ -404,7 +375,7 @@
             </ul>
         </li>
         <li class="side-nav__devider my-6"></li>
-        <li>
+        {{-- <li>
             <a href="javascript:;" class="side-menu">
                 <div class="side-menu__icon"> <i data-lucide="inbox"></i> </div>
                 <div class="side-menu__title">
@@ -526,8 +497,8 @@
                     </a>
                 </li>
             </ul>
-        </li>
-        <li>
+        </li> --}}
+        {{-- <li>
             <a href="javascript:;" class="side-menu">
                 <div class="side-menu__icon"> <i data-lucide="sidebar"></i> </div>
                 <div class="side-menu__title">
@@ -608,7 +579,7 @@
                     </a>
                 </li>
             </ul>
-        </li>
+        </li> --}}
         <li>
             <a href="javascript:;" class="side-menu">
                 <div class="side-menu__icon"> <i data-lucide="hard-drive"></i> </div>

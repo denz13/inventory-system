@@ -30,5 +30,8 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('pages.faqs.faqlayout1', FAQLayout1::class);
         Livewire::component('pages.faqs.faqlayout2', FAQLayout2::class);
         Livewire::component('pages.faqs.faqlayout3', FAQLayout3::class);
+        
+        // Register Inventory components
+        Livewire::component('inventory.entrydata', \App\Http\Livewire\Inventory\Entrydata::class);
     }
 }
