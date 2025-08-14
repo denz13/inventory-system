@@ -21,6 +21,7 @@ License: You must have a valid license purchased only from themeforest(the above
         <title>@yield('title', 'Dashboard - Midone - Tailwind HTML Admin Template')</title>
         <!-- BEGIN: CSS Assets-->
         @vite('resources/css/app.css')
+        <link rel="stylesheet" href="{{ asset('assets/toastify/toastify.css') }}">
         @livewireStyles
         <!-- END: CSS Assets-->
     </head>
@@ -47,7 +48,9 @@ License: You must have a valid license purchased only from themeforest(the above
         @include('layout._partials.mobile')
         <!-- BEGIN: JS Assets-->
         @vite('resources/js/app.js')
+        <script src="{{ asset('assets/toastify/toastify.js') }}"></script>
         @livewireScripts
+        @stack('scripts')
         <!-- END: JS Assets-->
     </body>
 </html>

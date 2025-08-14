@@ -2,8 +2,8 @@
     <div class="h-full flex items-center">
         <!-- BEGIN: Logo -->
         <a href="" class="-intro-x hidden md:flex">
-            <img alt="Midone - HTML Admin Template" class="w-6" src="dist/images/logo.svg">
-            <span class="text-white text-lg ml-3"> Icewall </span> 
+            <img alt="Midone - HTML Admin Template" class="w-6" src="dist/images/logo.png">
+            <span class="text-white text-lg ml-3"> GCH </span> 
         </a>
         <!-- END: Logo -->
         <!-- BEGIN: Breadcrumb -->
@@ -207,7 +207,7 @@
                         <hr class="dropdown-divider border-white/[0.08]">
                     </li>
                     <li>
-                        <a href="" class="dropdown-item hover:bg-white/5"> <i data-lucide="toggle-right" class="w-4 h-4 mr-2"></i> Logout </a>
+                        <a href="{{ route('logout') }}" class="dropdown-item hover:bg-white/5"> <i data-lucide="toggle-right" class="w-4 h-4 mr-2"></i> Logout </a>
                     </li>
                 </ul>
             </div>

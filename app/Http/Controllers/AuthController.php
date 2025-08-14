@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Request\LoginRequest;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
@@ -15,9 +16,7 @@ class AuthController extends Controller
      */
     public function loginView()
     {
-        return view('login.main', [
-            'layout' => 'login'
-        ]);
+        return view('login.index-login');
     }
 
     /**
@@ -28,12 +27,17 @@ class AuthController extends Controller
      */
     public function login(LoginRequest $request)
     {
-        if (!\Auth::attempt([
+        if (!Auth::attempt([
             'email' => $request->email,
             'password' => $request->password
         ])) {
-            throw new \Exception('Wrong email or password.');
+            return response()->json([
+                'success' => false,
+                'message' => 'Wrong email or password.'
+            ], 422);
         }
+
+        $request->session()->regenerate();
 
         return response()->json([
             'success' => true,
@@ -49,7 +53,7 @@ class AuthController extends Controller
      */
     public function logout()
     {
-        \Auth::logout();
+        Auth::logout();
         return redirect('login');
     }
 }

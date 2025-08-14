@@ -19,8 +19,20 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'street',
+        'lot',
+        'block',
+        'contact_number',
+        'membership_fee',
+        'is_with_title',
+        'gender',
         'email',
+        'email_verified_at',
         'password',
+        'photo',
+        'role',
+        'active',
+        'remember_token',
     ];
 
     /**
@@ -47,7 +59,7 @@ class User extends Authenticatable
      *
      * @var array
      */
-    protected $appends = ['photo'];
+    protected $appends = ['photo_url'];
 
     /**
      * The getter that return accessible URL for user photo.
@@ -56,10 +68,9 @@ class User extends Authenticatable
      */
     public function getPhotoUrlAttribute()
     {
-        if ($this->foto !== null) {
-            return url('media/user/' . $this->id . '/' . $this->foto);
-        } else {
-            return url('media-example/no-image.png');
+        if (!empty($this->photo)) {
+            return asset('uploads/profiles/' . $this->photo);
         }
+        return asset('dist/images/preview-5.jpg');
     }
 }
