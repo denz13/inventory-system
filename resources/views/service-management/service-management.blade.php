@@ -10,16 +10,19 @@
                             <button class="dropdown-toggle btn btn-primary" aria-expanded="false" data-tw-toggle="dropdown">Filter</button> 
                             <div class="dropdown-menu w-40"> 
                                 <ul class="dropdown-content"> 
-                                    <li> <a href="" class="dropdown-item">All Requests</a> </li> 
-                                    <li> <a href="" class="dropdown-item">Pending</a> </li> 
-                                    <li> <a href="" class="dropdown-item">In Progress</a> </li> 
-                                    <li> <a href="" class="dropdown-item">Completed</a> </li> 
-                                    <li> <a href="" class="dropdown-item">Cancelled</a> </li> 
+                                    <li> <a href="javascript:;" class="dropdown-item" data-filter="all">All Requests</a> </li> 
+                                    <li> <a href="javascript:;" class="dropdown-item" data-filter="Pending">Pending</a> </li> 
+                                    <li> <a href="javascript:;" class="dropdown-item" data-filter="Approved">Approved</a> </li> 
+                                    <li> <a href="javascript:;" class="dropdown-item" data-filter="Declined">Declined</a> </li> 
+                                    <!-- <li> <a href="javascript:;" class="dropdown-item" data-filter="In Progress">In Progress</a> </li> 
+                                    <li> <a href="javascript:;" class="dropdown-item" data-filter="Completed">Completed</a> </li> 
+                                    <li> <a href="javascript:;" class="dropdown-item" data-filter="Cancelled">Cancelled</a> </li>  -->
                                 </ul> 
                             </div> 
-                        </div>                         
+                        </div>
+                        
                         <div class="hidden md:block mx-auto text-slate-500">
-                            Showing {{ $serviceRequests->firstItem() ?? 0 }} to {{ $serviceRequests->lastItem() ?? 0 }} of {{ $serviceRequests->total() ?? 0 }} entries
+                            Showing <span id="filtered-count">{{ $serviceRequests->count() }}</span> of <span id="total-count">{{ $serviceRequests->total() }}</span> entries
                         </div>
                         <div class="w-full sm:w-auto mt-3 sm:mt-0 sm:ml-auto md:ml-0">
                             <div class="w-56 relative text-slate-500">
@@ -113,13 +116,34 @@
                                                 View
                                             </a>
                                             @if($request->status === 'Pending')
-                                            <a class="flex items-center mr-3" href="javascript:;" data-tw-toggle="modal" data-tw-target="#update-status-modal" data-request-id="{{ $request->id }}">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1">
-                                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                                    <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                                </svg>
-                                                Update Status
-                                            </a>
+                                            <div class="dropdown">
+                                                <button class="dropdown-toggle btn btn-outline-primary btn-sm" aria-expanded="false" data-tw-toggle="dropdown">
+                                                    Update Status
+                                                </button>
+                                                <div class="dropdown-menu w-40">
+                                                    <ul class="dropdown-content">
+                                                        <li>
+                                                            <a href="javascript:;" class="dropdown-item" data-action="approve" data-request-id="{{ $request->id }}">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2 text-success">
+                                                                    <polyline points="9 11 12 14 22 4"></polyline>
+                                                                    <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+                                                                </svg>
+                                                                Approve
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a href="javascript:;" class="dropdown-item" data-action="decline" data-request-id="{{ $request->id }}">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2 text-danger">
+                                                                    <circle cx="12" cy="12" r="10"></circle>
+                                                                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                                                                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                                                                </svg>
+                                                                Decline
+                                                            </a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
                                             @endif
                                         </div>
                                     </td>
@@ -144,29 +168,77 @@
                     <!-- END: Data List -->
                     
                     <!-- BEGIN: Pagination -->
-                    @if($serviceRequests->hasPages())
-                        <div class="intro-y col-span-12 flex flex-wrap sm:flex-row sm:flex-nowrap items-center">
-                            <nav class="w-full sm:w-auto sm:mr-auto">
-                                {{ $serviceRequests->links() }}
-                            </nav>
-                        </div>
-                    @endif
+                    <x-pagination 
+                        :current-page="$serviceRequests->currentPage()" 
+                        :total-pages="$serviceRequests->lastPage()" 
+                        :per-page="$serviceRequests->perPage()" 
+                        :show-per-page-selector="true" 
+                        :show-first-last="true" 
+                    />
                     <!-- END: Pagination -->
                 </div>
+
+<!-- BEGIN: Notification Toasts -->
+<x-notification-toast 
+    id="service_management_toast_success" 
+    type="success" 
+    title="Success!" 
+    :showButton="false" 
+>
+    <div id="service-management-success-message-slot" class="text-slate-500 mt-1">Action completed successfully</div>
+</x-notification-toast>
+
+<x-notification-toast 
+    id="service_management_toast_error" 
+    type="error" 
+    title="Error!" 
+    :showButton="false"
+>
+    <div id="service-management-error-message-slot" class="text-slate-500 mt-1">An error occurred</div>
+</x-notification-toast>
+
+<style>
+    .toastify {
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+    .service-type-option:hover, .category-option:hover {
+        border-color: #3b82f6 !important;
+        background-color: #f8fafc;
+    }
+    .service-type-option.selected, .category-option.selected {
+        border-color: #3b82f6 !important;
+        background-color: #eff6ff;
+    }
+    
+    /* Ensure notification toast content is visible */
+    .toastify-content {
+        color: #000 !important;
+        background: #fff !important;
+        padding: 1rem !important;
+        border-radius: 0.5rem !important;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+    }
+    
+    .toastify-content .font-medium {
+        font-weight: 600 !important;
+        font-size: 1rem !important;
+        margin-bottom: 0.5rem !important;
+        color: #1f2937 !important;
+    }
+    
+    .toastify-content .text-slate-500 {
+        color: #6b7280 !important;
+        font-size: 0.875rem !important;
+    }
+</style>
+<!-- END: Notification Toasts -->
 
 <!-- BEGIN: View Request Modal -->
 <div id="view-request-modal" class="modal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="font-medium text-base mr-auto">Service Request Details</h2>
-                <button type="button" data-tw-dismiss="modal" class="btn-close">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
+            
             <div class="modal-body px-5 py-10">
                 <div id="request-details">
                     <div class="text-center text-slate-500">
@@ -236,8 +308,70 @@
 </div>
 <!-- END: Update Status Modal -->
 
+<!-- BEGIN: Approve Confirmation Modal -->
+<div id="approve-confirmation-modal" class="modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            
+            <div class="modal-body px-5 py-10">
+                <div class="text-center">
+                    <div class="mb-5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-3 text-success">
+                            <polyline points="9 11 12 14 22 4"></polyline>
+                            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+                        </svg>
+                        <h3 class="text-lg font-medium mb-2">Approve Service Request?</h3>
+                        <p class="text-slate-500">Are you sure you want to approve this service request?</p>
+                    </div>
+                    <input type="hidden" id="approveRequestId">
+                </div>
+            </div>
+            <div class="modal-footer px-5 py-3">
+                <div class="flex justify-end gap-2">
+                    <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-24">Cancel</button>
+                    <button type="button" onclick="confirmApprove()" class="btn btn-success w-24">Approve</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- END: Approve Confirmation Modal -->
+
+<!-- BEGIN: Decline Reason Modal -->
+<div id="decline-reason-modal" class="modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+           
+            <div class="modal-body px-5 py-10">
+                <form id="declineReasonForm">
+                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="_method" value="PUT">
+                    <input type="hidden" id="declineRequestId" name="request_id">
+                    
+                    <div class="mb-6">
+                        <label class="form-label">Reason for Decline</label>
+                        <textarea name="reason" id="declineReason" class="form-control" rows="4" placeholder="Please provide a reason for declining this service request..." required></textarea>
+                        <div class="text-slate-500 text-xs mt-1">This reason will be recorded and visible to the user.</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer px-5 py-3">
+                <div class="flex justify-end gap-2">
+                    <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-24">Cancel</button>
+                    <button type="button" onclick="confirmDecline()" class="btn btn-danger w-24">Decline</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- END: Decline Reason Modal -->
+
 @endsection
 
 @push('scripts')
+    <!-- Toastify for notifications -->
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.css">
+    
     <script src="{{ asset('js/servicemanagement/service-management.js') }}"></script>
 @endpush
