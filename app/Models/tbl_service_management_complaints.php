@@ -12,7 +12,7 @@ class tbl_service_management_complaints extends Model
 
     protected $table = 'tbl_service_management_complaints';
     protected $primaryKey = 'id';
-    protected $fillable = ['service_management_category_id', 'user_id', 'complaint_description', 'status'];
+    protected $fillable = ['service_management_category_id', 'user_id', 'complaint_description', 'status', 'reason'];
 
     public function user()
     {

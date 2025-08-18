@@ -96,6 +96,8 @@ Route::middleware('auth')->group(function() {
     Route::get('service-management/{service}/edit', [ServiceManagementController::class, 'edit'])->name('service-management.edit');
     Route::put('service-management/{service}', [ServiceManagementController::class, 'update'])->name('service-management.update');
     Route::delete('service-management/{service}', [ServiceManagementController::class, 'destroy'])->name('service-management.destroy');
+    Route::post('service-management/{service}/approve', [ServiceManagementController::class, 'approve'])->name('service-management.approve');
+    Route::post('service-management/{service}/decline', [ServiceManagementController::class, 'decline'])->name('service-management.decline');
         
     // // Named route for menu system
     // Route::get("{page}", [RouteController::class, 'routes'])->name('page.show')->where('page', '.*');
