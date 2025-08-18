@@ -8,12 +8,9 @@
                                     <button type="button" class="btn-close text-white" data-tw-dismiss="alert" aria-label="Close"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="x" data-lucide="x" class="lucide lucide-x w-4 h-4"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> </button>
                                 </div>
                             </div>
-<div class="grid grid-cols-12 gap-6 mt-5">
-    <div class="intro-y col-span-12">
-        <div class="intro-y text-lg font-medium mt-10">
-            Service Request
-        </div>
-    </div>
+                            <h2 class="intro-y text-lg font-medium mt-10">
+                    List of Homeowners Service Requests
+                </h2>   
 
     <!-- Notifications -->
     <div class="intro-y col-span-12">
@@ -63,6 +60,8 @@
             }
         </style>
     </div>
+
+    <div class="grid grid-cols-12 gap-6 mt-5">
 
     <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2">
         <button class="btn btn-primary shadow-md mr-2" data-tw-toggle="modal" data-tw-target="#request-service-modal">

@@ -1,6 +1,12 @@
 @extends('layout._partials.master')
 
 @section('content')
+<div class="col-span-12 mt-6 -mb-6 intro-y">
+                                <div class="alert alert-dismissible show box bg-primary text-white flex items-center mb-6" role="alert">
+                                    <span>Take note: The Approved and Declined Button will be hide after the status is changed into Approved or Declined.</span>
+                                    <button type="button" class="btn-close text-white" data-tw-dismiss="alert" aria-label="Close"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="x" data-lucide="x" class="lucide lucide-x w-4 h-4"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> </button>
+                                </div>
+                            </div>
 <h2 class="intro-y text-lg font-medium mt-10">
                     List of Homeowners Service Requests
                 </h2>
