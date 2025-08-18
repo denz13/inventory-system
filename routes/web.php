@@ -10,6 +10,8 @@ use App\Http\Controllers\LangController;
 use App\Http\Controllers\usermanagement\UserManagamentController;
 use App\Http\Controllers\businessmanagement\BusinessManagementController;
 use App\Http\Controllers\vehiclemanagement\VehicleManagementController;
+use App\Http\Controllers\servicemanagement\ServiceManagementController;
+use App\Http\Controllers\complaints\ComplaintsController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -48,35 +50,54 @@ Route::middleware('auth')->group(function() {
     
     // Dashboard route (specific route before wildcard)
     Route::get('dashboard', [RouteController::class, 'index'])->name('dashboard');
+    
+    // User Management routes
+    Route::get('user-management', [UserManagamentController::class, 'index'])->name('usermanagement.index');
+    Route::get('user-management/create', [UserManagamentController::class, 'create'])->name('usermanagement.create');
+    Route::post('user-management', [UserManagamentController::class, 'store'])->name('usermanagement.store');
+    Route::get('user-management/{user}', [UserManagamentController::class, 'show'])->name('usermanagement.show');
+    Route::get('user-management/{user}/edit', [UserManagamentController::class, 'edit'])->name('usermanagement.edit');
+    Route::put('user-management/{user}', [UserManagamentController::class, 'update'])->name('usermanagement.update');
+    Route::delete('user-management/{user}', [UserManagamentController::class, 'destroy'])->name('usermanagement.destroy');
+
+    // Business Management routes
+    Route::get('business-management', [BusinessManagementController::class, 'index'])->name('businessmanagement.index');
+    Route::get('business-management/create', [BusinessManagementController::class, 'create'])->name('businessmanagement.create');
+    Route::post('business-management', [BusinessManagementController::class, 'store'])->name('businessmanagement.store');
+    Route::get('business-management/{business}', [BusinessManagementController::class, 'show'])->name('businessmanagement.show');
+    Route::get('business-management/{business}/edit', [BusinessManagementController::class, 'edit'])->name('businessmanagement.edit');
+    Route::put('business-management/{business}', [BusinessManagementController::class, 'update'])->name('businessmanagement.update');
+    Route::delete('business-management/{business}', [BusinessManagementController::class, 'destroy'])->name('businessmanagement.destroy');
+
+    // Vehicle Management routes
+    Route::get('vehicle-management', [VehicleManagementController::class, 'index'])->name('vehiclemanagement.index');
+    Route::get('vehicle-management/create', [VehicleManagementController::class, 'create'])->name('vehiclemanagement.create');
+    Route::post('vehicle-management', [VehicleManagementController::class, 'store'])->name('vehiclemanagement.store');
+    Route::get('vehicle-management/{vehicle}', [VehicleManagementController::class, 'show'])->name('vehiclemanagement.show');
+    Route::get('vehicle-management/{vehicle}/edit', [VehicleManagementController::class, 'edit'])->name('vehiclemanagement.edit');
+    Route::put('vehicle-management/{vehicle}', [VehicleManagementController::class, 'update'])->name('vehiclemanagement.update');
+    Route::delete('vehicle-management/{vehicle}', [VehicleManagementController::class, 'destroy'])->name('vehiclemanagement.destroy');
+
+    // Complaints routes
+    Route::get('complaints', [ComplaintsController::class, 'index'])->name('complaints.index');
+    Route::get('complaints/create', [ComplaintsController::class, 'create'])->name('complaints.create');
+    Route::post('complaints', [ComplaintsController::class, 'store'])->name('complaints.store');
+    Route::get('complaints/{complaint}', [ComplaintsController::class, 'show'])->name('complaints.show');
+    Route::get('complaints/{complaint}/edit', [ComplaintsController::class, 'edit'])->name('complaints.edit');
+    Route::put('complaints/{complaint}', [ComplaintsController::class, 'update'])->name('complaints.update');
+    Route::delete('complaints/{complaint}', [ComplaintsController::class, 'destroy'])->name('complaints.destroy');
+    Route::get('complaints/categories/{typeId}', [ComplaintsController::class, 'getCategories'])->name('complaints.categories');
+
+    // Service Management routes
+    Route::get('service-management', [ServiceManagementController::class, 'index'])->name('service-management.index');
+    Route::get('service-management/create', [ServiceManagementController::class, 'create'])->name('service-management.create');
+    Route::post('service-management', [ServiceManagementController::class, 'store'])->name('service-management.store');
+    Route::get('service-management/{service}', [ServiceManagementController::class, 'show'])->name('service-management.show');
+    Route::get('service-management/{service}/edit', [ServiceManagementController::class, 'edit'])->name('service-management.edit');
+    Route::put('service-management/{service}', [ServiceManagementController::class, 'update'])->name('service-management.update');
+    Route::delete('service-management/{service}', [ServiceManagementController::class, 'destroy'])->name('service-management.destroy');
         
     // // Named route for menu system
     // Route::get("{page}", [RouteController::class, 'routes'])->name('page.show')->where('page', '.*');
 });
-
-// User Management routes
-Route::get('user-management', [UserManagamentController::class, 'index'])->name('usermanagement.index');
-Route::get('user-management/create', [UserManagamentController::class, 'create'])->name('usermanagement.create');
-Route::post('user-management', [UserManagamentController::class, 'store'])->name('usermanagement.store');
-Route::get('user-management/{user}', [UserManagamentController::class, 'show'])->name('usermanagement.show');
-Route::get('user-management/{user}/edit', [UserManagamentController::class, 'edit'])->name('usermanagement.edit');
-Route::put('user-management/{user}', [UserManagamentController::class, 'update'])->name('usermanagement.update');
-Route::delete('user-management/{user}', [UserManagamentController::class, 'destroy'])->name('usermanagement.destroy');
-
-// Business Management routes
-Route::get('business-management', [BusinessManagementController::class, 'index'])->name('businessmanagement.index');
-Route::get('business-management/create', [BusinessManagementController::class, 'create'])->name('businessmanagement.create');
-Route::post('business-management', [BusinessManagementController::class, 'store'])->name('businessmanagement.store');
-Route::get('business-management/{business}', [BusinessManagementController::class, 'show'])->name('businessmanagement.show');
-Route::get('business-management/{business}/edit', [BusinessManagementController::class, 'edit'])->name('businessmanagement.edit');
-Route::put('business-management/{business}', [BusinessManagementController::class, 'update'])->name('businessmanagement.update');
-Route::delete('business-management/{business}', [BusinessManagementController::class, 'destroy'])->name('businessmanagement.destroy');
-
-// Vehicle Management routes
-Route::get('vehicle-management', [VehicleManagementController::class, 'index'])->name('vehiclemanagement.index');
-Route::get('vehicle-management/create', [VehicleManagementController::class, 'create'])->name('vehiclemanagement.create');
-Route::post('vehicle-management', [VehicleManagementController::class, 'store'])->name('vehiclemanagement.store');
-Route::get('vehicle-management/{vehicle}', [VehicleManagementController::class, 'show'])->name('vehiclemanagement.show');
-Route::get('vehicle-management/{vehicle}/edit', [VehicleManagementController::class, 'edit'])->name('vehiclemanagement.edit');
-Route::put('vehicle-management/{vehicle}', [VehicleManagementController::class, 'update'])->name('vehiclemanagement.update');
-Route::delete('vehicle-management/{vehicle}', [VehicleManagementController::class, 'destroy'])->name('vehiclemanagement.destroy');
 
