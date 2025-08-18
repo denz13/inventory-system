@@ -152,21 +152,15 @@
             <a href="javascript:;" class="side-menu">
                 <div class="side-menu__icon"> <i data-lucide="users"></i> </div>
                 <div class="side-menu__title">
-                    Users 
+                    Service Request 
                     <div class="side-menu__sub-icon "> <i data-lucide="chevron-down"></i> </div>
                 </div>
             </a>
             <ul class="">
                 <li>
-                    <a href="side-menu-light-users-layout-2.html" class="side-menu">
+                    <a href="{{ route('complaints.index') }}" class="side-menu">
                         <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
-                        <div class="side-menu__title"> Layout 2 </div>
-                    </a>
-                </li>
-                <li>
-                    <a href="side-menu-light-users-layout-3.html" class="side-menu">
-                        <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
-                        <div class="side-menu__title"> Layout 3 </div>
+                        <div class="side-menu__title"> Service Request </div>
                     </a>
                 </li>
             </ul>
@@ -196,6 +190,12 @@
                     <a href="{{ route('vehiclemanagement.index') }}" class="side-menu">
                         <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
                         <div class="side-menu__title"> Vehicle Management </div>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('service-management.index') }}" class="side-menu">
+                        <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
+                        <div class="side-menu__title"> Service Management </div>
                     </a>
                 </li>
             </ul>
