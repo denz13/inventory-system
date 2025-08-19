@@ -59,7 +59,7 @@ class User extends Authenticatable
      *
      * @var array
      */
-    protected $appends = ['photo_url'];
+    protected $appends = ['photo_url', 'avatar'];
 
     /**
      * The getter that return accessible URL for user photo.
@@ -72,5 +72,14 @@ class User extends Authenticatable
             return asset('uploads/profiles/' . $this->photo);
         }
         return asset('dist/images/preview-5.jpg');
+    }
+
+    /**
+     * Get avatar attribute for Chatify compatibility
+     * Maps the photo field to avatar for Chatify
+     */
+    public function getAvatarAttribute()
+    {
+        return $this->photo_url;
     }
 }
