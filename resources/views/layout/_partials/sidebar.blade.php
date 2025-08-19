@@ -24,6 +24,12 @@
                 </li>
             </ul>
         </li>
+        <li>
+            <a href="{{ route('chatify') }}" class="side-menu">
+                <div class="side-menu__icon"> <i data-lucide="message-circle"></i> </div>
+                <div class="side-menu__title"> Message </div>
+            </a>
+        </li>
        
         {{-- <li>
             <a href="javascript:;" class="side-menu">
@@ -160,7 +166,7 @@
                 <li>
                     <a href="{{ route('complaints.index') }}" class="side-menu">
                         <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
-                        <div class="side-menu__title"> Service Request </div>
+                        <div class="side-menu__title"> Request Now </div>
                     </a>
                 </li>
             </ul>

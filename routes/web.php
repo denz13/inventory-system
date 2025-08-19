@@ -12,6 +12,7 @@ use App\Http\Controllers\businessmanagement\BusinessManagementController;
 use App\Http\Controllers\vehiclemanagement\VehicleManagementController;
 use App\Http\Controllers\servicemanagement\ServiceManagementController;
 use App\Http\Controllers\complaints\ComplaintsController;
+use App\Http\Controllers\chat\ChatController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -98,7 +99,12 @@ Route::middleware('auth')->group(function() {
     Route::delete('service-management/{service}', [ServiceManagementController::class, 'destroy'])->name('service-management.destroy');
     Route::post('service-management/{service}/approve', [ServiceManagementController::class, 'approve'])->name('service-management.approve');
     Route::post('service-management/{service}/decline', [ServiceManagementController::class, 'decline'])->name('service-management.decline');
-        
+
+    // Chat routes
+    Route::get('chat', [ChatController::class, 'index'])->name('chat.index');
+    Route::post('chat/get-messages', [ChatController::class, 'getMessages'])->name('chat.get-messages');
+    Route::post('chat/send-message', [ChatController::class, 'sendMessage'])->name('chat.send-message');
+
     // // Named route for menu system
     // Route::get("{page}", [RouteController::class, 'routes'])->name('page.show')->where('page', '.*');
 });
