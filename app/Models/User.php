@@ -33,6 +33,7 @@ class User extends Authenticatable
         'role',
         'active',
         'remember_token',
+        'is_online',
     ];
 
     /**
