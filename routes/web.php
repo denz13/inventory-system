@@ -12,7 +12,10 @@ use App\Http\Controllers\businessmanagement\BusinessManagementController;
 use App\Http\Controllers\vehiclemanagement\VehicleManagementController;
 use App\Http\Controllers\servicemanagement\ServiceManagementController;
 use App\Http\Controllers\complaints\ComplaintsController;
-use App\Http\Controllers\chat\ChatController;
+use App\Http\Controllers\incident\IncidentController;
+use App\Http\Controllers\incidentreportmanagement\IncidentReportManagementController;
+use App\Http\Controllers\incidentmanagement\IncidentManagementController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -100,10 +103,18 @@ Route::middleware('auth')->group(function() {
     Route::post('service-management/{service}/approve', [ServiceManagementController::class, 'approve'])->name('service-management.approve');
     Route::post('service-management/{service}/decline', [ServiceManagementController::class, 'decline'])->name('service-management.decline');
 
-    // Chat routes
-    Route::get('chat', [ChatController::class, 'index'])->name('chat.index');
-    Route::post('chat/get-messages', [ChatController::class, 'getMessages'])->name('chat.get-messages');
-    Route::post('chat/send-message', [ChatController::class, 'sendMessage'])->name('chat.send-message');
+    // Incident Management routes
+    Route::get('incident-report-management', [IncidentReportManagementController::class, 'index'])->name('incident-report-management.index');
+    Route::get('incident-report-management/{id}', [IncidentReportManagementController::class, 'show'])->name('incident-report-management.show');
+    Route::put('incident-report-management/{id}/status', [IncidentReportManagementController::class, 'updateStatus'])->name('incident-report-management.updateStatus');
+    Route::put('incident-report-management/{id}/assign', [IncidentReportManagementController::class, 'assign'])->name('incident-report-management.assign');
+
+    // Incident routes
+    Route::get('incident', [IncidentController::class, 'index'])->name('incident.index');
+    Route::post('incident-reports', [IncidentController::class, 'store'])->name('incident.store');
+    Route::get('incident-reports/{id}', [IncidentController::class, 'show'])->name('incident.show');
+    Route::put('incident-reports/{id}', [IncidentController::class, 'update'])->name('incident.update');
+    Route::delete('incident-reports/{id}', [IncidentController::class, 'destroy'])->name('incident.destroy');
 
     // // Named route for menu system
     // Route::get("{page}", [RouteController::class, 'routes'])->name('page.show')->where('page', '.*');
