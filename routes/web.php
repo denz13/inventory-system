@@ -17,6 +17,8 @@ use App\Http\Controllers\incidentreportmanagement\IncidentReportManagementContro
 use App\Http\Controllers\incidentmanagement\IncidentManagementController;
 use App\Http\Controllers\announcement\AnnouncementController;
 use App\Http\Controllers\billingmanagement\BillingManagementController;
+use App\Http\Controllers\billingpayment\BillingPaymentController;
+use App\Http\Controllers\bankaccount\BankAccountController;
 
 /*
 |--------------------------------------------------------------------------
@@ -118,6 +120,13 @@ Route::middleware('auth')->group(function() {
     Route::put('/billing/{id}', [BillingManagementController::class, 'update'])->name('billing.update');
     Route::delete('/billing/{id}', [BillingManagementController::class, 'destroy'])->name('billing.destroy');
 
+    // Bank Account routes
+    Route::get('bank-account', [BankAccountController::class, 'index'])->name('bank-account.index');
+    Route::post('bank-account', [BankAccountController::class, 'store'])->name('bank-account.store');
+    Route::get('bank-account/{id}', [BankAccountController::class, 'show'])->name('bank-account.show');
+    Route::put('bank-account/{id}', [BankAccountController::class, 'update'])->name('bank-account.update');
+    Route::delete('bank-account/{id}', [BankAccountController::class, 'destroy'])->name('bank-account.destroy');
+    
     // Incident routes
     Route::get('incident', [IncidentController::class, 'index'])->name('incident.index');
     Route::post('incident-reports', [IncidentController::class, 'store'])->name('incident.store');
@@ -133,6 +142,8 @@ Route::middleware('auth')->group(function() {
     Route::delete('announcement/{id}', [AnnouncementController::class, 'destroy'])->name('announcement.destroy');
 
 
+    // Billing Payment routes
+    Route::get('billing-payment', [BillingPaymentController::class, 'index'])->name('billing-payment.index');
 
     // // Named route for menu system
     // Route::get("{page}", [RouteController::class, 'routes'])->name('page.show')->where('page', '.*');
