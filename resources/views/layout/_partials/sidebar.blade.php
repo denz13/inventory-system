@@ -226,6 +226,18 @@
                         <div class="side-menu__title"> Incident Management </div>
                     </a>
                 </li>
+                <li>
+                    <a href="{{ route('announcement.index') }}" class="side-menu">
+                        <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
+                        <div class="side-menu__title"> Announcement </div>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('billing-management.index') }}" class="side-menu">
+                        <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
+                        <div class="side-menu__title"> Billing Management </div>
+                    </a>
+                </li>
             </ul>
         </li>
         <!-- <li>

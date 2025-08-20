@@ -15,6 +15,8 @@ use App\Http\Controllers\complaints\ComplaintsController;
 use App\Http\Controllers\incident\IncidentController;
 use App\Http\Controllers\incidentreportmanagement\IncidentReportManagementController;
 use App\Http\Controllers\incidentmanagement\IncidentManagementController;
+use App\Http\Controllers\announcement\AnnouncementController;
+use App\Http\Controllers\billingmanagement\BillingManagementController;
 
 /*
 |--------------------------------------------------------------------------
@@ -109,12 +111,28 @@ Route::middleware('auth')->group(function() {
     Route::put('incident-report-management/{id}/status', [IncidentReportManagementController::class, 'updateStatus'])->name('incident-report-management.updateStatus');
     Route::put('incident-report-management/{id}/assign', [IncidentReportManagementController::class, 'assign'])->name('incident-report-management.assign');
 
+    // Billing Management Routes
+    Route::get('billing-management', [BillingManagementController::class, 'index'])->name('billing-management.index');
+    Route::post('/billing', [BillingManagementController::class, 'store'])->name('billing.store');
+    Route::get('/billing/{id}', [BillingManagementController::class, 'show'])->name('billing.show');
+    Route::put('/billing/{id}', [BillingManagementController::class, 'update'])->name('billing.update');
+    Route::delete('/billing/{id}', [BillingManagementController::class, 'destroy'])->name('billing.destroy');
+
     // Incident routes
     Route::get('incident', [IncidentController::class, 'index'])->name('incident.index');
     Route::post('incident-reports', [IncidentController::class, 'store'])->name('incident.store');
     Route::get('incident-reports/{id}', [IncidentController::class, 'show'])->name('incident.show');
     Route::put('incident-reports/{id}', [IncidentController::class, 'update'])->name('incident.update');
     Route::delete('incident-reports/{id}', [IncidentController::class, 'destroy'])->name('incident.destroy');
+
+    // Announcement routes
+    Route::get('announcement', [AnnouncementController::class, 'index'])->name('announcement.index');
+    Route::post('announcement', [AnnouncementController::class, 'store'])->name('announcement.store');
+    Route::get('announcement/{id}', [AnnouncementController::class, 'show'])->name('announcement.show');
+    Route::put('announcement/{id}', [AnnouncementController::class, 'update'])->name('announcement.update');
+    Route::delete('announcement/{id}', [AnnouncementController::class, 'destroy'])->name('announcement.destroy');
+
+
 
     // // Named route for menu system
     // Route::get("{page}", [RouteController::class, 'routes'])->name('page.show')->where('page', '.*');
