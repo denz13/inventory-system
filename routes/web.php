@@ -21,6 +21,8 @@ use App\Http\Controllers\billingpayment\BillingPaymentController;
 use App\Http\Controllers\bankaccount\BankAccountController;
 use App\Http\Controllers\listpayments\ListPaymentsController;
 use App\Http\Controllers\feedback\FeedbackController;
+use App\Http\Controllers\feedbackmanagement\FeedbackManagementController;
+use App\Http\Controllers\profilemanagement\ProfileManagementController;
 
 /*
 |--------------------------------------------------------------------------
@@ -122,6 +124,24 @@ Route::middleware('auth')->group(function() {
     Route::put('/billing/{id}', [BillingManagementController::class, 'update'])->name('billing.update');
     Route::delete('/billing/{id}', [BillingManagementController::class, 'destroy'])->name('billing.destroy');
 
+    // Feedback Management routes (Admin view)
+    Route::get('feedback-management', [FeedbackManagementController::class, 'index'])->name('feedback-management.index');
+    Route::get('feedback-management/{id}', [FeedbackManagementController::class, 'show'])->name('feedback-management.show');
+    Route::put('feedback-management/{id}', [FeedbackManagementController::class, 'update'])->name('feedback-management.update');
+    Route::delete('feedback-management/{id}', [FeedbackManagementController::class, 'destroy'])->name('feedback-management.destroy');
+
+    // Profile Management routes
+    Route::get('profile-management', [ProfileManagementController::class, 'index'])->name('profile-management.index');
+    Route::post('profile-management/update', [ProfileManagementController::class, 'updateProfile'])->name('profile-management.update');
+    Route::post('profile-management/change-password', [ProfileManagementController::class, 'changePassword'])->name('profile-management.change-password');
+    Route::post('profile-management/upload-photo', [ProfileManagementController::class, 'uploadPhoto'])->name('profile-management.upload-photo');
+    
+    // Tenant Management routes
+    Route::post('profile-management/tenants', [ProfileManagementController::class, 'addTenant'])->name('profile-management.tenants.store');
+    Route::get('profile-management/tenants/{id}', [ProfileManagementController::class, 'getTenant'])->name('profile-management.tenants.show');
+    Route::put('profile-management/tenants/{id}', [ProfileManagementController::class, 'updateTenant'])->name('profile-management.tenants.update');
+    Route::delete('profile-management/tenants/{id}', [ProfileManagementController::class, 'deleteTenant'])->name('profile-management.tenants.destroy');
+
     // Bank Account routes
     Route::get('bank-account', [BankAccountController::class, 'index'])->name('bank-account.index');
     Route::post('bank-account', [BankAccountController::class, 'store'])->name('bank-account.store');
@@ -160,6 +180,9 @@ Route::middleware('auth')->group(function() {
     Route::get('feedback/{id}', [FeedbackController::class, 'show'])->name('feedback.show');
     Route::put('feedback/{id}', [FeedbackController::class, 'update'])->name('feedback.update');
     Route::delete('feedback/{id}', [FeedbackController::class, 'destroy'])->name('feedback.destroy');
+
+
+
     
     // // Named route for menu system
     // Route::get("{page}", [RouteController::class, 'routes'])->name('page.show')->where('page', '.*');

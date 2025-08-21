@@ -70,9 +70,9 @@ class User extends Authenticatable
     public function getPhotoUrlAttribute()
     {
         if (!empty($this->photo)) {
-            return asset('uploads/profiles/' . $this->photo);
+            return asset('storage/profiles/' . $this->photo);
         }
-        return asset('dist/images/preview-5.jpg');
+        return asset('img/user.jpg');
     }
 
     /**
