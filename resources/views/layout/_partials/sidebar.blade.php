@@ -30,6 +30,12 @@
                 <div class="side-menu__title"> Message </div>
             </a>
         </li>
+        <li>
+            <a href="{{ route('feedback.index') }}" class="side-menu">
+                <div class="side-menu__icon"> <i data-lucide="file-text"></i> </div>
+                <div class="side-menu__title"> Feedback </div>
+            </a>
+        </li>
         {{-- <li>
             <a href="javascript:;" class="side-menu">
                 <div class="side-menu__icon"> <i data-lucide="shopping-bag"></i> </div>
@@ -249,11 +255,28 @@
                         <div class="side-menu__title"> Announcement </div>
                     </a>
                 </li>
+                
                 <li>
-                    <a href="{{ route('billing-management.index') }}" class="side-menu">
+                    <a href="javascript:;" class="side-menu">
                         <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
-                        <div class="side-menu__title"> Billing Management </div>
+                        <div class="side-menu__title"> Billing Management 
+                            <div class="side-menu__sub-icon "> <i data-lucide="chevron-down"></i> </div>
+                        </div>
                     </a>
+                    <ul class="">
+                        <li>
+                            <a href="{{ route('billing-management.index') }}" class="side-menu">
+                                <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
+                                <div class="side-menu__title"> Create Billing </div>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('list-payments.index') }}" class="side-menu">
+                                <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
+                                <div class="side-menu__title"> List of Payments </div>
+                            </a>
+                        </li>
+                    </ul>
                 </li>
                 <li>
                     <a href="{{ route('bank-account.index') }}" class="side-menu">

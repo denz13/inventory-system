@@ -22,7 +22,11 @@ License: You must have a valid license purchased only from themeforest(the above
         <!-- BEGIN: CSS Assets-->
         @vite('resources/css/app.css')
         <link rel="stylesheet" href="{{ asset('assets/toastify/toastify.css') }}">
+        <link href="https://unpkg.com/filepond/dist/filepond.css" rel="stylesheet" />
+        <link href="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css" rel="stylesheet" />
+        <link href="https://unpkg.com/filepond-plugin-pdf-preview/dist/filepond-plugin-pdf-preview.css" rel="stylesheet" />
         @livewireStyles
+        @stack('styles')
         
         <!-- BEGIN: Announcement Toast Styling -->
         <style>

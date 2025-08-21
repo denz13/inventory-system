@@ -19,6 +19,8 @@ use App\Http\Controllers\announcement\AnnouncementController;
 use App\Http\Controllers\billingmanagement\BillingManagementController;
 use App\Http\Controllers\billingpayment\BillingPaymentController;
 use App\Http\Controllers\bankaccount\BankAccountController;
+use App\Http\Controllers\listpayments\ListPaymentsController;
+use App\Http\Controllers\feedback\FeedbackController;
 
 /*
 |--------------------------------------------------------------------------
@@ -144,7 +146,21 @@ Route::middleware('auth')->group(function() {
 
     // Billing Payment routes
     Route::get('billing-payment', [BillingPaymentController::class, 'index'])->name('billing-payment.index');
+    Route::post('billing-payment/process', [BillingPaymentController::class, 'processPayment'])->name('billing-payment.process');
 
+    // List of Payments routes
+    Route::get('list-payments', [ListPaymentsController::class, 'index'])->name('list-payments.index');
+    Route::get('list-payments/{id}', [ListPaymentsController::class, 'show'])->name('list-payments.show');
+    Route::post('list-payments/{id}/approve', [ListPaymentsController::class, 'approve'])->name('list-payments.approve');
+    Route::post('list-payments/{id}/reject', [ListPaymentsController::class, 'reject'])->name('list-payments.reject');
+
+    // Feedback routes
+    Route::get('feedback', [FeedbackController::class, 'index'])->name('feedback.index');
+    Route::post('feedback', [FeedbackController::class, 'store'])->name('feedback.store');
+    Route::get('feedback/{id}', [FeedbackController::class, 'show'])->name('feedback.show');
+    Route::put('feedback/{id}', [FeedbackController::class, 'update'])->name('feedback.update');
+    Route::delete('feedback/{id}', [FeedbackController::class, 'destroy'])->name('feedback.destroy');
+    
     // // Named route for menu system
     // Route::get("{page}", [RouteController::class, 'routes'])->name('page.show')->where('page', '.*');
 });

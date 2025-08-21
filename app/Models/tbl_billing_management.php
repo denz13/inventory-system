@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\User;
 use App\Models\tbl_billing_management_list;
+use App\Models\tbl_bank_account_category;
 
 class tbl_billing_management extends Model
 {
@@ -20,6 +21,8 @@ class tbl_billing_management extends Model
         'receipt',
         'amount_due',
         'status',
+        'payment_account_id',
+        'reason',
     ];
 
     protected $casts = [
@@ -36,5 +39,10 @@ class tbl_billing_management extends Model
     public function billingItems()
     {
         return $this->hasMany(tbl_billing_management_list::class, 'billing_management_id');
+    }
+
+    public function paymentAccount()
+    {
+        return $this->belongsTo(tbl_bank_account_category::class, 'payment_account_id');
     }
 }
