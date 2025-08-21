@@ -104,6 +104,9 @@
         <li id="account-tab" class="nav-item" role="presentation">
             <a href="javascript:;" class="nav-link py-4 flex items-center" data-tw-target="#account" aria-selected="false" role="tab"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="shield" class="lucide lucide-shield w-4 h-4 mr-2" data-lucide="shield"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> Account </a>
         </li>
+        <li id="add-business-tab" class="nav-item" role="presentation">
+            <a href="javascript:;" class="nav-link py-4 flex items-center" data-tw-target="#account" aria-selected="false" role="tab"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="commerce" class="lucide lucide-commerce w-4 h-4 mr-2" data-lucide="commerce"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="12" y1="6" x2="12" y2="2"></line><line x1="12" y1="18" x2="12" y2="22"></line></svg> Add Business </a>
+        </li>
         <li id="add-tenant-tab" class="nav-item" role="presentation">
             <a href="javascript:;" class="nav-link py-4 flex items-center" data-tw-target="#add-tenant" aria-selected="false" role="tab"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="users" class="lucide lucide-users w-4 h-4 mr-2" data-lucide="users"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 00-3-3.87"></path><path d="M16 3.13a4 4 0 010 7.75"></path></svg> Add Tenant </a>
         </li>
@@ -500,24 +503,24 @@
                                             <div class="dropdown ml-3">
                                                 <button class="dropdown-toggle btn px-2 py-1 box" aria-expanded="false" data-tw-toggle="dropdown">
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
-                                                </button>
-                                                <div class="dropdown-menu w-40">
-                                                    <ul class="dropdown-content">
-                                                        <li>
+                            </button>
+                            <div class="dropdown-menu w-40">
+                                <ul class="dropdown-content">
+                                    <li>
                                                             <a href="javascript:;" class="dropdown-item edit-tenant" data-tenant-id="{{ $tenant->id }}">
                                                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                                                                 Edit
                                                             </a>
-                                                        </li>
-                                                        <li>
-                                                            <a href="javascript:;" class="dropdown-item delete-tenant text-danger" data-tenant-id="{{ $tenant->id }}">
+                                    </li>
+                                                                                            <li>
+                                                            <a href="javascript:;" class="dropdown-item delete-tenant text-danger" data-tw-toggle="modal" data-tw-target="#delete-tenant-modal" data-tenant-id="{{ $tenant->id }}">
                                                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                                                                 Delete
                                                             </a>
                                                         </li>
-                                                    </ul>
-                                                </div>
-                                            </div>
+                                </ul>
+                            </div>
+                        </div>
                                         </div>
                                     </div>
                                 </div>
@@ -531,10 +534,92 @@
                         @endif
                     </div>
                 </div>
-            </div>
+                                            </div>
             <!-- END: Tenant List -->
+                                            </div>
+                                            </div>
+                                        </div>
+
+
+
+<!-- Delete Tenant Confirmation Modal -->
+<div id="delete-tenant-modal" class="modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body px-5 py-10">
+                <div class="text-center">
+                    <div class="mb-5">Are you sure you want to delete this tenant?</div>
+                    <p class="text-red-600 font-medium mb-4" id="deleteTenantName">Tenant Name</p>
+                    <input type="hidden" id="deleteTenantId" />
+                    <button type="button" id="confirmDeleteTenant" class="btn btn-danger w-24 mr-2">Delete</button>
+                    <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-24">Cancel</button>
+                </div>
+            </div>
         </div>
     </div>
+</div>
+
+<!-- Edit Tenant Modal -->
+<div id="edit-tenant-modal" class="modal" data-tw-backdrop="static" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="font-medium text-base mr-auto">Edit Tenant</h2>
+                <button type="button" class="btn btn-outline-secondary w-8 h-8 mr-1" data-tw-dismiss="modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x w-4 h-4"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+                                        </div>
+            <div class="modal-body px-5 py-5">
+                <form id="editTenantForm">
+                    @csrf
+                    <input type="hidden" id="editTenantId" name="tenant_id">
+                    <div class="grid grid-cols-1 gap-5">
+                        <div>
+                            <label for="editTenantFullName" class="form-label">Full Name *</label>
+                            <input id="editTenantFullName" name="full_name" type="text" class="form-control" required>
+                    </div>
+                        <div>
+                            <label for="editTenantRelationship" class="form-label">Relationship</label>
+                            <select id="editTenantRelationship" name="relationship" class="form-select">
+                                <option value="">Select Relationship</option>
+                                <option value="spouse">Spouse</option>
+                                <option value="child">Child</option>
+                                <option value="parent">Parent</option>
+                                <option value="sibling">Sibling</option>
+                                <option value="relative">Relative</option>
+                                <option value="friend">Friend</option>
+                                <option value="boarder">Boarder</option>
+                                <option value="other">Other</option>
+                        </select>
+                        </div>
+                        <div>
+                            <label for="editTenantContact" class="form-label">Contact Number</label>
+                            <input id="editTenantContact" name="contact_number" type="text" class="form-control" placeholder="09XXXXXXXXX">
+                        </div>
+                        <div>
+                            <label for="editTenantEmail" class="form-label">Email</label>
+                            <input id="editTenantEmail" name="email" type="email" class="form-control" placeholder="example@email.com">
+                        </div>
+                        <div>
+                            <label for="editTenantPhoto" class="form-label">Photo</label>
+                            <input id="editTenantPhoto" name="photo" type="file" class="form-control" accept="image/*">
+                            <div class="form-help mt-1">Optional: Upload a new photo (max 5MB) - leave empty to keep current photo</div>
+                            <div id="editCurrentPhoto" class="mt-3" style="display: none;">
+                                <label class="form-label">Current Photo:</label>
+                                <div class="w-16 h-16 image-fit">
+                                    <img id="editCurrentPhotoImg" class="rounded-full w-full h-full object-cover border-2 border-slate-200" src="" alt="Current Photo">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary w-20 mr-1" data-tw-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary w-20" id="updateTenantBtn">Update</button>
+            </div>
+        </div>
+                </div>
 </div>
 
 <!-- Photo Upload Confirmation Modal -->
