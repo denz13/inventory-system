@@ -284,6 +284,12 @@
                         <div class="side-menu__title"> Payment Method Management </div>
                     </a>
                 </li>
+                <li>
+                    <a href="{{ route('feedback-management.index') }}" class="side-menu">
+                        <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
+                        <div class="side-menu__title"> Feedback Management </div>
+                    </a>
+                </li>
             </ul>
         </li>
         <!-- <li>
