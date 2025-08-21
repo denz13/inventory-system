@@ -382,44 +382,41 @@ function updateProfileDisplay(formData) {
     }
 }
 
+// Toast notification function (following complaints pattern)
 function showToast(message, type = 'success') {
-    const toastElement = document.getElementById(`profile_toast_${type}`);
+    const toastId = type === 'success' ? 'profile_toast_success' : 'profile_toast_error';
     
-    // Fix: Check if toastElement exists before calling querySelector
-    const messageElement = type === 'error' 
-        ? document.getElementById('profile_error_message_slot')
-        : (toastElement ? toastElement.querySelector('.text-slate-500') : null);
-    
-    if (messageElement) {
-        messageElement.textContent = message;
+    if (type === 'error') {
+        // Update error message slot
+        const messageSlot = document.getElementById('profile_error_message_slot');
+        if (messageSlot) {
+            messageSlot.textContent = message;
+        }
     }
     
-    if (toastElement) {
-        // Show toast using Toastify
-        Toastify({
-            node: toastElement.cloneNode(true),
-            duration: 3000,
-            gravity: "top",
-            position: "right",
-            className: "toastify-content",
-            backgroundColor: type === 'success' ? '#10b981' : '#ef4444'
-        }).showToast();
-    } else {
-        // Fallback: Simple Toastify if toast elements don't exist
-        Toastify({
-            text: message,
-            duration: 3000,
-            gravity: "top",
-            position: "right",
-            stopOnFocus: true,
-            style: {
-                background: type === 'success' ? '#10b981' : '#ef4444',
-                color: '#ffffff',
-                borderRadius: '8px',
-                fontSize: '14px'
-            },
-            className: "toastify-content"
-        }).showToast();
+    // Use your notification-toast component's show function
+    try {
+        if (window[`showNotification_${toastId}`]) {
+            window[`showNotification_${toastId}`]();
+        } else {
+            // Fallback: use Toastify if available
+            if (typeof Toastify !== 'undefined') {
+                Toastify({
+                    text: message,
+                    duration: 5000,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: type === 'success' ? "#10b981" : "#ef4444",
+                    stopOnFocus: true,
+                }).showToast();
+            } else {
+                // Ultimate fallback
+                console.log(`${type.toUpperCase()}:`, message);
+            }
+        }
+    } catch (error) {
+        console.error('Error showing toast:', error);
+        console.log(`${type.toUpperCase()}:`, message);
     }
 }
 
@@ -488,6 +485,69 @@ function initializeTenantManagement() {
 
     // Initialize tenant action buttons
     initializeTenantActions();
+    
+    // Add keyboard shortcuts
+    initializeTenantKeyboardShortcuts();
+    
+    // Initialize delete modal functionality (following complaints pattern)
+    initializeDeleteModal();
+}
+
+function initializeTenantKeyboardShortcuts() {
+    document.addEventListener('keydown', function(e) {
+        // Only apply shortcuts when in the add tenant tab
+        const addTenantTab = document.getElementById('add-tenant');
+        if (!addTenantTab || !addTenantTab.classList.contains('active')) {
+            return;
+        }
+        
+        // Escape key to cancel edit mode
+        if (e.key === 'Escape') {
+            const form = document.getElementById('addTenantForm');
+            if (form && form.getAttribute('data-edit-mode') === 'true') {
+                e.preventDefault();
+                resetTenantForm();
+            }
+        }
+        
+        // Ctrl/Cmd + Enter to submit form
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            const form = document.getElementById('addTenantForm');
+            if (form) {
+                handleAddTenant();
+            }
+        }
+        
+        // Ctrl/Cmd + R to reset form
+        if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+            e.preventDefault();
+            resetTenantForm();
+        }
+    });
+    
+    // Add keyboard shortcuts for delete modal
+    document.addEventListener('keydown', function(e) {
+        const deleteModal = document.getElementById('delete-tenant-modal');
+        if (!deleteModal || (!deleteModal.classList.contains('show') && deleteModal.style.display !== 'block')) {
+            return;
+        }
+        
+        // Escape to close modal
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            hideDeleteTenantModal();
+        }
+        
+        // Enter to confirm if DELETE is typed correctly
+        if (e.key === 'Enter') {
+            const confirmBtn = document.getElementById('confirmDeleteTenantBtn');
+            if (confirmBtn && !confirmBtn.disabled) {
+                e.preventDefault();
+                confirmBtn.click();
+            }
+        }
+    });
 }
 
 function handleAddTenant() {
@@ -563,6 +623,8 @@ function handleAddTenant() {
 function resetTenantForm() {
     const form = document.getElementById('addTenantForm');
     if (form) {
+        const wasInEditMode = form.getAttribute('data-edit-mode') === 'true';
+        
         form.reset();
         
         // Reset form state
@@ -579,6 +641,26 @@ function resetTenantForm() {
         if (submitBtn) {
             submitBtn.textContent = 'Add Tenant';
             submitBtn.removeAttribute('data-editing');
+            submitBtn.classList.remove('btn-warning');
+            submitBtn.classList.add('btn-primary');
+        }
+
+        // Reset button styling
+        const resetBtn = document.getElementById('resetTenantForm');
+        if (resetBtn) {
+            resetBtn.textContent = 'Reset';
+            resetBtn.classList.remove('btn-outline-danger');
+            resetBtn.classList.add('btn-outline-secondary');
+        }
+
+        // Reset form visual indicators
+        form.style.border = '';
+        form.style.borderRadius = '';
+        form.style.backgroundColor = '';
+        
+        // Show appropriate toast message
+        if (wasInEditMode) {
+            showToast('Edit cancelled. Form reset to add new tenant.', 'success');
         }
     }
 }
@@ -685,6 +767,12 @@ function handleEditTenant(e) {
     e.preventDefault();
     const tenantId = this.getAttribute('data-tenant-id');
     
+    // Show loading state
+    const button = this;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Loading...';
+    button.disabled = true;
+    
     // Fetch tenant data
     fetch(`/profile-management/tenants/${tenantId}`, {
         method: 'GET',
@@ -697,14 +785,26 @@ function handleEditTenant(e) {
     .then(data => {
         if (data.success) {
             populateTenantForm(data.tenant);
-            showToast('You can now edit the tenant information', 'success');
+            
+            // Scroll to form
+            const form = document.getElementById('addTenantForm');
+            if (form) {
+                form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            
+            showToast('Tenant loaded for editing. Make your changes and click "Update Tenant".', 'success');
         } else {
-            showToast('Error loading tenant data', 'error');
+            showToast('Error loading tenant data: ' + (data.message || 'Unknown error'), 'error');
         }
     })
     .catch(error => {
         console.error('Error fetching tenant:', error);
-        showToast('Error loading tenant data', 'error');
+        showToast('Error loading tenant data. Please try again.', 'error');
+    })
+    .finally(() => {
+        // Reset button state
+        button.innerHTML = originalText;
+        button.disabled = false;
     });
 }
 
@@ -721,30 +821,57 @@ function populateTenantForm(tenant) {
     // Change form title and button
     const formTitle = form.closest('.box').querySelector('h2');
     if (formTitle) {
-        formTitle.textContent = 'Edit Tenant';
+        formTitle.textContent = `Edit Tenant: ${tenant.full_name}`;
     }
 
     const submitBtn = form.querySelector('button[type="submit"]');
     if (submitBtn) {
         submitBtn.textContent = 'Update Tenant';
         submitBtn.setAttribute('data-editing', tenant.id);
+        submitBtn.classList.remove('btn-primary');
+        submitBtn.classList.add('btn-warning');
+    }
+
+    // Update reset button to "Cancel Edit"
+    const resetBtn = document.getElementById('resetTenantForm');
+    if (resetBtn) {
+        resetBtn.textContent = 'Cancel Edit';
+        resetBtn.classList.remove('btn-outline-secondary');
+        resetBtn.classList.add('btn-outline-danger');
     }
 
     // Change form action
     form.setAttribute('data-edit-mode', 'true');
     form.setAttribute('data-tenant-id', tenant.id);
+    
+    // Add visual indicator that form is in edit mode
+    form.style.border = '2px solid #f59e0b';
+    form.style.borderRadius = '8px';
+    form.style.backgroundColor = '#fffbeb';
 }
 
 function handleDeleteTenant(e) {
     e.preventDefault();
     const tenantId = this.getAttribute('data-tenant-id');
+    const tenantItem = document.querySelector(`[data-tenant-id="${tenantId}"]`);
+    const tenantName = tenantItem ? tenantItem.querySelector('.font-medium').textContent : 'this tenant';
     
-    if (confirm('Are you sure you want to delete this tenant? This action cannot be undone.')) {
-        deleteTenant(tenantId);
-    }
+    // Set tenant info in the modal (following complaints pattern)
+    document.getElementById('deleteTenantName').textContent = tenantName;
+    document.getElementById('deleteTenantId').value = tenantId;
 }
 
-function deleteTenant(tenantId) {
+function deleteTenant(tenantId, tenantName = 'Tenant') {
+    // Show deleting status
+    showToast(`Deleting ${tenantName}...`, 'info');
+    
+    // Add visual feedback to the tenant item
+    const tenantItem = document.querySelector(`[data-tenant-id="${tenantId}"]`);
+    if (tenantItem) {
+        tenantItem.style.opacity = '0.5';
+        tenantItem.style.pointerEvents = 'none';
+    }
+    
     fetch(`/profile-management/tenants/${tenantId}`, {
         method: 'DELETE',
         headers: {
@@ -755,32 +882,47 @@ function deleteTenant(tenantId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            showToast('Tenant deleted successfully', 'success');
+            showToast(`${tenantName} deleted successfully`, 'success');
             
-            // Remove tenant from list
-            const tenantItem = document.querySelector(`[data-tenant-id="${tenantId}"]`);
+            // Animate removal
             if (tenantItem) {
-                tenantItem.remove();
-            }
-
-            // Check if list is now empty
-            const tenantsList = document.getElementById('tenantsList');
-            if (tenantsList && tenantsList.children.length === 0) {
-                tenantsList.innerHTML = `
-                    <div class="text-center py-8">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-16 h-16 mx-auto text-slate-300 mb-4"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 00-3-3.87"></path><path d="M16 3.13a4 4 0 010 7.75"></path></svg>
-                        <p class="text-slate-500">No tenants added yet</p>
-                        <p class="text-slate-400 text-sm">Use the form on the left to add your first tenant</p>
-                    </div>
-                `;
+                tenantItem.style.transition = 'all 0.3s ease-out';
+                tenantItem.style.transform = 'translateX(-100%)';
+                tenantItem.style.opacity = '0';
+                
+                setTimeout(() => {
+                    tenantItem.remove();
+                    
+                    // Check if list is now empty
+                    const tenantsList = document.getElementById('tenantsList');
+                    if (tenantsList && tenantsList.children.length === 0) {
+                        tenantsList.innerHTML = `
+                            <div class="text-center py-8">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-16 h-16 mx-auto text-slate-300 mb-4"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 00-3-3.87"></path><path d="M16 3.13a4 4 0 010 7.75"></path></svg>
+                                <p class="text-slate-500">No tenants added yet</p>
+                                <p class="text-slate-400 text-sm">Use the form on the left to add your first tenant</p>
+                            </div>
+                        `;
+                    }
+                }, 300);
             }
         } else {
-            showToast(data.message || 'Error deleting tenant', 'error');
+            // Restore tenant item if deletion failed
+            if (tenantItem) {
+                tenantItem.style.opacity = '1';
+                tenantItem.style.pointerEvents = 'auto';
+            }
+            showToast(data.message || `Error deleting ${tenantName}`, 'error');
         }
     })
     .catch(error => {
+        // Restore tenant item if deletion failed
+        if (tenantItem) {
+            tenantItem.style.opacity = '1';
+            tenantItem.style.pointerEvents = 'auto';
+        }
         console.error('Error deleting tenant:', error);
-        showToast('Error deleting tenant', 'error');
+        showToast(`Error deleting ${tenantName}. Please try again.`, 'error');
     });
 }
 
@@ -796,3 +938,98 @@ function filterTenants(searchTerm) {
         item.style.display = matches ? 'block' : 'none';
     });
 }
+
+// Test function for debugging
+function testDeleteModal() {
+    console.log('Testing delete modal...');
+    showDeleteTenantModal('test-id', 'Test Tenant');
+}
+
+// Make test function globally available
+window.testDeleteModal = testDeleteModal;
+
+// Test function to force enable and click delete button
+function testDeleteButton() {
+    console.log('Testing delete button...');
+    
+    // First show modal
+    testDeleteModal();
+    
+    setTimeout(() => {
+        // Force enable the button
+        const deleteBtn = document.getElementById('confirmDeleteTenantBtn');
+        const deleteInput = document.getElementById('deleteConfirmInput');
+        
+        if (deleteInput) {
+            deleteInput.value = 'DELETE';
+            // Trigger input event
+            deleteInput.dispatchEvent(new Event('input'));
+            console.log('Set input to DELETE');
+        }
+        
+        if (deleteBtn) {
+            deleteBtn.disabled = false;
+            deleteBtn.classList.remove('opacity-50');
+            console.log('Enabled delete button');
+            
+            // Try clicking it
+            setTimeout(() => {
+                console.log('Clicking delete button...');
+                deleteBtn.click();
+            }, 500);
+        }
+    }, 1000);
+}
+
+window.testDeleteButton = testDeleteButton;
+
+// Delete Modal Functions (following complaints pattern)
+function initializeDeleteModal() {
+    // Delete tenant functionality (simplified like complaints)
+    const confirmDeleteBtn = document.getElementById('confirmDeleteTenant');
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', function() {
+            const tenantId = document.getElementById('deleteTenantId').value;
+            const tenantName = document.getElementById('deleteTenantName').textContent;
+            
+            if (tenantId) {
+                deleteTenant(tenantId, tenantName);
+            }
+        });
+    }
+}
+
+// Simplified delete tenant function (following complaints pattern)
+function deleteTenant(tenantId, tenantName) {
+    fetch(`/profile-management/tenants/${tenantId}`, {
+        method: 'DELETE',
+        headers: {
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+        }
+    })
+    .then(response => {
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Server returned non-JSON response. Status: ' + response.status);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            showToast('Tenant deleted successfully', 'success');
+            // Close modal and reload page to refresh the list
+            document.getElementById('delete-tenant-modal').classList.remove('show');
+            document.body.classList.remove('modal-open');
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        }
+    })
+    .catch(error => {
+        console.error('Error deleting tenant:', error);
+        showToast('Error deleting tenant: ' + error.message, 'error');
+    });
+}
+
