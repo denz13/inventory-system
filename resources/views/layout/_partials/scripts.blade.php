@@ -2,6 +2,10 @@
     src="../https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js">
 </script>
 <script src="../https://maps.googleapis.com/maps/api/js?key=[" your-google-map-api"]&libraries=places"></script>-->
+
+<!-- Load FilePond from CDN (simple and reliable) -->
+<script src="https://unpkg.com/filepond/dist/filepond.js"></script>
+
 <script src="{{ url('') }}/dist/js/app.js"></script>
 <script src="{{ url('') }}/assets/jquery/jquery-3.6.1.min.js"></script>
 <script src="{{ url('') }}/assets/datatable/datatables.min.js"></script>
@@ -23,12 +27,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
 
-{{--
-<script src="https://unpkg.com/filepond@^4/dist/filepond.js"></script> --}}
-{{--
-<script src="https://unpkg.com/filepond-plugin-pdf-preview/dist/filepond-plugin-pdf-preview.min.js"></script> --}}
-{{--
-<script src='https://unpkg.com/filepond-plugin-file-encode/dist/filepond-plugin-file-encode.min.js'></script> --}}
+<!-- FilePond already loaded at the top -->
 {{--
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script> --}}
 

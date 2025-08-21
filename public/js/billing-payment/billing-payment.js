@@ -1,11 +1,16 @@
 // Billing Payment JavaScript
 document.addEventListener('DOMContentLoaded', function() {
-    initializeEventListeners();
+    // Wait a bit for FilePond to load from CDN
+    setTimeout(() => {
+        initializeEventListeners();
+    }, 500);
 });
 
 // Payment step variables (similar to complaints.js)
 let selectedPaymentType = null;
 let selectedAccount = null;
+let uploadedFile = null;
+let filePond = null;
 
 function initializeEventListeners() {
     // Search functionality
@@ -58,6 +63,15 @@ function initializeEventListeners() {
             const billingId = this.getAttribute('data-billing-id');
             const amount = this.getAttribute('data-amount');
             openPaymentModal(billingId, amount);
+        });
+    });
+
+    // Receipt modal
+    document.querySelectorAll('[data-tw-target="#receipt-modal"]').forEach(button => {
+        button.addEventListener('click', function() {
+            const receiptPath = this.getAttribute('data-receipt');
+            const billNumber = this.getAttribute('data-bill-number');
+            openReceiptModal(receiptPath, billNumber);
         });
     });
 
@@ -124,6 +138,16 @@ function initializeEventListeners() {
         confirmPaymentBtn.addEventListener('click', function() {
             processPayment();
         });
+    }
+
+    // File upload functionality - use page-initialized FilePond or fallback
+    if (window.paymentFilePond) {
+        console.log('Using page-initialized FilePond');
+        filePond = window.paymentFilePond;
+        uploadedFile = window.uploadedFile || null;
+    } else {
+        console.log('No page FilePond found, trying to initialize...');
+        waitForFilePond();
     }
 }
 
@@ -440,21 +464,113 @@ function displayBillingDetails(billing) {
 
 // Payment Modal Functions
 function openPaymentModal(billingId, amount) {
+    console.log('Opening payment modal for billing ID:', billingId, 'Amount:', amount);
+    
     document.getElementById('selectedBillingId').value = billingId;
     document.getElementById('paymentAmount').textContent = '₱' + parseFloat(amount).toFixed(2);
     document.getElementById('paymentBillNumber').textContent = billingId.toString().padStart(6, '0');
     
+    console.log('Set billing ID in hidden field:', document.getElementById('selectedBillingId').value);
+    
     // Reset modal state
     resetPaymentModal();
     
+    // Ensure confirm button is disabled initially
+    updateConfirmButtonState();
+    
     // Show step 1 (like complaints modal)
     showPaymentStep(1);
+    
+    // FilePond is already initialized globally, no need to re-initialize
+    console.log('Modal opened, FilePond already available');
+}
+
+// Receipt Modal Functions
+function openReceiptModal(receiptPath, billNumber) {
+    console.log('Opening receipt modal for:', receiptPath, 'Bill:', billNumber);
+    
+    // Set bill number
+    document.getElementById('receiptBillNumber').textContent = billNumber.toString().padStart(6, '0');
+    
+    // Display receipt file
+    displayReceiptFile(receiptPath);
+    
+    // Set up download button
+    setupDownloadButton(receiptPath);
+}
+
+function displayReceiptFile(receiptPath) {
+    const receiptDisplay = document.getElementById('receiptFileDisplay');
+    const fileUrl = `/storage/${receiptPath}`;
+    
+    // Get file extension to determine file type
+    const fileExtension = receiptPath.split('.').pop().toLowerCase();
+    
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension)) {
+        // Display image
+        receiptDisplay.innerHTML = `
+            <div class="text-center">
+                <img src="${fileUrl}" alt="Payment Receipt" class="max-w-full max-h-96 mx-auto rounded-lg shadow-lg">
+                <p class="text-sm text-slate-500 mt-3">Payment Receipt Image</p>
+            </div>
+        `;
+    } else if (fileExtension === 'pdf') {
+        // Display PDF
+        receiptDisplay.innerHTML = `
+            <div class="text-center">
+                <iframe src="${fileUrl}" class="w-full h-96 border rounded-lg shadow-lg"></iframe>
+                <p class="text-sm text-slate-500 mt-3">Payment Receipt PDF</p>
+            </div>
+        `;
+    } else {
+        // Display file info for other types
+        receiptDisplay.innerHTML = `
+            <div class="text-center">
+                <div class="bg-white p-6 rounded-lg border-2 border-dashed border-slate-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-400">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14,2 14,8 20,8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                    </svg>
+                    <h3 class="font-semibold text-slate-700 mb-2">Payment Receipt Document</h3>
+                    <p class="text-slate-500 text-sm mb-3">File Type: ${fileExtension.toUpperCase()}</p>
+                    <a href="${fileUrl}" target="_blank" class="btn btn-outline-primary btn-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                            <polyline points="15,3 21,3 21,9"></polyline>
+                            <line x1="10" y1="14" x2="21" y2="3"></line>
+                        </svg>
+                        Open File
+                    </a>
+                </div>
+            </div>
+        `;
+    }
+}
+
+function setupDownloadButton(receiptPath) {
+    const downloadBtn = document.getElementById('downloadReceiptBtn');
+    const fileUrl = `/storage/${receiptPath}`;
+    const fileName = receiptPath.split('/').pop();
+    
+    downloadBtn.onclick = function() {
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showToast('Receipt download started', 'success');
+    };
 }
 
 function resetPaymentModal() {
     // Reset variables
     selectedPaymentType = null;
     selectedAccount = null;
+    uploadedFile = null;
     
     // Clear all selections
     document.querySelectorAll('.bank-type-card, .account-category-card').forEach(card => {
@@ -462,8 +578,13 @@ function resetPaymentModal() {
     });
     
     // Reset form fields
-    document.getElementById('confirmPaymentBtn').disabled = true;
+    const confirmBtn = document.getElementById('confirmPaymentBtn');
+    confirmBtn.disabled = true;
+    confirmBtn.classList.add('hidden');
     document.getElementById('selectedAccountId').value = '';
+    
+    // Reset file upload
+    resetFilePond();
 }
 
 // Step-based functions (like complaints modal)
@@ -560,7 +681,9 @@ function selectPaymentAccount(accountId) {
         
         // Display selected account details
         displaySelectedAccount(accountData);
-        document.getElementById('confirmPaymentBtn').disabled = false;
+        
+        // Update confirm button state based on file upload
+        updateConfirmButtonState();
         
         // Show step 3
         showPaymentStep(3);
@@ -717,6 +840,13 @@ function processPayment() {
         return;
     }
     
+    const fileToUpload = uploadedFile || window.uploadedFile;
+    if (!fileToUpload) {
+        showToast('Please upload payment proof before confirming', 'error');
+        showFileError('Payment proof is required');
+        return;
+    }
+    
     // Disable button and show loading
     const confirmBtn = document.getElementById('confirmPaymentBtn');
     confirmBtn.disabled = true;
@@ -728,17 +858,56 @@ function processPayment() {
         Processing...
     `;
     
-    // Simulate payment processing
-    setTimeout(() => {
-        showToast(`Payment of ${amount} processed successfully!`, 'success');
-        
-        // Close modal
-        const modal = document.getElementById('payment-modal');
-        const closeBtn = modal.querySelector('[data-tw-dismiss="modal"]');
-        if (closeBtn) closeBtn.click();
-        
-        // Reset button
-        confirmBtn.disabled = false;
+    // Debug log the values being sent
+    console.log('Processing payment with values:', {
+        billingId: billingId,
+        accountId: accountId,
+        amount: amount,
+        fileToUpload: fileToUpload ? fileToUpload.name : 'No file'
+    });
+    
+    // Create FormData for file upload
+    const formData = new FormData();
+    formData.append('billing_id', billingId);
+    formData.append('account_id', accountId);
+    formData.append('payment_file', fileToUpload);
+    formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+    
+    // Log FormData contents
+    for (let [key, value] of formData.entries()) {
+        console.log('FormData:', key, value);
+    }
+    
+    // Send payment data to server
+    fetch('/billing-payment/process', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            
+            // Close modal
+            const modal = document.getElementById('payment-modal');
+            const closeBtn = modal.querySelector('[data-tw-dismiss="modal"]');
+            if (closeBtn) closeBtn.click();
+            
+            // Optionally refresh the page to show updated billing status
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            showToast(data.message || 'Payment processing failed', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Error processing payment. Please try again.', 'error');
+    })
+    .finally(() => {
+        // Reset button to proper state based on file upload
+        updateConfirmButtonState();
         confirmBtn.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
                 <polyline points="9 11 12 14 22 4"></polyline>
@@ -746,9 +915,7 @@ function processPayment() {
             </svg>
             Confirm Payment
         `;
-        
-        console.log('Payment processed:', { billingId, accountId, amount });
-    }, 2000);
+    });
 }
 
 function handlePayBilling(billingId) {
@@ -817,5 +984,161 @@ function updateStepIndicator(currentStep) {
     const currentStepDot = document.querySelector(`[data-step="${currentStep}"]`);
     if (currentStepDot) {
         currentStepDot.classList.add('active');
+    }
+}
+
+// Simple FilePond initialization using parse method
+function initializeFilePond() {
+    if (typeof FilePond === 'undefined') {
+        console.error('FilePond library not available');
+        initializeBasicFileUpload();
+        return;
+    }
+    
+    console.log('FilePond library loaded, initializing...');
+
+    // Use FilePond.parse() method like the working example
+    FilePond.parse(document.querySelector('#paymentFile'));
+    
+    // Get the FilePond instance that was created
+    const inputElement = document.querySelector('#paymentFile');
+    if (inputElement && inputElement.filepond) {
+        filePond = inputElement.filepond;
+        
+        // Configure the FilePond instance
+        filePond.setOptions({
+            labelIdle: `Drag & Drop your payment proof or <span class="filepond--label-action">Browse</span><br><small style="color: #6b7280;">Supports: Images, PDF, Word documents (Max 10MB)</small>`,
+            maxFileSize: '10MB',
+            maxFiles: 1,
+            allowMultiple: false,
+            allowRevert: true,
+            allowRemove: true,
+            allowReplace: true,
+            credits: false,
+            acceptedFileTypes: ['image/*', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+        });
+        
+        // Add event handlers
+        addFilePondEventHandlers();
+        console.log('FilePond initialized successfully using parse method');
+    } else {
+        console.error('Failed to create FilePond instance');
+        initializeBasicFileUpload();
+    }
+}
+
+// Simple waiting function
+function waitForFilePond(retries = 0) {
+    if (typeof FilePond !== 'undefined') {
+        console.log('FilePond is available, initializing...');
+        initializeFilePond();
+    } else if (retries < 5) {
+        console.log(`Waiting for FilePond... attempt ${retries + 1}`);
+        setTimeout(() => {
+            waitForFilePond(retries + 1);
+        }, 500);
+    } else {
+        console.error('FilePond failed to load, falling back to basic file input');
+        initializeBasicFileUpload();
+    }
+}
+
+function addFilePondEventHandlers() {
+    if (!filePond) return;
+
+    // Add file event
+    filePond.on('addfile', (error, file) => {
+        if (error) {
+            console.error('FilePond add file error:', error);
+            showFileError('Error uploading file: ' + error.body);
+            return;
+        }
+        
+        console.log('FilePond file added:', file.filename);
+        uploadedFile = file.file; // Store the actual File object
+        hideFileError();
+        updateConfirmButtonState();
+        showToast(`File "${file.filename}" uploaded successfully`, 'success');
+    });
+
+    // Remove file event
+    filePond.on('removefile', (error, file) => {
+        if (error) {
+            console.error('FilePond remove file error:', error);
+            return;
+        }
+        
+        console.log('FilePond file removed:', file.filename);
+        uploadedFile = null;
+        updateConfirmButtonState();
+        showToast('File removed', 'success');
+    });
+
+    // Error event
+    filePond.on('error', (error) => {
+        console.error('FilePond error:', error);
+        showFileError('File upload error: ' + error);
+    });
+}
+
+function initializeBasicFileUpload() {
+    const fileInput = document.getElementById('paymentFile');
+    if (!fileInput) return;
+
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            uploadedFile = file;
+            updateConfirmButtonState();
+            showToast(`File "${file.name}" selected`, 'success');
+        }
+    });
+}
+
+function resetFilePond() {
+    // Use the global FilePond instance
+    const pondInstance = window.paymentFilePond || filePond;
+    if (pondInstance) {
+        pondInstance.removeFiles();
+        console.log('FilePond files cleared');
+    }
+    uploadedFile = null;
+    window.uploadedFile = null; // Also clear global uploaded file
+    hideFileError();
+}
+
+function showFileError(message) {
+    const fileError = document.getElementById('fileError');
+    if (fileError) {
+        fileError.textContent = message;
+        fileError.classList.remove('hidden');
+    }
+}
+
+function hideFileError() {
+    const fileError = document.getElementById('fileError');
+    if (fileError) {
+        fileError.classList.add('hidden');
+    }
+}
+
+function updateConfirmButtonState() {
+    const confirmBtn = document.getElementById('confirmPaymentBtn');
+    if (!confirmBtn) return;
+
+    // Check if all required conditions are met
+    const hasAccount = selectedAccount !== null;
+    const hasFile = uploadedFile !== null || window.uploadedFile !== null;
+
+    if (hasAccount && hasFile) {
+        // Show and enable button when both conditions are met
+        confirmBtn.classList.remove('hidden');
+        confirmBtn.disabled = false;
+        console.log('Confirm button enabled - account and file ready');
+    } else {
+        // Hide button when conditions are not met
+        confirmBtn.classList.add('hidden');
+        confirmBtn.disabled = true;
+        console.log('Confirm button hidden - missing:', hasAccount ? 'file' : 'account' + (hasAccount ? '' : ' and file'));
     }
 }
