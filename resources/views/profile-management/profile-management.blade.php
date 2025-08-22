@@ -9,7 +9,7 @@
 
 <!-- Notifications -->
 <div class="intro-y col-span-12 mt-5">
-    <x-notification-toast id="profile_toast_success" type="success" title="Success" message="Action completed successfully"
+    <x-notification-toast id="profile_toast_success" type="success" title="Success" message="Profile updated successfully"
         :showButton="false" />
     <x-notification-toast id="profile_toast_error" type="error" title="Error" :showButton="false">
         <div id="profile_error_message_slot" class="text-slate-500 mt-1"></div>
@@ -101,11 +101,8 @@
         <li id="profile-tab" class="nav-item" role="presentation">
             <a href="javascript:;" class="nav-link py-4 flex items-center active" data-tw-target="#profile" aria-controls="profile" aria-selected="true" role="tab"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="user" class="lucide lucide-user w-4 h-4 mr-2" data-lucide="user"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> Profile </a>
         </li>
-        <li id="account-tab" class="nav-item" role="presentation">
-            <a href="javascript:;" class="nav-link py-4 flex items-center" data-tw-target="#account" aria-selected="false" role="tab"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="shield" class="lucide lucide-shield w-4 h-4 mr-2" data-lucide="shield"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> Account </a>
-        </li>
         <li id="add-business-tab" class="nav-item" role="presentation">
-            <a href="javascript:;" class="nav-link py-4 flex items-center" data-tw-target="#account" aria-selected="false" role="tab"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="commerce" class="lucide lucide-commerce w-4 h-4 mr-2" data-lucide="commerce"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="12" y1="6" x2="12" y2="2"></line><line x1="12" y1="18" x2="12" y2="22"></line></svg> Add Business </a>
+            <a href="javascript:;" class="nav-link py-4 flex items-center" data-tw-target="#add-business" aria-selected="false" role="tab"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="shield" class="lucide lucide-shield w-4 h-4 mr-2" data-lucide="shield"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> Add Business </a>
         </li>
         <li id="add-tenant-tab" class="nav-item" role="presentation">
             <a href="javascript:;" class="nav-link py-4 flex items-center" data-tw-target="#add-tenant" aria-selected="false" role="tab"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="users" class="lucide lucide-users w-4 h-4 mr-2" data-lucide="users"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 00-3-3.87"></path><path d="M16 3.13a4 4 0 010 7.75"></path></svg> Add Tenant </a>
@@ -133,85 +130,242 @@
                     <button class="btn btn-outline-secondary hidden sm:flex" id="editProfileBtn">Edit Profile</button>
                 </div>
                 <div class="p-5">
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                        <!-- Left Column -->
-                        <div>
+                    <form id="editProfileForm" style="display: none;">
+                        @csrf
+                        <div class="space-y-5">
                             <div class="mb-5">
-                                <label class="form-label font-medium">Name</label>
-                                <div class="mt-1 text-slate-600">{{ $user->name ?? 'Not provided' }}</div>
+                                <label class="form-label font-medium">Name *</label>
+                                <input type="text" class="form-control" name="name" value="{{ $user->name ?? '' }}" placeholder="Enter name" required>
                             </div>
                             <div class="mb-5">
-                                <label class="form-label font-medium">Email</label>
-                                <div class="mt-1 text-slate-600">{{ $user->email ?? 'Not provided' }}</div>
+                                <label class="form-label font-medium">Email *</label>
+                                <input type="email" class="form-control" name="email" value="{{ $user->email ?? '' }}" placeholder="Enter email" required>
                             </div>
                             <div class="mb-5">
                                 <label class="form-label font-medium">Contact Number</label>
-                                <div class="mt-1 text-slate-600">{{ $user->contact_number ?? 'Not provided' }}</div>
-                            </div>
-                            <div class="mb-5">
-                                <label class="form-label font-medium">Role</label>
-                                <div class="mt-1 text-slate-600">{{ $user->role ?? 'Not provided' }}</div>
+                                <input type="text" class="form-control" name="contact_number" value="{{ $user->contact_number ?? '' }}" placeholder="Enter contact number">
                             </div>
                             <div class="mb-5">
                                 <label class="form-label font-medium">Gender</label>
-                                <div class="mt-1 text-slate-600">{{ $user->gender ?? 'Not provided' }}</div>
+                                <select class="form-select" name="gender">
+                                    <option value="">Select gender</option>
+                                    <option value="male" {{ ($user->gender ?? '') == 'male' ? 'selected' : '' }}>Male</option>
+                                    <option value="female" {{ ($user->gender ?? '') == 'female' ? 'selected' : '' }}>Female</option>
+                                    <option value="other" {{ ($user->gender ?? '') == 'other' ? 'selected' : '' }}>Other</option>
+                                </select>
                             </div>
                             <div class="mb-5">
+                                <label class="form-label font-medium">Street</label>
+                                <input type="text" class="form-control" name="street" value="{{ $user->street ?? '' }}" placeholder="Enter street">
+                            </div>
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Lot</label>
+                                <input type="text" class="form-control" name="lot" value="{{ $user->lot ?? '' }}" placeholder="Enter lot number">
+                            </div>
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Block</label>
+                                <input type="text" class="form-control" name="block" value="{{ $user->block ?? '' }}" placeholder="Enter block number">
+                            </div>
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Date of Birth</label>
+                                <input type="date" name="date_of_birth" class="form-control" value="{{ $user->date_of_birth ?? '' }}">
+                            </div>
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Civil Status</label>
+                                <select name="civil_status" class="form-select">
+                                    <option value="">Select status</option>
+                                    <option value="single" {{ ($user->civil_status ?? '') == 'single' ? 'selected' : '' }}>Single</option>
+                                    <option value="married" {{ ($user->civil_status ?? '') == 'married' ? 'selected' : '' }}>Married</option>
+                                    <option value="widowed" {{ ($user->civil_status ?? '') == 'widowed' ? 'selected' : '' }}>Widowed</option>
+                                    <option value="divorced" {{ ($user->civil_status ?? '') == 'divorced' ? 'selected' : '' }}>Divorced</option>
+                                </select>
+                            </div>
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Number of Months Stay</label>
+                                <input type="text" name="number_of_months_stay" class="form-control" value="{{ $user->number_of_months_stay ?? '' }}" placeholder="Enter months">
+                            </div>
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Telephone Number</label>
+                                <input type="text" name="telephone_number" class="form-control" value="{{ $user->telephone_number ?? '' }}" placeholder="Enter telephone number">
+                            </div>
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Facebook Account</label>
+                                <input type="text" name="fb_account" class="form-control" value="{{ $user->fb_account ?? '' }}" placeholder="Enter Facebook account">
+                            </div>
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Messenger Account</label>
+                                <input type="text" name="messenger_account" class="form-control" value="{{ $user->messenger_account ?? '' }}" placeholder="Enter Messenger account">
+                            </div>
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Prepared Contact</label>
+                                <input type="text" name="prepared_contact" class="form-control" value="{{ $user->prepared_contact ?? '' }}" placeholder="Enter prepared contact">
+                            </div>
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Caretaker Name</label>
+                                <input type="text" name="caretaker_name" class="form-control" value="{{ $user->caretaker_name ?? '' }}" placeholder="Enter caretaker name">
+                            </div>
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Caretaker Address</label>
+                                <textarea name="caretaker_address" class="form-control" rows="2" placeholder="Enter caretaker address">{{ $user->caretaker_address ?? '' }}</textarea>
+                            </div>
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Caretaker Contact Number</label>
+                                <input type="text" name="caretaker_contact_number" class="form-control" value="{{ $user->caretaker_contact_number ?? '' }}" placeholder="Enter caretaker contact">
+                            </div>
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Caretaker Email</label>
+                                <input type="email" name="caretaker_email" class="form-control" value="{{ $user->caretaker_email ?? '' }}" placeholder="Enter caretaker email">
+                            </div>
+                            <div class="mb-5">
+                                <label class="form-label font-medium">In Case of Emergency</label>
+                                <input type="text" name="incase_of_emergency" class="form-control" value="{{ $user->incase_of_emergency ?? '' }}" placeholder="Enter emergency contact">
+                            </div>
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Membership Fee</label>
+                                <div class="mt-1 text-slate-600">{{ $user->membership_fee ?? 'Not provided' }}</div>
+                            </div>
+                            <div class="mb-5">
+                                <label class="form-label font-medium">With Title</label>
+                                <div class="mt-1 text-slate-600">
+                                    <span class="px-2 py-1 rounded-full text-xs {{ ($user->is_with_title ?? '') == 'yes' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+                                        {{ ($user->is_with_title ?? '') == 'yes' ? 'Yes' : 'No' }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="flex justify-end space-x-2">
+                                <button type="button" class="btn btn-outline-secondary" id="cancelEditProfile">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Update Profile</button>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <div id="profileDisplay">
+                        <div class="space-y-5">
+                            <!-- Name -->
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Name</label>
+                                <div class="mt-1 text-slate-600" data-field="name">{{ $user->name ?? 'Not provided' }}</div>
+                            </div>
+                            <!-- Email -->
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Email</label>
+                                <div class="mt-1 text-slate-600" data-field="email">{{ $user->email ?? 'Not provided' }}</div>
+                            </div>
+                            <!-- Contact Number -->
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Contact Number</label>
+                                <div class="mt-1 text-slate-600" data-field="contact_number">{{ $user->contact_number ?? 'Not provided' }}</div>
+                            </div>
+                            <!-- Role -->
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Role</label>
+                                <div class="mt-1 text-slate-600" data-field="role">{{ $user->role ?? 'Not provided' }}</div>
+                            </div>
+                            <!-- Gender -->
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Gender</label>
+                                <div class="mt-1 text-slate-600" data-field="gender">{{ ucfirst($user->gender ?? 'Not provided') }}</div>
+                            </div>
+                            <!-- Active Status -->
+                            <div class="mb-5">
                                 <label class="form-label font-medium">Active Status</label>
-                                <div class="mt-1">
+                                <div class="mt-1" data-field="active">
                                     <span class="px-2 py-1 rounded-full text-xs {{ $user->active == 'yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                         {{ $user->active == 'yes' ? 'Active' : 'Inactive' }}
                                     </span>
                                 </div>
                             </div>
-                        </div>
-                        
-                        <!-- Right Column -->
-                        <div>
+                            <!-- Street -->
                             <div class="mb-5">
                                 <label class="form-label font-medium">Street</label>
-                                <div class="mt-1 text-slate-600">{{ $user->street ?? 'Not provided' }}</div>
+                                <div class="mt-1 text-slate-600" data-field="street">{{ $user->street ?? 'Not provided' }}</div>
                             </div>
+                            <!-- Lot -->
                             <div class="mb-5">
                                 <label class="form-label font-medium">Lot</label>
-                                <div class="mt-1 text-slate-600">{{ $user->lot ?? 'Not provided' }}</div>
+                                <div class="mt-1 text-slate-600" data-field="lot">{{ $user->lot ?? 'Not provided' }}</div>
                             </div>
+                            <!-- Block -->
                             <div class="mb-5">
                                 <label class="form-label font-medium">Block</label>
-                                <div class="mt-1 text-slate-600">{{ $user->block ?? 'Not provided' }}</div>
+                                <div class="mt-1 text-slate-600" data-field="block">{{ $user->block ?? 'Not provided' }}</div>
                             </div>
+                            <!-- Date of Birth -->
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Date of Birth</label>
+                                <div class="mt-1 text-slate-600" data-field="date_of_birth">{{ $user->date_of_birth ? \Carbon\Carbon::parse($user->date_of_birth)->format('M d, Y') : 'Not provided' }}</div>
+                            </div>
+                            <!-- Civil Status -->
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Civil Status</label>
+                                <div class="mt-1 text-slate-600" data-field="civil_status">{{ ucfirst($user->civil_status ?? 'Not provided') }}</div>
+                            </div>
+                            <!-- Number of Months Stay -->
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Number of Months Stay</label>
+                                <div class="mt-1 text-slate-600" data-field="number_of_months_stay">{{ $user->number_of_months_stay ?? 'Not provided' }}</div>
+                            </div>
+                            <!-- Telephone Number -->
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Telephone Number</label>
+                                <div class="mt-1 text-slate-600" data-field="telephone_number">{{ $user->telephone_number ?? 'Not provided' }}</div>
+                            </div>
+                            <!-- Facebook Account -->
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Facebook Account</label>
+                                <div class="mt-1 text-slate-600" data-field="fb_account">{{ $user->fb_account ?? 'Not provided' }}</div>
+                            </div>
+                            <!-- Messenger Account -->
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Messenger Account</label>
+                                <div class="mt-1 text-slate-600" data-field="messenger_account">{{ $user->messenger_account ?? 'Not provided' }}</div>
+                            </div>
+                            <!-- Prepared Contact -->
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Prepared Contact</label>
+                                <div class="mt-1 text-slate-600" data-field="prepared_contact">{{ $user->prepared_contact ?? 'Not provided' }}</div>
+                            </div>
+                            <!-- Caretaker Name -->
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Caretaker Name</label>
+                                <div class="mt-1 text-slate-600" data-field="caretaker_name">{{ $user->caretaker_name ?? 'Not provided' }}</div>
+                            </div>
+                            <!-- Caretaker Address -->
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Caretaker Address</label>
+                                <div class="mt-1 text-slate-600" data-field="caretaker_address">{{ $user->caretaker_address ?? 'Not provided' }}</div>
+                            </div>
+                            <!-- Caretaker Contact Number -->
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Caretaker Contact Number</label>
+                                <div class="mt-1 text-slate-600" data-field="caretaker_contact_number">{{ $user->caretaker_contact_number ?? 'Not provided' }}</div>
+                            </div>
+                            <!-- Caretaker Email -->
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Caretaker Email</label>
+                                <div class="mt-1 text-slate-600" data-field="caretaker_email">{{ $user->caretaker_email ?? 'Not provided' }}</div>
+                            </div>
+                            <!-- In Case of Emergency -->
+                            <div class="mb-5">
+                                <label class="form-label font-medium">In Case of Emergency</label>
+                                <div class="mt-1 text-slate-600" data-field="incase_of_emergency">{{ $user->incase_of_emergency ?? 'Not provided' }}</div>
+                            </div>
+                            <!-- Membership Fee -->
                             <div class="mb-5">
                                 <label class="form-label font-medium">Membership Fee</label>
-                                <div class="mt-1 text-slate-600">₱{{ number_format($user->membership_fee ?? 0, 2) }}</div>
+                                <div class="mt-1 text-slate-600" data-field="membership_fee">₱{{ number_format($user->membership_fee ?? 0, 2) }}</div>
                             </div>
+                            <!-- With Title -->
                             <div class="mb-5">
                                 <label class="form-label font-medium">With Title</label>
-                                <div class="mt-1">
+                                <div class="mt-1" data-field="is_with_title">
                                     <span class="px-2 py-1 rounded-full text-xs {{ $user->is_with_title == 'yes' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800' }}">
                                         {{ $user->is_with_title == 'yes' ? 'Yes' : 'No' }}
                                     </span>
                                 </div>
                             </div>
-                            <div class="mb-5">
-                                <label class="form-label font-medium">Online Status</label>
-                                <div class="mt-1">
-                                    <span class="px-2 py-1 rounded-full text-xs {{ $user->is_online == 'yes' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
-                                        {{ $user->is_online == 'yes' ? 'Online' : 'Offline' }}
-                                    </span>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Additional Information -->
-                    @if($user->email_verified_at)
-                    <div class="mt-5 pt-5 border-t border-slate-200/60">
-                        <div class="mb-3">
-                            <label class="form-label font-medium">Email Verified At</label>
-                            <div class="mt-1 text-slate-600">{{ $user->email_verified_at->format('F j, Y g:i A') }}</div>
-                        </div>
-                    </div>
-                    @endif
                 </div>
             </div>
             <!-- END: Personal Information -->

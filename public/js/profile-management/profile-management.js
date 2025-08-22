@@ -215,13 +215,46 @@ function initializeForms() {
 
 function initializeEditProfile() {
     const editProfileBtn = document.getElementById('editProfileBtn');
+    const cancelEditBtn = document.getElementById('cancelEditProfile');
+    const editProfileForm = document.getElementById('editProfileForm');
+    const profileDisplay = document.getElementById('profileDisplay');
+    
     if (editProfileBtn) {
         editProfileBtn.addEventListener('click', function() {
-            // Switch to account tab
-            const accountTab = document.querySelector('[data-tw-target="#account"]');
-            if (accountTab) {
-                accountTab.click();
-            }
+            // Show edit form and hide display
+            editProfileForm.style.display = 'block';
+            profileDisplay.style.display = 'none';
+            
+            // Change button text and style
+            editProfileBtn.textContent = 'Editing...';
+            editProfileBtn.classList.remove('btn-outline-secondary');
+            editProfileBtn.classList.add('btn-warning');
+            editProfileBtn.disabled = true;
+        });
+    }
+    
+    if (cancelEditBtn) {
+        cancelEditBtn.addEventListener('click', function() {
+            // Hide edit form and show display
+            editProfileForm.style.display = 'none';
+            profileDisplay.style.display = 'block';
+            
+            // Reset button
+            editProfileBtn.textContent = 'Edit Profile';
+            editProfileBtn.classList.remove('btn-warning');
+            editProfileBtn.classList.add('btn-outline-secondary');
+            editProfileBtn.disabled = false;
+            
+            // Reset form to original values
+            resetEditProfileForm();
+        });
+    }
+    
+    // Handle edit profile form submission
+    if (editProfileForm) {
+        editProfileForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            handleEditProfileUpdate();
         });
     }
 }
@@ -377,7 +410,325 @@ function updateProfileDisplay(formData) {
         
         // Update address if exists
         if (contactDetails.length >= 3) {
-            contactDetails[2].innerHTML = contactDetails[2].innerHTML.replace(/[^<]*$/, ' ' + address + ' ');
+            const addressParts = [];
+            if (lot) addressParts.push('Lot ' + lot);
+            if (block) addressParts.push('Block ' + block);
+            if (street) addressParts.push(street);
+            
+            const address = addressParts.join(' ').trim();
+            if (address) {
+                contactDetails[2].innerHTML = contactDetails[2].innerHTML.replace(/[^<]*$/, ' ' + address + ' ');
+            }
+        }
+    }
+}
+
+function handleEditProfileUpdate() {
+    const form = document.getElementById('editProfileForm');
+    const formData = new FormData(form);
+    
+    // Show loading state
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Updating...';
+    submitBtn.disabled = true;
+
+    fetch('/profile-management/update', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                           document.querySelector('input[name="_token"]')?.value,
+            'Accept': 'application/json'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Profile updated successfully!', 'success');
+            
+            // Update the profile display with new data
+            updateProfileDisplayFromForm(formData);
+            
+            // Hide edit form and show updated display
+            const editProfileForm = document.getElementById('editProfileForm');
+            const profileDisplay = document.getElementById('profileDisplay');
+            editProfileForm.style.display = 'none';
+            profileDisplay.style.display = 'block';
+            
+            // Reset edit button
+            const editProfileBtn = document.getElementById('editProfileBtn');
+            editProfileBtn.textContent = 'Edit Profile';
+            editProfileBtn.classList.remove('btn-warning');
+            editProfileBtn.classList.add('btn-outline-secondary');
+            editProfileBtn.disabled = false;
+            
+            // Update header display
+            updateHeaderDisplay(formData);
+            
+            // Update contact details in the main profile section
+            updateContactDetailsDisplay(formData);
+            
+            // Update statistics display
+            updateStatisticsDisplay(formData);
+            
+        } else {
+            // Show detailed validation errors if available
+            let errorMessage = data.message || 'Error updating profile';
+            if (data.errors) {
+                const errorMessages = Object.values(data.errors).flat();
+                errorMessage = errorMessages.join(', ');
+            }
+            console.error('Profile update error:', data);
+            showToast(errorMessage, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating profile:', error);
+        showToast('Error updating profile. Please try again.', 'error');
+    })
+    .finally(() => {
+        // Reset button state
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+function resetEditProfileForm() {
+    const form = document.getElementById('editProfileForm');
+    if (form) {
+        // Reset form to original values from the display
+        const profileDisplay = document.getElementById('profileDisplay');
+        
+        // Get current values from profile display
+        const name = profileDisplay.querySelector('[data-field="name"]')?.textContent || '';
+        const email = profileDisplay.querySelector('[data-field="email"]')?.textContent || '';
+        const contactNumber = profileDisplay.querySelector('[data-field="contact_number"]')?.textContent || '';
+        const gender = profileDisplay.querySelector('[data-field="gender"]')?.textContent || '';
+        const street = profileDisplay.querySelector('[data-field="street"]')?.textContent || '';
+        const lot = profileDisplay.querySelector('[data-field="lot"]')?.textContent || '';
+        const block = profileDisplay.querySelector('[data-field="block"]')?.textContent || '';
+        const dateOfBirth = profileDisplay.querySelector('[data-field="date_of_birth"]')?.textContent || '';
+        const civilStatus = profileDisplay.querySelector('[data-field="civil_status"]')?.textContent || '';
+        const monthsStay = profileDisplay.querySelector('[data-field="number_of_months_stay"]')?.textContent || '';
+        const telephoneNumber = profileDisplay.querySelector('[data-field="telephone_number"]')?.textContent || '';
+        const fbAccount = profileDisplay.querySelector('[data-field="fb_account"]')?.textContent || '';
+        const messengerAccount = profileDisplay.querySelector('[data-field="messenger_account"]')?.textContent || '';
+        const preparedContact = profileDisplay.querySelector('[data-field="prepared_contact"]')?.textContent || '';
+        const caretakerName = profileDisplay.querySelector('[data-field="caretaker_name"]')?.textContent || '';
+        const caretakerAddress = profileDisplay.querySelector('[data-field="caretaker_address"]')?.textContent || '';
+        const caretakerContact = profileDisplay.querySelector('[data-field="caretaker_contact_number"]')?.textContent || '';
+        const caretakerEmail = profileDisplay.querySelector('[data-field="caretaker_email"]')?.textContent || '';
+        const emergencyContact = profileDisplay.querySelector('[data-field="incase_of_emergency"]')?.textContent || '';
+        
+        // Set form values
+        form.querySelector('[name="name"]').value = name;
+        form.querySelector('[name="email"]').value = email;
+        form.querySelector('[name="contact_number"]').value = contactNumber;
+        form.querySelector('[name="gender"]').value = gender.toLowerCase();
+        form.querySelector('[name="street"]').value = street;
+        form.querySelector('[name="lot"]').value = lot;
+        form.querySelector('[name="block"]').value = block;
+        form.querySelector('[name="date_of_birth"]').value = dateOfBirth ? formatDateForInput(dateOfBirth) : '';
+        form.querySelector('[name="civil_status"]').value = civilStatus.toLowerCase();
+        form.querySelector('[name="number_of_months_stay"]').value = monthsStay;
+        form.querySelector('[name="telephone_number"]').value = telephoneNumber;
+        form.querySelector('[name="fb_account"]').value = fbAccount;
+        form.querySelector('[name="messenger_account"]').value = messengerAccount;
+        form.querySelector('[name="prepared_contact"]').value = preparedContact;
+        form.querySelector('[name="caretaker_name"]').value = caretakerName;
+        form.querySelector('[name="caretaker_address"]').value = caretakerAddress;
+        form.querySelector('[name="caretaker_contact_number"]').value = caretakerContact;
+        form.querySelector('[name="caretaker_email"]').value = caretakerEmail;
+        form.querySelector('[name="incase_of_emergency"]').value = emergencyContact;
+    }
+}
+
+// Helper function to format date for input field
+function formatDateForInput(dateString) {
+    if (!dateString || dateString === 'Not provided') return '';
+    
+    // Try to parse the date string (format: "Jan 01, 2025")
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    
+    // Format as YYYY-MM-DD for input field
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+}
+
+// Helper function to format date for display
+function formatDisplayDate(dateString) {
+    if (!dateString || dateString === 'Not provided') return 'Not provided';
+    
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Not provided';
+    
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const month = months[date.getMonth()];
+    const day = date.getDate();
+    const year = date.getFullYear();
+    
+    return `${month} ${day.toString().padStart(2, '0')}, ${year}`;
+}
+
+function updateProfileDisplayFromForm(formData) {
+    const profileDisplay = document.getElementById('profileDisplay');
+    if (!profileDisplay) return;
+    
+    // Update all the display fields with new values
+    const name = formData.get('name');
+    const email = formData.get('email');
+    const contactNumber = formData.get('contact_number') || 'Not provided';
+    const gender = formData.get('gender') || 'Not provided';
+    const street = formData.get('street') || 'Not provided';
+    const lot = formData.get('lot') || 'Not provided';
+    const block = formData.get('block') || 'Not provided';
+    const dateOfBirth = formData.get('date_of_birth') || 'Not provided';
+    const civilStatus = formData.get('civil_status') || 'Not provided';
+    const monthsStay = formData.get('number_of_months_stay') || 'Not provided';
+    const telephoneNumber = formData.get('telephone_number') || 'Not provided';
+    const fbAccount = formData.get('fb_account') || 'Not provided';
+    const messengerAccount = formData.get('messenger_account') || 'Not provided';
+    const preparedContact = formData.get('prepared_contact') || 'Not provided';
+    const caretakerName = formData.get('caretaker_name') || 'Not provided';
+    const caretakerAddress = formData.get('caretaker_address') || 'Not provided';
+    const caretakerContact = formData.get('caretaker_contact_number') || 'Not provided';
+    const caretakerEmail = formData.get('caretaker_email') || 'Not provided';
+    const emergencyContact = formData.get('incase_of_emergency') || 'Not provided';
+    
+    // Update all fields in single column layout
+    const allFields = profileDisplay.querySelectorAll('[data-field]');
+    
+    allFields.forEach(field => {
+        const fieldName = field.getAttribute('data-field');
+        let value = '';
+        
+        switch(fieldName) {
+            case 'name':
+                value = name;
+                break;
+            case 'email':
+                value = email;
+                break;
+            case 'contact_number':
+                value = contactNumber;
+                break;
+            case 'gender':
+                value = gender;
+                break;
+            case 'street':
+                value = street;
+                break;
+            case 'lot':
+                value = lot;
+                break;
+            case 'block':
+                value = block;
+                break;
+            case 'date_of_birth':
+                value = dateOfBirth !== 'Not provided' ? formatDisplayDate(dateOfBirth) : 'Not provided';
+                break;
+            case 'civil_status':
+                value = civilStatus !== 'Not provided' ? civilStatus.charAt(0).toUpperCase() + civilStatus.slice(1) : 'Not provided';
+                break;
+            case 'number_of_months_stay':
+                value = monthsStay !== 'Not provided' ? monthsStay : 'Not provided';
+                break;
+            case 'telephone_number':
+                value = telephoneNumber;
+                break;
+            case 'fb_account':
+                value = fbAccount;
+                break;
+            case 'messenger_account':
+                value = messengerAccount;
+                break;
+            case 'prepared_contact':
+                value = preparedContact;
+                break;
+            case 'caretaker_name':
+                value = caretakerName;
+                break;
+            case 'caretaker_address':
+                value = caretakerAddress;
+                break;
+            case 'caretaker_contact_number':
+                value = caretakerContact;
+                break;
+            case 'caretaker_email':
+                value = caretakerEmail;
+                break;
+            case 'incase_of_emergency':
+                value = emergencyContact;
+                break;
+        }
+        
+        if (value && field) {
+            field.textContent = value;
+        }
+    });
+}
+
+function updateHeaderDisplay(formData) {
+    const name = formData.get('name');
+    
+    // Update header name
+    const headerName = document.querySelector('.font-medium.text-lg');
+    if (headerName) {
+        headerName.textContent = name;
+    }
+}
+
+function updateContactDetailsDisplay(formData) {
+    const email = formData.get('email');
+    const contactNumber = formData.get('contact_number') || 'Not provided';
+    const street = formData.get('street') || 'Not provided';
+    const lot = formData.get('lot') || 'Not provided';
+    const block = formData.get('block') || 'Not provided';
+    
+    // Update contact details in the main profile section
+    const contactDetails = document.querySelectorAll('.truncate.sm\\:whitespace-normal.flex.items-center');
+    if (contactDetails.length >= 1) {
+        // Update email
+        contactDetails[0].innerHTML = contactDetails[0].innerHTML.replace(/[^<]*$/, ' ' + email + ' ');
+        
+        // Update phone if exists
+        if (contactDetails.length >= 2) {
+            contactDetails[1].innerHTML = contactDetails[1].innerHTML.replace(/[^<]*$/, ' ' + contactNumber + ' ');
+        }
+        
+        // Update address if exists
+        if (contactDetails.length >= 3) {
+            const addressParts = [];
+            if (lot) addressParts.push('Lot ' + lot);
+            if (block) addressParts.push('Block ' + block);
+            if (street) addressParts.push(street);
+            
+            const address = addressParts.join(' ').trim();
+            if (address) {
+                contactDetails[2].innerHTML = contactDetails[2].innerHTML.replace(/[^<]*$/, ' ' + address + ' ');
+            }
+        }
+    }
+}
+
+function updateStatisticsDisplay(formData) {
+    const gender = formData.get('gender') || 'N/A';
+    
+    // Update statistics in the main profile section
+    const statsContainer = document.querySelector('.flex.items-center.justify-center.px-5');
+    if (statsContainer) {
+        const statItems = statsContainer.querySelectorAll('.text-center.rounded-md');
+        if (statItems.length >= 3) {
+            // Update "Gender" stat
+            const genderStat = statItems[2].querySelector('.font-medium.text-primary.text-xl');
+            if (genderStat) {
+                genderStat.textContent = gender;
+            }
         }
     }
 }
