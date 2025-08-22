@@ -34,6 +34,19 @@ class User extends Authenticatable
         'active',
         'remember_token',
         'is_online',
+        'date_of_birth',
+        'civil_status',
+        'number_of_months_stay',
+        'telephone_number',
+        'fb_account',
+        'messenger_account',
+        'prepared_contact',
+        'caretaker_name',
+        'caretaker_address',
+        'caretaker_contact_number',
+        'caretaker_email',
+        'signature_image',
+        'incase_of_emergency',
     ];
 
     /**

@@ -42,27 +42,62 @@ class ProfileManagementController extends Controller
             $request->validate([
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email,' . Auth::id(),
-                'phone' => 'nullable|string|max:20',
-                'address' => 'nullable|string|max:500',
-                'bio' => 'nullable|string|max:1000',
+                'contact_number' => 'nullable|string|max:20',
+                'gender' => 'nullable|in:male,female,other',
+                'street' => 'nullable|string|max:255',
+                'lot' => 'nullable|string|max:100',
+                'block' => 'nullable|string|max:100',
+                'date_of_birth' => 'nullable|date',
+                'civil_status' => 'nullable|in:single,married,widowed,divorced',
+                'number_of_months_stay' => 'nullable|string|max:50',
+                'telephone_number' => 'nullable|string|max:20',
+                'fb_account' => 'nullable|string|max:255',
+                'messenger_account' => 'nullable|string|max:255',
+                'prepared_contact' => 'nullable|string|max:255',
+                'caretaker_name' => 'nullable|string|max:255',
+                'caretaker_address' => 'nullable|string',
+                'caretaker_contact_number' => 'nullable|string|max:20',
+                'caretaker_email' => 'nullable|email|max:255',
+                'incase_of_emergency' => 'nullable|string|max:255',
             ]);
 
             $user = Auth::user();
-            $user->update([
+            
+            // All fields are varchar in database, so we can use them directly
+            $updateData = [
                 'name' => $request->name,
                 'email' => $request->email,
-                // Add other fields as needed
-            ]);
+                'contact_number' => $request->contact_number,
+                'gender' => $request->gender,
+                'street' => $request->street,
+                'lot' => $request->lot,
+                'block' => $request->block,
+                'date_of_birth' => $request->date_of_birth,
+                'civil_status' => $request->civil_status,
+                'number_of_months_stay' => $request->number_of_months_stay,
+                'telephone_number' => $request->telephone_number,
+                'fb_account' => $request->fb_account,
+                'messenger_account' => $request->messenger_account,
+                'prepared_contact' => $request->prepared_contact,
+                'caretaker_name' => $request->caretaker_name,
+                'caretaker_address' => $request->caretaker_address,
+                'caretaker_contact_number' => $request->caretaker_contact_number,
+                'caretaker_email' => $request->caretaker_email,
+                'incase_of_emergency' => $request->incase_of_emergency,
+            ];
+
+            $user->update($updateData);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Profile updated successfully'
+                'message' => 'Profile updated successfully!',
+                'user' => $user->fresh()
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Error updating profile: ' . $e->getMessage()
-            ], 500);
+            ]);
         }
     }
 
