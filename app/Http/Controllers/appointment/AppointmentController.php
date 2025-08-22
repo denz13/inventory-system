@@ -76,6 +76,30 @@ class AppointmentController extends Controller
         ]);
     }
 
+    /**
+     * Get the next available ID for tracking number generation
+     */
+    public function getNextId()
+    {
+        try {
+            // Get the highest ID from the appointments table
+            $maxId = tbl_appointment::max('id');
+            
+            // If no appointments exist, start from 1, otherwise increment by 1
+            $nextId = $maxId ? $maxId + 1 : 1;
+            
+            return response()->json([
+                'success' => true,
+                'next_id' => $nextId
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error getting next ID: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function update(Request $request, $id)
     {
         $appointment = tbl_appointment::find($id);

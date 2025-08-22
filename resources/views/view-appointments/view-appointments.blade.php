@@ -3,14 +3,12 @@
         <meta charset="utf-8">
         <link href="dist/images/logo.svg" rel="shortcut icon">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="description" content="Midone admin is super flexible, powerful, clean &amp; modern responsive tailwind admin template with unlimited possibilities.">
         <meta name="keywords" content="admin template, Midone Admin Template, dashboard template, flat admin template, responsive admin template, web app">
         <meta name="author" content="LEFT4CODE">
-        <title>Login - Midone - Tailwind HTML Admin Template</title>
+        <title>Register - Midone - Tailwind HTML Admin Template</title>
         <!-- BEGIN: CSS Assets-->
         <link rel="stylesheet" href="dist/css/app.css">
-        <link rel="stylesheet" href="{{ asset('assets/toastify/toastify.css') }}">
         <!-- END: CSS Assets-->
     <style>
 /* classes attached to <body> */
@@ -1525,65 +1523,191 @@ A VERTICAL event
     <body class="login">
         <div class="container sm:px-10">
             <div class="block xl:grid grid-cols-2 gap-4">
-                <!-- BEGIN: Login Info -->
+                <!-- BEGIN: Register Info -->
                 <div class="hidden xl:flex flex-col min-h-screen">
                     <a href="" class="-intro-x flex items-center pt-5">
-                        <img alt="Midone - HTML Admin Template" class="w-6" src="dist/images/logo.png">
-                        <span class="text-white text-lg ml-3"> GCH </span> 
+                      <img alt="Midone - HTML Admin Template" class="w-6" src="dist/images/logo.png">
+                      <span class="text-white text-lg ml-3"> GCH </span> 
                     </a>
                     <div class="my-auto">
-                        <img alt="Midone - HTML Admin Template" class="-intro-x w-1/2 -mt-16" src="dist/images/logo.png">
-                        <div class="-intro-x text-white font-medium text-2xl leading-tight mt-10">
-                            Welcome to Golden Country Homes 
-                            {{-- <br>
-                            sign in to your account. --}}
-                        </div>
-                        <div class="-intro-x mt-5 text-xs text-white text-opacity-70 dark:text-slate-400">Manage all your property accounts in one place</div>
-                    </div>
+                      <img alt="Midone - HTML Admin Template" class="-intro-x w-1/2 -mt-16" src="dist/images/logo.png">
+                      <div class="-intro-x text-white font-medium text-2xl leading-tight mt-10">
+                          Welcome to Golden Country Homes 
+                          {{-- <br>
+                          sign in to your account. --}}
+                      </div>
+                      <div class="-intro-x mt-5 text-xs text-white text-opacity-70 dark:text-slate-400">Manage all your property accounts in one place</div>
+                  </div>
                 </div>
-                <!-- END: Login Info -->
-                <!-- BEGIN: Login Form -->
+                <!-- END: Register Info -->
+                <!-- BEGIN: Register Form -->
                 <div class="h-screen xl:h-auto flex py-5 xl:py-0 my-10 xl:my-0">
                     <div class="my-auto mx-auto xl:ml-20 bg-white dark:bg-darkmode-600 xl:bg-transparent px-5 sm:px-8 py-8 xl:p-0 rounded-md shadow-md xl:shadow-none w-full sm:w-3/4 lg:w-2/4 xl:w-auto">
                         <h2 class="intro-x font-bold text-2xl xl:text-3xl text-center xl:text-left">
-                            Sign In
+                            View Appointments
                         </h2>
-                        <div class="intro-x mt-2 text-slate-400 xl:hidden text-center">A few more clicks to sign in to your account. Manage all your e-commerce accounts in one place</div>
-                        <div class="intro-x mt-8">
-                            <input type="text" id="login-email" class="intro-x login__input form-control py-3 px-4 block" placeholder="Email">
-                            <input type="password" id="login-password" class="intro-x login__input form-control py-3 px-4 block mt-4" placeholder="Password">
-                        </div>
-                        <div class="intro-x flex text-slate-600 dark:text-slate-500 text-xs sm:text-sm mt-4">
-                            <div class="flex items-center mr-auto">
-                                <input id="remember-me" type="checkbox" class="form-check-input border mr-2">
-                                <label class="cursor-pointer select-none" for="remember-me">Remember me</label>
+                        <div class="intro-x mt-2 text-slate-400 dark:text-slate-400 xl:hidden text-center">Fill in the tracking number below to view the appointment details and status</div>
+                        <form id="viewAppointmentForm">
+                            @csrf
+                            <div class="intro-x mt-8">
+                                <input type="text" class="intro-x login__input form-control py-3 px-4 block mt-4" name="tracking_number" placeholder="Tracking Number" required>
                             </div>
-                            <a href="">Forgot Password?</a> 
-                        </div>
+                        </form>
                         <div class="intro-x mt-5 xl:mt-8 text-center xl:text-left">
-                            <button id="login-submit" class="btn btn-primary py-3 px-4 w-full xl:w-32 xl:mr-3 align-top">Login</button>
-                            <a href="{{ route('appointment.index') }}" class="btn btn-outline-secondary py-3 px-4 w-full xl:w-32 mt-3 xl:mt-0 align-top">Appointment</a>
+                            <button type="submit" form="viewAppointmentForm" class="btn btn-primary py-3 px-4 w-full xl:w-32 xl:mr-3 align-top whitespace-nowrap text-xs">View Appointment</button>
+                            <a href="{{ route('login.index') }}" class="btn btn-outline-secondary py-3 px-4 w-full xl:w-32 mt-3 xl:mt-0 align-top whitespace-nowrap text-xs">Back to Login</a>
                         </div>
                     </div>
                 </div>
-                <!-- END: Login Form -->
+                <!-- END: Register Form -->
             </div>
         </div>
         
-        <!-- Notification templates -->
-        <x-notification-toast id="login_toast_success" type="success" title="Success" message="Login successful" :show-button="false" />
-        <x-notification-toast id="login_toast_error" type="error" title="Login failed" :show-button="false">
-            <div id="login-error-message-slot" class="text-slate-500 mt-1"></div>
-        </x-notification-toast>
-        <x-notification-toast id="login_toast_warning" type="warning" title="Missing fields" message="Please enter email and password" :show-button="false" />
-        
+        <!-- BEGIN: Tracking Number Modal -->
+        <div id="trackingNumberModal" class="modal" tabindex="-1" aria-hidden="true" style="display: none !important; position: fixed !important; z-index: 99999 !important; left: 0 !important; top: 0 !important; width: 100% !important; height: 100% !important; background-color: rgba(0, 0, 0, 0.5) !important;">
+            <div class="modal-dialog" style="position: relative !important; width: auto !important; margin: 5% auto !important; max-width: 600px !important;">
+                <div class="modal-content" style="position: relative !important; background-color: #fff !important; border-radius: 0.5rem !important; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important; border: 1px solid #e9ecef !important;">
+                    <div class="modal-body px-5 py-10" style="padding: 1.5rem !important;">
+                        <div class="text-center">
+                            <div class="mb-5">
+                                <h3 class="text-lg font-medium mb-3">Appointment Details</h3>
+                                <div class="text-left bg-gray-50 p-4 rounded-lg mb-4" style="text-align: left !important; background-color: #f9fafb !important; padding: 1rem !important; border-radius: 0.5rem !important; margin-bottom: 1rem !important;">
+                                    <p><strong>Tracking Number:</strong> <span id="modalTrackingNumber" class="font-bold text-blue-600" style="font-weight: 700 !important; color: #2563eb !important;"></span></p>
+                                    <p><strong>Description:</strong> <span id="modalDescription"></span></p>
+                                    <p><strong>Date & Time:</strong> <span id="modalDateTime"></span></p>
+                                    <p><strong>Status:</strong> <span id="modalStatus" class="font-bold px-2 py-1 rounded text-sm" style="display: inline-block; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.875rem;"></span></p>
+                                    <p><strong>Remarks:</strong> <span id="modalRemarks"></span></p>
+                                    <p><strong>Created:</strong> <span id="modalCreated"></span></p>
+                                    <p><strong>Last Updated:</strong> <span id="modalUpdated"></span></p>
+                                </div>
+                                <p class="text-gray-600" style="color: #4b5563 !important;">Appointment details retrieved successfully!</p>
+                            </div>
+                            <button type="button" class="btn btn-primary w-24" onclick="closeModal()">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END: Tracking Number Modal -->
         <!-- BEGIN: JS Assets-->
-        <!-- END: JS Assets-->
+        @vite('resources/css/app.css')
+        @vite('resources/js/app.js')
+        <script src="{{ asset('js/view-appointments/view-appointments.js') }}"></script>
+
         <style>
-        .toastify { background: transparent !important; box-shadow: none !important; }
+        /* Modal styles for vanilla JavaScript */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 99999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            overflow: auto;
+        }
+        
+        .modal.show {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        .modal-dialog {
+            position: relative;
+            width: auto;
+            margin: 5% auto;
+            max-width: 500px;
+            min-height: 200px;
+        }
+        
+        .modal-content {
+            position: relative;
+            background-color: #fff;
+            border-radius: 0.5rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            border: 1px solid #e9ecef;
+        }
+        
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid #e9ecef;
+            background-color: #f8f9fa;
+        }
+        
+        /* Ensure modal is visible when shown */
+        #trackingNumberModal.show {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        /* Force modal visibility */
+        #trackingNumberModal[style*="display: block"] {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        /* Override any conflicting styles */
+        #trackingNumberModal {
+            display: none;
+        }
+        
+        #trackingNumberModal.show,
+        #trackingNumberModal[style*="display: block"] {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        /* Force modal to be visible and positioned correctly */
+        #trackingNumberModal[style*="display: block"],
+        #trackingNumberModal.show {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            position: fixed !important;
+            z-index: 99999 !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background-color: rgba(0, 0, 0, 0.5) !important;
+        }
+        
+        /* Ensure modal dialog is visible */
+        #trackingNumberModal[style*="display: block"] .modal-dialog,
+        #trackingNumberModal.show .modal-dialog {
+            position: relative !important;
+            width: auto !important;
+            margin: 5% auto !important;
+            max-width: 500px !important;
+            min-height: 200px !important;
+        }
+        
+        /* Ensure modal content is visible */
+        #trackingNumberModal[style*="display: block"] .modal-content,
+        #trackingNumberModal.show .modal-content {
+            position: relative !important;
+            background-color: #fff !important;
+            border-radius: 0.5rem !important;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+            border: 1px solid #e9ecef !important;
+        }
         </style>
-        <script src="{{ asset('assets/toastify/toastify.js') }}"></script>
-        @stack('scripts')
-        <script src="{{ asset('js/login/login.js') }}"></script>
     
 </body></html>
