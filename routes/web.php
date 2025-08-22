@@ -26,6 +26,9 @@ use App\Http\Controllers\profilemanagement\ProfileManagementController;
 use App\Http\Controllers\appointment\AppointmentController;
 use App\Http\Controllers\viewappointment\ViewAppointmentController;
 use App\Http\Controllers\appointmentmanagement\AppointmentManagementController;
+use App\Http\Controllers\forgotpassword\ForgotPasswordController;
+use App\Http\Controllers\otp\OtpController;
+use App\Http\Controllers\newpassword\NewPasswordController;
 
 /*
 |--------------------------------------------------------------------------
@@ -62,6 +65,19 @@ Route::delete('appointment/{id}', [AppointmentController::class, 'destroy'])->na
 // View Appointment routes
 Route::get('view-appointments', [ViewAppointmentController::class, 'index'])->name('view-appointments.index');
 Route::post('view-appointments/track', [ViewAppointmentController::class, 'getAppointmentByTrackingNumber'])->name('view-appointments.track');
+
+// Forgot Password routes
+Route::get('forgot-password', [ForgotPasswordController::class, 'index'])->name('forgot-password.index');
+Route::post('forgot-password', [ForgotPasswordController::class, 'store'])->name('forgot-password.store');
+
+// OTP routes
+Route::get('otp', [OtpController::class, 'index'])->name('otp.index');
+Route::post('otp', [OtpController::class, 'store'])->name('otp.store');
+
+// New Password routes
+Route::get('new-password', [NewPasswordController::class, 'index'])->name('new-password.index');
+Route::post('new-password', [NewPasswordController::class, 'store'])->name('new-password.store');
+
 
 // Root redirect
 Route::get('/', function () {
