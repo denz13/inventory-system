@@ -11,7 +11,7 @@ class business_management_list extends Model
     use HasFactory, SoftDeletes;
 
     protected $table = 'business_management_list';
-    protected $fillable = ['user_id', 'type_of_business', 'business_name', 'address', 'status'];
+    protected $fillable = ['user_id', 'type_of_business', 'business_name','business_clearance','address', 'status','reason'];
 
     public function user()
     {

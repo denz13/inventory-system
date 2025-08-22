@@ -79,6 +79,7 @@ Route::middleware('auth')->group(function() {
     Route::get('business-management/{business}', [BusinessManagementController::class, 'show'])->name('businessmanagement.show');
     Route::get('business-management/{business}/edit', [BusinessManagementController::class, 'edit'])->name('businessmanagement.edit');
     Route::put('business-management/{business}', [BusinessManagementController::class, 'update'])->name('businessmanagement.update');
+    Route::put('business-management/{business}/status', [BusinessManagementController::class, 'updateStatus'])->name('businessmanagement.updateStatus');
     Route::delete('business-management/{business}', [BusinessManagementController::class, 'destroy'])->name('businessmanagement.destroy');
 
     // Vehicle Management routes
@@ -141,6 +142,37 @@ Route::middleware('auth')->group(function() {
     Route::get('profile-management/tenants/{id}', [ProfileManagementController::class, 'getTenant'])->name('profile-management.tenants.show');
     Route::put('profile-management/tenants/{id}', [ProfileManagementController::class, 'updateTenant'])->name('profile-management.tenants.update');
     Route::delete('profile-management/tenants/{id}', [ProfileManagementController::class, 'deleteTenant'])->name('profile-management.tenants.destroy');
+
+    // Business Management routes
+    Route::post('profile-management/businesses', [ProfileManagementController::class, 'addBusiness'])->name('profile-management.businesses.store');
+    Route::get('profile-management/businesses/{id}', [ProfileManagementController::class, 'getBusiness'])->name('profile-management.businesses.show');
+    Route::put('profile-management/businesses/{id}', [ProfileManagementController::class, 'updateBusiness'])->name('profile-management.businesses.update');
+    Route::delete('profile-management/businesses/{id}', [ProfileManagementController::class, 'deleteBusiness'])->name('profile-management.businesses.destroy');
+
+    // Temporary debug route
+    Route::get('debug/business/{id}', function($id) {
+        try {
+            $business = \App\Models\business_management_list::find($id);
+            if ($business) {
+                return response()->json([
+                    'success' => true,
+                    'business' => $business,
+                    'user_id' => $business->user_id,
+                    'current_user_id' => auth()->id()
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Business not found in database'
+                ], 404);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
+    });
 
     // Bank Account routes
     Route::get('bank-account', [BankAccountController::class, 'index'])->name('bank-account.index');

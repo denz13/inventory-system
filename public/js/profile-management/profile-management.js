@@ -3,6 +3,9 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeForms();
     initializeEditProfile();
     initializeTenantManagement();
+    initializePasswordChange();
+    initializeSignatureImageClicks();
+    initializeBusinessManagement();
 });
 
 // Global variable to store selected file
@@ -99,16 +102,82 @@ document.addEventListener('DOMContentLoaded', function() {
     const cancelBtns = document.querySelectorAll('#photo-upload-modal [data-tw-dismiss="modal"]');
     cancelBtns.forEach(btn => {
         btn.addEventListener('click', function() {
-            // Clear the file input
-            const fileInput = document.getElementById('profile-photo-input');
-            if (fileInput) {
-                fileInput.value = '';
-            }
-            // Clear selected file
-            selectedPhotoFile = null;
+            hidePhotoUploadModal();
         });
     });
+    
+    // Initialize signature image preview
+    initializeSignatureImagePreview();
 });
+
+// Initialize signature image preview functionality
+function initializeSignatureImagePreview() {
+    const signatureInput = document.getElementById('signatureImageInput');
+    if (signatureInput) {
+        signatureInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Validate file type
+                if (!file.type.startsWith('image/')) {
+                    showToast('Please select a valid image file', 'error');
+                    this.value = '';
+                    return;
+                }
+                
+                // Validate file size (max 2MB)
+                if (file.size > 2 * 1024 * 1024) {
+                    showToast('Image size must be less than 2MB', 'error');
+                    this.value = '';
+                    return;
+                }
+                
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const previewContainer = signatureInput.closest('.mb-5').querySelector('.w-20.h-20');
+                    if (previewContainer) {
+                        previewContainer.innerHTML = `<img src="${e.target.result}" alt="Signature Preview" class="w-16 h-16 object-contain">`;
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+}
+
+// Initialize signature image click functionality
+function initializeSignatureImageClicks() {
+    // Use event delegation to handle clicks on signature images
+    document.addEventListener('click', function(e) {
+        const signatureElement = e.target.closest('.signature-image-clickable');
+        if (signatureElement) {
+            const imageSrc = signatureElement.getAttribute('data-signature-src');
+            if (imageSrc) {
+                openSignatureModal(imageSrc);
+            }
+        }
+    });
+}
+
+// Function to open signature image modal
+function openSignatureModal(imageSrc) {
+    const modal = document.getElementById('signature-modal');
+    const modalImage = document.getElementById('signature-modal-image');
+    
+    if (modal && modalImage) {
+        modalImage.src = imageSrc;
+        
+        // Show the modal using Tailwind's modal functionality
+        const modalTrigger = document.createElement('button');
+        modalTrigger.setAttribute('data-tw-toggle', 'modal');
+        modalTrigger.setAttribute('data-tw-target', '#signature-modal');
+        modalTrigger.style.display = 'none';
+        document.body.appendChild(modalTrigger);
+        
+        modalTrigger.click();
+        document.body.removeChild(modalTrigger);
+    }
+}
 
 // Upload profile photo to server
 function uploadProfilePhoto(file) {
@@ -309,24 +378,46 @@ function handleAccountUpdate() {
 }
 
 function handlePasswordChange() {
+    console.log('handlePasswordChange function called');
+    
     const form = document.getElementById('changePasswordForm');
-    const formData = new FormData(form);
-    
-    // Validate password confirmation
-    const newPassword = form.querySelector('[name="new_password"]').value;
-    const confirmPassword = form.querySelector('[name="new_password_confirmation"]').value;
-    
-    if (newPassword !== confirmPassword) {
-        showToast('New passwords do not match', 'error');
+    if (!form) {
+        console.error('Form not found in handlePasswordChange');
         return;
     }
+    
+    const formData = new FormData(form);
+    
+    // Basic validation
+    const currentPassword = formData.get('current_password');
+    const newPassword = formData.get('new_password');
+    const confirmPassword = formData.get('new_password_confirmation');
+    
+    console.log('Form data:', { currentPassword: currentPassword ? '***' : 'empty', newPassword: newPassword ? '***' : 'empty', confirmPassword: confirmPassword ? '***' : 'empty' });
+    
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        showToast('Please fill in all fields', 'error');
+        return;
+    }
+    
+    if (newPassword.length < 8) {
+        showToast('New password must be at least 8 characters long', 'error');
+        return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+        showToast('New password and confirmation do not match', 'error');
+        return;
+    }
+    
+    console.log('Validation passed, sending request...');
     
     // Show loading state
     const submitBtn = form.querySelector('button[type="submit"]');
     const originalText = submitBtn.textContent;
     submitBtn.textContent = 'Changing...';
     submitBtn.disabled = true;
-
+    
     fetch('/profile-management/change-password', {
         method: 'POST',
         headers: {
@@ -336,28 +427,22 @@ function handlePasswordChange() {
         },
         body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Response received:', response);
+        return response.json();
+    })
     .then(data => {
+        console.log('Response data:', data);
         if (data.success) {
-            showToast('Password changed successfully', 'success');
-            
-            // Reset form
+            showToast('Password changed successfully!', 'success');
             form.reset();
-            
-            // Switch back to profile tab
-            setTimeout(() => {
-                const profileTab = document.querySelector('[data-tw-target="#profile"]');
-                if (profileTab) {
-                    profileTab.click();
-                }
-            }, 1000);
         } else {
-            showToast(data.message || 'Error changing password', 'error');
+            showToast(data.message, 'error');
         }
     })
     .catch(error => {
-        console.error('Error changing password:', error);
-        showToast('Error changing password', 'error');
+        console.error('Error:', error);
+        showToast('An error occurred while changing password', 'error');
     })
     .finally(() => {
         // Reset button state
@@ -520,6 +605,7 @@ function resetEditProfileForm() {
         const caretakerContact = profileDisplay.querySelector('[data-field="caretaker_contact_number"]')?.textContent || '';
         const caretakerEmail = profileDisplay.querySelector('[data-field="caretaker_email"]')?.textContent || '';
         const emergencyContact = profileDisplay.querySelector('[data-field="incase_of_emergency"]')?.textContent || '';
+        const signatureImage = profileDisplay.querySelector('[data-field="signature_image"]')?.innerHTML || '';
         
         // Set form values
         form.querySelector('[name="name"]').value = name;
@@ -541,6 +627,7 @@ function resetEditProfileForm() {
         form.querySelector('[name="caretaker_contact_number"]').value = caretakerContact;
         form.querySelector('[name="caretaker_email"]').value = caretakerEmail;
         form.querySelector('[name="incase_of_emergency"]').value = emergencyContact;
+        // Note: File inputs cannot be set programmatically for security reasons
     }
 }
 
@@ -664,6 +751,11 @@ function updateProfileDisplayFromForm(formData) {
                 break;
             case 'incase_of_emergency':
                 value = emergencyContact;
+                break;
+            case 'signature_image':
+                // For file uploads, we can't directly update the display
+                // The page will need to be refreshed to show the new image
+                value = 'Image updated - refresh to view';
                 break;
         }
         
@@ -795,6 +887,24 @@ document.addEventListener('change', function(e) {
         showToast(`${setting} ${isEnabled ? 'enabled' : 'disabled'}`, 'success');
     }
 });
+
+// Password change form handler
+function initializePasswordChange() {
+    const changePasswordForm = document.getElementById('changePasswordForm');
+    
+    console.log('Initializing password change, form found:', changePasswordForm);
+    
+    if (changePasswordForm) {
+        changePasswordForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            console.log('Password change form submitted');
+            handlePasswordChange();
+        });
+        console.log('Password change form event listener added');
+    } else {
+        console.error('Password change form not found!');
+    }
+}
 
 // Two-factor authentication enable button
 document.addEventListener('click', function(e) {
@@ -1382,5 +1492,378 @@ function deleteTenant(tenantId, tenantName) {
         console.error('Error deleting tenant:', error);
         showToast('Error deleting tenant: ' + error.message, 'error');
     });
+}
+
+
+// Business Management Functions
+function initializeBusinessManagement() {
+    // Add Business Form
+    const addBusinessForm = document.getElementById('addBusinessForm');
+    if (addBusinessForm) {
+        addBusinessForm.addEventListener('submit', handleAddBusiness);
+    }
+
+    // Edit Business Form - use form submission instead of button click
+    const editBusinessForm = document.getElementById('editBusinessForm');
+    if (editBusinessForm) {
+        editBusinessForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            console.log('Edit business form submitted!');
+            console.log('Form element:', this);
+            console.log('Form action:', this.action);
+            console.log('Form method:', this.method);
+            handleUpdateBusiness();
+        });
+    }
+
+    // Delete Business Confirmation Button
+    const confirmDeleteBusinessBtn = document.getElementById('confirmDeleteBusiness');
+    if (confirmDeleteBusinessBtn) {
+        confirmDeleteBusinessBtn.addEventListener('click', handleDeleteBusiness);
+    }
+    
+    // Handle edit button clicks to populate form when modal opens
+    document.addEventListener('click', function(e) {
+        const editBtn = e.target.closest('[data-business-id]');
+        if (editBtn && editBtn.getAttribute('data-tw-target') === '#edit-business-modal') {
+            const businessId = editBtn.getAttribute('data-business-id');
+            // Small delay to ensure modal is open before populating
+            setTimeout(() => {
+                populateEditBusinessForm(businessId);
+            }, 100);
+        }
+    });
+}
+
+function prepareDeleteBusiness(businessId, businessName) {
+    document.getElementById('deleteBusinessId').value = businessId;
+    document.getElementById('deleteBusinessName').textContent = businessName;
+}
+
+function handleDeleteBusiness() {
+    const businessId = document.getElementById('deleteBusinessId').value;
+    
+    if (!businessId) {
+        showToast('Business ID not found', 'error');
+        return;
+    }
+
+    // Show loading state
+    const deleteBtn = document.getElementById('confirmDeleteBusiness');
+    const originalText = deleteBtn.textContent;
+    deleteBtn.textContent = 'Deleting...';
+    deleteBtn.disabled = true;
+
+    fetch(`/profile-management/businesses/${businessId}`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Business deleted successfully', 'success');
+            // Close modal and reload page
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            showToast('Error deleting business: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Error deleting business: ' + error.message, 'error');
+    })
+    .finally(() => {
+        // Reset button state
+        deleteBtn.textContent = originalText;
+        deleteBtn.disabled = false;
+    });
+}
+
+function handleAddBusiness(e) {
+    e.preventDefault();
+    
+    const form = e.target;
+    const formData = new FormData(form);
+    
+    // Show loading state
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Adding...';
+    submitBtn.disabled = true;
+    
+    fetch('/profile-management/businesses', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                           document.querySelector('input[name="_token"]')?.value,
+            'Accept': 'application/json'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Business added successfully!', 'success');
+            form.reset();
+            // Reload page to show new business
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            showToast(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('An error occurred while adding business', 'error');
+    })
+    .finally(() => {
+        // Reset button state
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+function editBusiness(businessId) {
+    console.log('editBusiness called with ID:', businessId);
+    
+    // Fetch business data and populate form
+    fetch(`/profile-management/businesses/${businessId}`)
+        .then(response => {
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+            
+            if (!response.ok) {
+                if (response.status === 422) {
+                    throw new Error('Validation error (422) - This is unusual for a GET request');
+                } else if (response.status === 404) {
+                    throw new Error('Business not found (404)');
+                } else if (response.status === 401) {
+                    throw new Error('Unauthorized (401) - Please log in again');
+                } else {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            
+            if (data.success) {
+                const business = data.business;
+                
+                // Populate form fields
+                document.getElementById('editBusinessId').value = business.id;
+                document.getElementById('editBusinessType').value = business.type_of_business;
+                document.getElementById('editBusinessName').value = business.business_name;
+                document.getElementById('editBusinessAddress').value = business.address || '';
+                
+                // Handle business clearance display
+                const currentClearanceDiv = document.getElementById('editCurrentClearance');
+                const currentClearanceLink = document.getElementById('editCurrentClearanceLink');
+                
+                if (business.business_clearance) {
+                    // Show current clearance file
+                    currentClearanceDiv.style.display = 'block';
+                    currentClearanceLink.href = `/storage/business-clearances/${business.business_clearance}`;
+                    
+                    // Set filename as link text
+                    const fileName = business.business_clearance;
+                    const displayName = fileName.length > 30 ? fileName.substring(0, 30) + '...' : fileName;
+                    currentClearanceLink.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 inline mr-1">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14,2 14,8 20,8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10,9 9,9 8,9"></polyline>
+                        </svg>
+                        ${displayName}
+                    `;
+                } else {
+                    // Hide current clearance section if no file exists
+                    currentClearanceDiv.style.display = 'none';
+                }
+            } else {
+                console.error('Business data not successful:', data);
+                showToast(data.message || 'Error loading business data', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching business:', error);
+            showToast('Error fetching business data: ' + error.message, 'error');
+        });
+}
+
+function handleUpdateBusiness() {
+    const form = document.getElementById('editBusinessForm');
+    const formData = new FormData(form);
+    const businessId = document.getElementById('editBusinessId').value;
+    
+    // Remove the business_clearance field if no file is selected
+    const clearanceFile = formData.get('business_clearance');
+    if (clearanceFile && clearanceFile.size === 0) {
+        formData.delete('business_clearance');
+    }
+    
+    // Remove the _token field from FormData since we'll send it in headers
+    formData.delete('_token');
+    
+    // Add method override for Laravel
+    formData.append('_method', 'PUT');
+    
+    // Debug: Log what's being sent
+    console.log('Updating business with ID:', businessId);
+    console.log('Form data being sent:');
+    for (let [key, value] of formData.entries()) {
+        console.log(key + ':', value);
+    }
+    
+    // Show loading state
+    const submitBtn = document.getElementById('updateBusinessBtn');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Updating...';
+    submitBtn.disabled = true;
+    
+    fetch(`/profile-management/businesses/${businessId}`, {
+        method: 'POST', // Use POST with method override for Laravel
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+            'Accept': 'application/json'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Check if this was a declined business that got reset to pending
+            if (data.message && data.message.includes('status reset to pending')) {
+                showToast('Business updated successfully! Status reset to pending for re-review.', 'success');
+            } else {
+                showToast('Business updated successfully!', 'success');
+            }
+            
+            // Close modal and reload page
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            showToast(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('An error occurred while updating business', 'error');
+    })
+    .finally(() => {
+        // Reset button state
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+function deleteBusiness(businessId) {
+    if (confirm('Are you sure you want to delete this business? This action cannot be undone.')) {
+        fetch(`/profile-management/businesses/${businessId}`, {
+            method: 'DELETE',
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Business deleted successfully', 'success');
+                // Reload page to refresh the list
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            } else {
+                showToast(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting business:', error);
+            showToast('Error deleting business: ' + error.message, 'error');
+        });
+    }
+}
+
+// Make business functions globally available
+window.editBusiness = editBusiness;
+window.deleteBusiness = deleteBusiness;
+
+function populateEditBusinessForm(businessId) {
+    console.log('Populating edit form for business ID:', businessId);
+    
+    // Fetch business data and populate form
+    fetch(`/profile-management/businesses/${businessId}`)
+        .then(response => {
+            console.log('Response status:', response.status);
+            
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error('Business not found (404)');
+                } else if (response.status === 401) {
+                    throw new Error('Unauthorized (401) - Please log in again');
+                } else {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            
+            if (data.success) {
+                const business = data.business;
+                
+                // Populate form fields
+                document.getElementById('editBusinessId').value = business.id;
+                document.getElementById('editBusinessType').value = business.type_of_business;
+                document.getElementById('editBusinessName').value = business.business_name;
+                document.getElementById('editBusinessAddress').value = business.address || '';
+                
+                // Handle business clearance display
+                const currentClearanceDiv = document.getElementById('editCurrentClearance');
+                const currentClearanceLink = document.getElementById('editCurrentClearanceLink');
+                
+                if (business.business_clearance) {
+                    // Show current clearance file
+                    currentClearanceDiv.style.display = 'block';
+                    currentClearanceLink.href = `/storage/business-clearances/${business.business_clearance}`;
+                    
+                    // Set filename as link text
+                    const fileName = business.business_clearance;
+                    const displayName = fileName.length > 30 ? fileName.substring(0, 30) + '...' : fileName;
+                    currentClearanceLink.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 inline mr-1">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14,2 14,8 20,8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10,9 9,9 8,9"></polyline>
+                        </svg>
+                        ${displayName}
+                    `;
+                } else {
+                    // Hide current clearance section if no file exists
+                    currentClearanceDiv.style.display = 'none';
+                }
+            } else {
+                console.error('Business data not successful:', data);
+                showToast(data.message || 'Error loading business data', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching business:', error);
+            showToast('Error fetching business data: ' + error.message, 'error');
+        });
 }
 
