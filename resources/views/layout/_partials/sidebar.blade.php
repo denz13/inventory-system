@@ -290,6 +290,12 @@
                         <div class="side-menu__title"> Feedback Management </div>
                     </a>
                 </li>
+                <li>
+                    <a href="{{ route('appointment-management.index') }}" class="side-menu">
+                        <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
+                        <div class="side-menu__title"> Appointment Management </div>
+                    </a>
+                </li>
             </ul>
         </li>
         <!-- <li>
