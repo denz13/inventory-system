@@ -15,7 +15,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        // Clean up expired OTPs every 5 minutes
+        $schedule->command('otp:cleanup')->everyFiveMinutes();
     }
 
     /**
