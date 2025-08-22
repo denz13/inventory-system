@@ -23,6 +23,7 @@ use App\Http\Controllers\listpayments\ListPaymentsController;
 use App\Http\Controllers\feedback\FeedbackController;
 use App\Http\Controllers\feedbackmanagement\FeedbackManagementController;
 use App\Http\Controllers\profilemanagement\ProfileManagementController;
+use App\Http\Controllers\appointment\AppointmentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -47,6 +48,13 @@ Route::controller(AuthController::class)->middleware('loggedin')->group(function
     Route::get('login', 'loginView')->name('login.index');
     Route::post('login', 'login')->name('login.check');
 });
+
+// Appointment routes
+Route::get('appointment', [AppointmentController::class, 'index'])->name('appointment.index');
+Route::post('appointment', [AppointmentController::class, 'store'])->name('appointment.store');
+Route::get('appointment/{id}', [AppointmentController::class, 'show'])->name('appointment.show');
+Route::put('appointment/{id}', [AppointmentController::class, 'update'])->name('appointment.update');
+Route::delete('appointment/{id}', [AppointmentController::class, 'destroy'])->name('appointment.destroy');
 
 // Root redirect
 Route::get('/', function () {
@@ -212,8 +220,6 @@ Route::middleware('auth')->group(function() {
     Route::get('feedback/{id}', [FeedbackController::class, 'show'])->name('feedback.show');
     Route::put('feedback/{id}', [FeedbackController::class, 'update'])->name('feedback.update');
     Route::delete('feedback/{id}', [FeedbackController::class, 'destroy'])->name('feedback.destroy');
-
-
 
     
     // // Named route for menu system
