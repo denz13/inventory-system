@@ -29,26 +29,26 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Validate password
             if (!password) {
-                showToast('warning', 'Missing field', 'Please enter your new password');
+                showToast('Please enter your new password', 'warning');
                 passwordInput.focus();
                 return;
             }
             
             if (password.length < 8) {
-                showToast('error', 'Invalid password', 'Password must be at least 8 characters long');
+                showToast('Password must be at least 8 characters long', 'error');
                 passwordInput.focus();
                 return;
             }
             
             // Validate confirm password
             if (!confirmPassword) {
-                showToast('warning', 'Missing field', 'Please confirm your new password');
+                showToast('Please confirm your new password', 'warning');
                 confirmPasswordInput.focus();
                 return;
             }
             
             if (password !== confirmPassword) {
-                showToast('error', 'Password mismatch', 'Passwords do not match');
+                showToast('Passwords do not match', 'error');
                 confirmPasswordInput.focus();
                 return;
             }
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     if (data.show_toast) {
-                        showToast(data.toast_type || 'success', 'Success', data.message);
+                        showToast(data.message, data.toast_type || 'success');
                     }
                     // Redirect after a short delay
                     setTimeout(() => {
@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 1500);
                 } else {
                     if (data.show_toast) {
-                        showToast(data.toast_type || 'error', 'Error', data.message || 'Failed to reset password');
+                        showToast(data.message || 'Failed to reset password', data.toast_type || 'error');
                     }
                     // Clear the inputs for retry
                     passwordInput.value = '';
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Error:', error);
-                showToast('error', 'Error', 'Something went wrong. Please try again.');
+                showToast('Something went wrong. Please try again.', 'error');
                 passwordInput.value = '';
                 confirmPasswordInput.value = '';
                 passwordInput.focus();
@@ -105,44 +105,40 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-function showToast(type, title, message) {
-    // Get the appropriate toast element
-    let toastId;
-    switch (type) {
-        case 'success':
-            toastId = 'login_toast_success';
-            break;
-        case 'error':
-            toastId = 'login_toast_error';
-            break;
-        case 'warning':
-            toastId = 'login_toast_warning';
-            break;
-        default:
-            toastId = 'login_toast_error';
+// Toast notification function (following announcement pattern)
+function showToast(message, type = 'success') {
+    const toastId = type === 'success' ? 'new_password_toast_success' : 'new_password_toast_error';
+    
+    if (type === 'error') {
+        // Update error message slot
+        const messageSlot = document.getElementById('new_password_error_message_slot');
+        if (messageSlot) {
+            messageSlot.textContent = message;
+        }
     }
     
-    const toast = document.getElementById(toastId);
-    if (toast) {
-        // Update toast content if needed
-        if (type === 'error' && message) {
-            const errorSlot = document.getElementById('login-error-message-slot');
-            if (errorSlot) {
-                errorSlot.textContent = message;
+    // Use your notification-toast component's show function
+    try {
+        if (window[`showNotification_${toastId}`]) {
+            window[`showNotification_${toastId}`]();
+        } else {
+            // Fallback: use Toastify if available
+            if (typeof Toastify !== 'undefined') {
+                Toastify({
+                    text: message,
+                    duration: 5000,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: type === 'success' ? "#10b981" : "#ef4444",
+                    stopOnFocus: true,
+                }).showToast();
+            } else {
+                // Ultimate fallback
+                console.log(`${type.toUpperCase()}:`, message);
             }
         }
-        
-        // Show toast using Toastify
-        Toastify({
-            text: title + ': ' + message,
-            duration: 3000,
-            gravity: "top",
-            position: "right",
-            style: {
-                background: type === 'success' ? '#10B981' : 
-                           type === 'error' ? '#EF4444' : 
-                           type === 'warning' ? '#F59E0B' : '#6B7280'
-            }
-        }).showToast();
+    } catch (error) {
+        console.error('Error showing toast:', error);
+        console.log(`${type.toUpperCase()}:`, message);
     }
 }

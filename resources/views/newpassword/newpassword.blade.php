@@ -1565,12 +1565,41 @@ A VERTICAL event
             </div>
         </div>
         
-        <!-- Notification templates -->
-        <x-notification-toast id="login_toast_success" type="success" title="Success" message="Login successful" :show-button="false" />
-        <x-notification-toast id="login_toast_error" type="error" title="Login failed" :show-button="false">
-            <div id="login-error-message-slot" class="text-slate-500 mt-1"></div>
-        </x-notification-toast>
-        <x-notification-toast id="login_toast_warning" type="warning" title="Missing fields" message="Please enter email and password" :show-button="false" />
+        <!-- Notifications -->
+        <div class="intro-y col-span-12">
+            <x-notification-toast id="new_password_toast_success" type="success" title="Success" message="Action completed successfully"
+                :showButton="false" />
+            <x-notification-toast id="new_password_toast_error" type="error" title="Error" :show-button="false">
+                <div id="new_password_error_message_slot" class="text-slate-500 mt-1"></div>
+            </x-notification-toast>
+            <style>
+                .toastify {
+                    background: transparent !important;
+                    box-shadow: none !important;
+                }
+                
+                /* Ensure notification toast content is visible */
+                .toastify-content {
+                    color: #000 !important;
+                    background: #fff !important;
+                    padding: 1rem !important;
+                    border-radius: 0.5rem !important;
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+                }
+                
+                .toastify-content .font-medium {
+                    font-weight: 600 !important;
+                    font-size: 1rem !important;
+                    margin-bottom: 0.5rem !important;
+                    color: #1f2937 !important;
+                }
+                
+                .toastify-content .text-slate-500 {
+                    color: #6b7280 !important;
+                    font-size: 0.875rem !important;
+                }
+            </style>
+        </div>
         
         <!-- BEGIN: JS Assets-->
         <!-- END: JS Assets-->
