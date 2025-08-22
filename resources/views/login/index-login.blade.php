@@ -1548,6 +1548,29 @@ A VERTICAL event
                         <h2 class="intro-x font-bold text-2xl xl:text-3xl text-center xl:text-left">
                             Sign In
                         </h2>
+                        @if(isset($announcements) && $announcements->count() > 0)
+                        <div class="col-span-12 mt-8 -mb-8 intro-y">
+                            @foreach($announcements as $announcement)
+                            <div class="alert alert-dismissible show box bg-primary text-white flex items-center mb-4" role="alert">
+                                <div class="flex-1">
+                                    <div class="font-semibold mb-1">{{ $announcement->type }}</div>
+                                    <div class="text-sm opacity-90">{{ $announcement->description }}</div>
+                                </div>
+                                <button type="button" class="btn-close text-white ml-3" data-tw-dismiss="alert" aria-label="Close"> 
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="x" data-lucide="x" class="lucide lucide-x w-4 h-4"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> 
+                                </button>
+                            </div>
+                            @endforeach
+                        </div>
+                        @else
+                        <div class="col-span-12 mt-6 -mb-6 intro-y">
+                            <div class="alert alert-dismissible show box bg-primary text-white flex items-center mb-6" role="alert">
+                                <span>Welcome to Golden Country Homes! Manage all your property accounts in one place.</span>
+                                <button type="button" class="btn-close text-white" data-tw-dismiss="alert" aria-label="Close"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="x" data-lucide="x" class="lucide lucide-x w-4 h-4"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> </button>
+                            </div>
+                        </div>
+                        @endif
+                        
                         <div class="intro-x mt-2 text-slate-400 xl:hidden text-center">A few more clicks to sign in to your account. Manage all your e-commerce accounts in one place</div>
                         <div class="intro-x mt-8">
                             <input type="text" id="login-email" class="intro-x login__input form-control py-3 px-4 block" placeholder="Email">

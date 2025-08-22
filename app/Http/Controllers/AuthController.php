@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Request\LoginRequest;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use App\Models\tbl_announcement;
 
 class AuthController extends Controller
 {
@@ -16,7 +17,13 @@ class AuthController extends Controller
      */
     public function loginView()
     {
-        return view('login.index-login');
+        // Fetch active public announcements
+        $announcements = tbl_announcement::where('status', 'Active')
+            ->where('visible_to', 'public')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('login.index-login', compact('announcements'));
     }
 
     /**
