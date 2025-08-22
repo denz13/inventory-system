@@ -24,6 +24,7 @@ use App\Http\Controllers\feedback\FeedbackController;
 use App\Http\Controllers\feedbackmanagement\FeedbackManagementController;
 use App\Http\Controllers\profilemanagement\ProfileManagementController;
 use App\Http\Controllers\appointment\AppointmentController;
+use App\Http\Controllers\viewappointment\ViewAppointmentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -52,9 +53,14 @@ Route::controller(AuthController::class)->middleware('loggedin')->group(function
 // Appointment routes
 Route::get('appointment', [AppointmentController::class, 'index'])->name('appointment.index');
 Route::post('appointment', [AppointmentController::class, 'store'])->name('appointment.store');
+Route::get('appointment/next-id', [AppointmentController::class, 'getNextId'])->name('appointment.next-id');
 Route::get('appointment/{id}', [AppointmentController::class, 'show'])->name('appointment.show');
 Route::put('appointment/{id}', [AppointmentController::class, 'update'])->name('appointment.update');
 Route::delete('appointment/{id}', [AppointmentController::class, 'destroy'])->name('appointment.destroy');
+
+// View Appointment routes
+Route::get('view-appointments', [ViewAppointmentController::class, 'index'])->name('view-appointments.index');
+Route::post('view-appointments/track', [ViewAppointmentController::class, 'getAppointmentByTrackingNumber'])->name('view-appointments.track');
 
 // Root redirect
 Route::get('/', function () {
