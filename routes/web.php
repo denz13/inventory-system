@@ -29,6 +29,7 @@ use App\Http\Controllers\appointmentmanagement\AppointmentManagementController;
 use App\Http\Controllers\forgotpassword\ForgotPasswordController;
 use App\Http\Controllers\otp\OtpController;
 use App\Http\Controllers\newpassword\NewPasswordController;
+use App\Http\Controllers\vehicle\VehicleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -182,6 +183,7 @@ Route::middleware('auth')->group(function() {
 
     // Appointment Management routes
     Route::get('appointment-management', [AppointmentManagementController::class, 'index'])->name('appointment-management.index');
+    Route::get('appointment-management/{id}', [AppointmentManagementController::class, 'show'])->name('appointment-management.show');
     Route::put('appointment-management/{id}/status', [AppointmentManagementController::class, 'updateStatus'])->name('appointment-management.updateStatus');
     Route::delete('appointment-management/{id}', [AppointmentManagementController::class, 'destroy'])->name('appointment-management.destroy');
 
@@ -248,6 +250,9 @@ Route::middleware('auth')->group(function() {
     Route::get('feedback/{id}', [FeedbackController::class, 'show'])->name('feedback.show');
     Route::put('feedback/{id}', [FeedbackController::class, 'update'])->name('feedback.update');
     Route::delete('feedback/{id}', [FeedbackController::class, 'destroy'])->name('feedback.destroy');
+
+    // Vehicle routes
+    Route::get('vehicle', [VehicleController::class, 'index'])->name('vehicle.index');
 
     
     // // Named route for menu system

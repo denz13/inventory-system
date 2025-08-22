@@ -15,6 +15,23 @@ class AppointmentManagementController extends Controller
         return view('appointment-management.appointment-management', compact('appointments'));
     }
 
+    public function show($id)
+    {
+        try {
+            $appointment = tbl_appointment::findOrFail($id);
+            
+            return response()->json([
+                'success' => true,
+                'appointment' => $appointment
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Appointment not found'
+            ], 404);
+        }
+    }
+
     public function updateStatus(Request $request, $id)
     {
         $request->validate([

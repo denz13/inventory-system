@@ -211,6 +211,12 @@
             </ul>
         </li>
         <li>
+            <a href="{{ route('vehicle.index') }}" class="side-menu">
+                <div class="side-menu__icon"> <i data-lucide="car"></i> </div>
+                <div class="side-menu__title"> Vehicle </div>
+            </a>
+        </li>
+        <li>
             <a href="javascript:;" class="side-menu">
                 <div class="side-menu__icon"> <i data-lucide="trello"></i> </div>
                 <div class="side-menu__title">

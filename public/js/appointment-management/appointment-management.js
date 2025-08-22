@@ -3,7 +3,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
   if (table) {
     table.addEventListener('click', async function (e) {
-      var viewBtn = e.target.closest('[data-tw-toggle="modal"][data-tw-target="#view-appointment-modal"]');
       var approveBtn = e.target.closest('[data-action="approve"]');
       var cancelBtn = e.target.closest('[data-action="cancel"]');
       var completeBtn = e.target.closest('[data-action="complete"]');
@@ -11,16 +10,15 @@ document.addEventListener('DOMContentLoaded', function () {
       
       // Debug logging
       console.log('Click detected:', e.target);
-      console.log('View button found:', !!viewBtn);
       console.log('Approve button found:', !!approveBtn);
       console.log('Cancel button found:', !!cancelBtn);
       console.log('Complete button found:', !!completeBtn);
       console.log('Delete button found:', !!deleteBtn);
       
-      if (!viewBtn && !approveBtn && !cancelBtn && !completeBtn && !deleteBtn) return;
+      if (!approveBtn && !cancelBtn && !completeBtn && !deleteBtn) return;
       e.preventDefault();
       
-      var id = (viewBtn || approveBtn || cancelBtn || completeBtn || deleteBtn).getAttribute('data-appointment-id') || 
+      var id = (approveBtn || cancelBtn || completeBtn || deleteBtn).getAttribute('data-appointment-id') || 
                (deleteBtn).getAttribute('data-id');
       if (!id) return;
 
@@ -28,23 +26,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (deleteBtn) {
         document.getElementById('deleteAppointmentId').value = id;
-        return;
-      }
-
-      if (viewBtn) {
-        try {
-          const resp = await fetch('/appointment-management/' + id);
-          if (!resp.ok) throw new Error(await resp.text());
-          const data = await resp.json();
-          loadAppointmentDetails(data);
-        } catch (err) {
-          console.error(err);
-          var slot = document.getElementById('appointments-error-message-slot');
-          if (slot) slot.textContent = 'Failed to load appointment';
-          if (typeof window.showNotification_appointments_toast_error === 'function') {
-            window.showNotification_appointments_toast_error();
-          }
-        }
         return;
       }
 
@@ -313,6 +294,43 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
   });
+
+  // Add event listener for view modal shown event
+  const viewModal = document.getElementById('view-appointment-modal');
+  if (viewModal) {
+    // Listen for when the modal is shown
+    viewModal.addEventListener('show.tw.modal', function (event) {
+      // Get the appointment ID from the button that triggered the modal
+      const triggerButton = document.querySelector('[data-tw-toggle="modal"][data-tw-target="#view-appointment-modal"]:focus');
+      if (triggerButton) {
+        const appointmentId = triggerButton.getAttribute('data-appointment-id');
+        if (appointmentId) {
+          loadAppointmentData(appointmentId);
+        }
+      }
+    });
+  }
+
+  // Function to load appointment data when modal is shown
+  async function loadAppointmentData(appointmentId) {
+    try {
+      const resp = await fetch('/appointment-management/' + appointmentId);
+      if (!resp.ok) throw new Error(await resp.text());
+      const data = await resp.json();
+      if (data.success && data.appointment) {
+        loadAppointmentDetails(data.appointment);
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (err) {
+      console.error(err);
+      var slot = document.getElementById('appointments-error-message-slot');
+      if (slot) slot.textContent = 'Failed to load appointment';
+      if (typeof window.showNotification_appointments_toast_error === 'function') {
+        window.showNotification_appointments_toast_error();
+      }
+    }
+  }
 });
 
 // Confirm approve appointment function
