@@ -25,6 +25,7 @@ use App\Http\Controllers\feedbackmanagement\FeedbackManagementController;
 use App\Http\Controllers\profilemanagement\ProfileManagementController;
 use App\Http\Controllers\appointment\AppointmentController;
 use App\Http\Controllers\viewappointment\ViewAppointmentController;
+use App\Http\Controllers\appointmentmanagement\AppointmentManagementController;
 
 /*
 |--------------------------------------------------------------------------
@@ -162,6 +163,11 @@ Route::middleware('auth')->group(function() {
     Route::get('profile-management/businesses/{id}', [ProfileManagementController::class, 'getBusiness'])->name('profile-management.businesses.show');
     Route::put('profile-management/businesses/{id}', [ProfileManagementController::class, 'updateBusiness'])->name('profile-management.businesses.update');
     Route::delete('profile-management/businesses/{id}', [ProfileManagementController::class, 'deleteBusiness'])->name('profile-management.businesses.destroy');
+
+    // Appointment Management routes
+    Route::get('appointment-management', [AppointmentManagementController::class, 'index'])->name('appointment-management.index');
+    Route::put('appointment-management/{id}/status', [AppointmentManagementController::class, 'updateStatus'])->name('appointment-management.updateStatus');
+    Route::delete('appointment-management/{id}', [AppointmentManagementController::class, 'destroy'])->name('appointment-management.destroy');
 
     // Temporary debug route
     Route::get('debug/business/{id}', function($id) {
