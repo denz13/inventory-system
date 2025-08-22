@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\tbl_tenant_list;
+use App\Models\business_management_list;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -30,7 +31,12 @@ class ProfileManagementController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->get();
 
-            return view('profile-management.profile-management', compact('user', 'stats', 'tenants'));
+            // Get user's businesses
+            $businesses = business_management_list::where('user_id', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return view('profile-management.profile-management', compact('user', 'stats', 'tenants', 'businesses'));
         } catch (\Exception $e) {
             return back()->with('error', 'Error loading profile: ' . $e->getMessage());
         }
@@ -59,9 +65,34 @@ class ProfileManagementController extends Controller
                 'caretaker_contact_number' => 'nullable|string|max:20',
                 'caretaker_email' => 'nullable|email|max:255',
                 'incase_of_emergency' => 'nullable|string|max:255',
+                'signature_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             ]);
 
             $user = Auth::user();
+            
+            // Handle signature image upload
+            $signatureImagePath = $user->signature_image; // Keep existing if no new upload
+            
+            // Clean up existing signature path if it contains full path
+            if ($signatureImagePath && strpos($signatureImagePath, 'signatures/') === 0) {
+                $signatureImagePath = basename($signatureImagePath);
+            }
+            
+            if ($request->hasFile('signature_image')) {
+                $signatureFile = $request->file('signature_image');
+                $signatureFileName = 'signature_' . time() . '_' . $user->id . '.' . $signatureFile->getClientOriginalExtension();
+                
+                // Store in storage/app/public/signatures
+                $signatureFile->storeAs('signatures', $signatureFileName, 'public');
+                
+                // Store only the filename in database, not the full path
+                $signatureImagePath = $signatureFileName;
+                
+                // Delete old signature if exists
+                if ($user->signature_image && Storage::disk('public')->exists('signatures/' . basename($user->signature_image))) {
+                    Storage::disk('public')->delete('signatures/' . basename($user->signature_image));
+                }
+            }
             
             // All fields are varchar in database, so we can use them directly
             $updateData = [
@@ -84,6 +115,7 @@ class ProfileManagementController extends Controller
                 'caretaker_contact_number' => $request->caretaker_contact_number,
                 'caretaker_email' => $request->caretaker_email,
                 'incase_of_emergency' => $request->incase_of_emergency,
+                'signature_image' => $signatureImagePath,
             ];
 
             $user->update($updateData);
@@ -105,18 +137,19 @@ class ProfileManagementController extends Controller
     {
         try {
             $request->validate([
-                'current_password' => 'required',
-                'new_password' => 'required|min:8|confirmed',
+                'current_password' => 'required|string',
+                'new_password' => 'required|string|min:8|confirmed',
+                'new_password_confirmation' => 'required|string',
             ]);
 
             $user = Auth::user();
 
-            // Check current password
+            // Check if current password is correct
             if (!Hash::check($request->current_password, $user->password)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Current password is incorrect'
-                ], 400);
+                ]);
             }
 
             // Update password
@@ -126,13 +159,13 @@ class ProfileManagementController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Password changed successfully'
+                'message' => 'Password changed successfully!'
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Error changing password: ' . $e->getMessage()
-            ], 500);
+            ]);
         }
     }
 
@@ -403,6 +436,274 @@ class ProfileManagementController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error retrieving tenant: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Business Management Methods
+    public function addBusiness(Request $request)
+    {
+        try {
+            $request->validate([
+                'type_of_business' => 'required|string|max:255',
+                'business_name' => 'required|string|max:255',
+                'address' => 'nullable|string|max:255',
+            ]);
+
+            $user = Auth::user();
+
+            $businessData = [
+                'user_id' => $user->id,
+                'type_of_business' => $request->type_of_business,
+                'business_name' => $request->business_name,
+                'address' => $request->address,
+                'status' => 'pending', // Always set to pending
+            ];
+
+            // Handle business clearance file upload
+            if ($request->hasFile('business_clearance')) {
+                $file = $request->file('business_clearance');
+                $fileName = 'clearance_' . time() . '_' . $user->id . '.' . $file->getClientOriginalExtension();
+                
+                // Store in storage/app/public/business-clearances
+                $file->storeAs('business-clearances', $fileName, 'public');
+                
+                // Store only the filename in database
+                $businessData['business_clearance'] = $fileName;
+            }
+
+            $business = business_management_list::create($businessData);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Business added successfully',
+                'business' => $business->fresh()
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Business creation error: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error adding business: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateBusiness(Request $request, $id)
+    {
+        try {
+            \Log::info('Updating business - FULL REQUEST INFO', [
+                'business_id' => $id,
+                'user_id' => Auth::id(),
+                'request_method' => $request->method(),
+                'request_url' => $request->url(),
+                'request_headers' => $request->headers->all(),
+                'request_data' => $request->all(),
+                'request_files' => $request->allFiles(),
+                'has_business_clearance' => $request->hasFile('business_clearance'),
+                'business_clearance_size' => $request->file('business_clearance') ? $request->file('business_clearance')->getSize() : 'no file',
+                'content_type' => $request->header('Content-Type'),
+                'content_length' => $request->header('Content-Length')
+            ]);
+            
+            // Temporarily simplify validation to isolate the issue
+            $request->validate([
+                'type_of_business' => 'required|string|max:255',
+                'business_name' => 'required|string|max:255',
+                'address' => 'nullable|string|max:255',
+            ]);
+
+            $user = Auth::user();
+            $business = business_management_list::where('id', $id)
+                ->where('user_id', $user->id)
+                ->first();
+
+            if (!$business) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Business not found or you do not have permission to update this business'
+                ], 404);
+            }
+
+            $businessData = [
+                'type_of_business' => $request->type_of_business,
+                'business_name' => $request->business_name,
+                'address' => $request->address,
+            ];
+
+            // If business was declined, automatically set status to pending for re-review
+            if (strtolower($business->status) === 'declined') {
+                $businessData['status'] = 'pending';
+                $businessData['reason'] = null; // Clear the decline reason
+            }
+
+            // Handle business clearance file upload
+            if ($request->hasFile('business_clearance')) {
+                $file = $request->file('business_clearance');
+                $fileName = 'clearance_' . time() . '_' . $user->id . '.' . $file->getClientOriginalExtension();
+                
+                // Store in storage/app/public/business-clearances
+                $file->storeAs('business-clearances', $fileName, 'public');
+                
+                // Delete old clearance file if exists
+                if ($business->business_clearance && Storage::disk('public')->exists('business-clearances/' . $business->business_clearance)) {
+                    Storage::disk('public')->delete('business-clearances/' . $business->business_clearance);
+                }
+                
+                // Store only the filename in database
+                $businessData['business_clearance'] = $fileName;
+            }
+
+            // Update the business
+            $business->update($businessData);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Business updated successfully' . (strtolower($business->status) === 'declined' ? ' and status reset to pending for re-review' : ''),
+                'business' => $business->fresh()
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Business update validation failed', [
+                'business_id' => $id,
+                'user_id' => Auth::id(),
+                'validation_errors' => $e->errors(),
+                'request_data' => $request->all()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Business update error: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'business_id' => $id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating business: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function deleteBusiness($id)
+    {
+        try {
+            $user = Auth::user();
+            $business = business_management_list::where('id', $id)
+                ->where('user_id', $user->id)
+                ->first();
+
+            if (!$business) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Business not found or you do not have permission to delete this business'
+                ], 404);
+            }
+
+            // Delete business clearance file if exists
+            if ($business->business_clearance && Storage::disk('public')->exists('business-clearances/' . $business->business_clearance)) {
+                Storage::disk('public')->delete('business-clearances/' . $business->business_clearance);
+            }
+
+            // Delete the business
+            $business->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Business deleted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Business deletion error: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'business_id' => $id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting business: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getBusiness($id)
+    {
+        try {
+            \Log::info('Attempting to get business', [
+                'business_id' => $id, 
+                'user_id' => Auth::id(),
+                'user_authenticated' => Auth::check(),
+                'request_method' => request()->method(),
+                'request_url' => request()->url()
+            ]);
+            
+            $user = Auth::user();
+            
+            if (!$user) {
+                \Log::error('User not authenticated');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
+            
+            $business = business_management_list::where('id', $id)
+                ->where('user_id', $user->id)
+                ->first();
+
+            \Log::info('Business query result', [
+                'business_found' => $business ? true : false, 
+                'business_data' => $business,
+                'query_sql' => business_management_list::where('id', $id)->where('user_id', $user->id)->toSql(),
+                'query_bindings' => ['id' => $id, 'user_id' => $user->id]
+            ]);
+
+            if (!$business) {
+                \Log::warning('Business not found or access denied', [
+                    'business_id' => $id, 
+                    'user_id' => $user->id,
+                    'all_businesses_for_user' => business_management_list::where('user_id', $user->id)->pluck('id')->toArray()
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Business not found or you do not have permission to view this business'
+                ], 404);
+            }
+
+            \Log::info('Business retrieved successfully', ['business' => $business->toArray()]);
+
+            return response()->json([
+                'success' => true,
+                'business' => $business
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error retrieving business: ' . $e->getMessage(), [
+                'business_id' => $id,
+                'user_id' => Auth::id(),
+                'exception_class' => get_class($e),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving business: ' . $e->getMessage()
             ], 500);
         }
     }

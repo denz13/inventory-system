@@ -1,6 +1,9 @@
 @extends('layout._partials.master')
 
+@section('title', 'Profile Management')
+
 @section('content')
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <div class="intro-y flex items-center mt-8">
     <h2 class="text-lg font-medium mr-auto">
         Profile Management
@@ -107,10 +110,6 @@
         <li id="add-tenant-tab" class="nav-item" role="presentation">
             <a href="javascript:;" class="nav-link py-4 flex items-center" data-tw-target="#add-tenant" aria-selected="false" role="tab"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="users" class="lucide lucide-users w-4 h-4 mr-2" data-lucide="users"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 00-3-3.87"></path><path d="M16 3.13a4 4 0 010 7.75"></path></svg> Add Tenant </a>
         </li>
-        <li id="change-password-tab" class="nav-item" role="presentation">
-            <a href="javascript:;" class="nav-link py-4 flex items-center" data-tw-target="#change-password" aria-selected="false" role="tab"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="lock" class="lucide lucide-lock w-4 h-4 mr-2" data-lucide="lock"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0110 0v4"></path></svg> Change Password </a>
-        </li>
-
         <li id="settings-tab" class="nav-item" role="presentation">
             <a href="javascript:;" class="nav-link py-4 flex items-center" data-tw-target="#settings" aria-selected="false" role="tab"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="settings" class="lucide lucide-settings w-4 h-4 mr-2" data-lucide="settings"><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg> Settings </a>
         </li>
@@ -219,6 +218,26 @@
                             <div class="mb-5">
                                 <label class="form-label font-medium">In Case of Emergency</label>
                                 <input type="text" name="incase_of_emergency" class="form-control" value="{{ $user->incase_of_emergency ?? '' }}" placeholder="Enter emergency contact">
+                            </div>
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Signature Image</label>
+                                <div class="flex items-center space-x-3">
+                                    @if($user->signature_image)
+                                        <div class="w-20 h-20 border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-400 transition-colors signature-image-clickable" data-signature-src="{{ asset('storage/signatures/' . $user->signature_image) }}">
+                                            <img src="{{ asset('storage/signatures/' . $user->signature_image) }}" alt="Current Signature" class="w-16 h-16 object-contain">
+                                        </div>
+                                    @else
+                                        <div class="w-20 h-20 border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center">
+                                            <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                            </svg>
+                                        </div>
+                                    @endif
+                                    <div class="flex-1">
+                                        <input type="file" name="signature_image" class="form-control" accept="image/*" id="signatureImageInput">
+                                        <div class="text-xs text-slate-500 mt-1">Upload your signature image (JPG, PNG, GIF - max 2MB)</div>
+                                    </div>
+                                </div>
                             </div>
                             <div class="mb-5">
                                 <label class="form-label font-medium">Membership Fee</label>
@@ -350,6 +369,25 @@
                                 <label class="form-label font-medium">In Case of Emergency</label>
                                 <div class="mt-1 text-slate-600" data-field="incase_of_emergency">{{ $user->incase_of_emergency ?? 'Not provided' }}</div>
                             </div>
+                            <!-- Signature Image -->
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Signature Image</label>
+                                <div class="mt-1 text-slate-600" data-field="signature_image">
+                                    @if($user->signature_image)
+                                        <img src="{{ asset('storage/signatures/' . $user->signature_image) }}" 
+                                             alt="Signature" 
+                                             class="w-16 h-16 object-contain rounded-full border-2 border-slate-200 cursor-pointer hover:border-blue-400 transition-colors signature-image-clickable"
+                                             data-signature-src="{{ asset('storage/signatures/' . $user->signature_image) }}"
+                                             title="Click to view larger image">
+                                    @else
+                                        <div class="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center border-2 border-dashed border-slate-300">
+                                            <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                            </svg>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
                             <!-- Membership Fee -->
                             <div class="mb-5">
                                 <label class="form-label font-medium">Membership Fee</label>
@@ -369,48 +407,66 @@
                 </div>
             </div>
             <!-- END: Personal Information -->
-            
-            <!-- BEGIN: Recent Activity -->
+
+            <!-- BEGIN: Change Password -->
             <div class="intro-y box col-span-12 lg:col-span-6">
-                <div class="flex items-center px-5 py-5 sm:py-0 border-b border-slate-200/60 dark:border-darkmode-400">
+                <div class="flex items-center px-5 py-5 sm:py-3 border-b border-slate-200/60 dark:border-darkmode-400">
                     <h2 class="font-medium text-base mr-auto">
-                        Recent Activity
+                        Change Password
                     </h2>
                 </div>
                 <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="border-l-2 border-primary dark:border-primary pl-4">
-                            <a href="" class="font-medium">Profile Updated</a> 
-                            <div class="text-slate-500">10:00 AM</div>
+                    <form id="changePasswordForm">
+                        @csrf
+                        <div class="space-y-5">
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Current Password *</label>
+                                <input type="password" class="form-control" name="current_password" placeholder="Enter current password" required>
+                            </div>
+                            <div class="mb-5">
+                                <label class="form-label font-medium">New Password *</label>
+                                <input type="password" class="form-control" name="new_password" placeholder="Enter new password" required>
+                            </div>
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Confirm New Password *</label>
+                                <input type="password" class="form-control" name="new_password_confirmation" placeholder="Confirm new password" required>
+                            </div>
+                            <div class="flex justify-end">
+                                <button type="submit" class="btn btn-primary">Change Password</button>
+                            </div>
                         </div>
-                        <div class="form-check form-switch ml-auto">
-                            <div class="w-3 h-3 bg-success rounded-full"></div>
-                        </div>
-                    </div>
-                    <div class="flex items-center mt-5">
-                        <div class="border-l-2 border-primary dark:border-primary pl-4">
-                            <a href="" class="font-medium">Password Changed</a> 
-                            <div class="text-slate-500">02:00 PM</div>
-                        </div>
-                        <div class="form-check form-switch ml-auto">
-                            <div class="w-3 h-3 bg-success rounded-full"></div>
-                        </div>
-                    </div>
-                    <div class="flex items-center mt-5">
-                        <div class="border-l-2 border-primary dark:border-primary pl-4">
-                            <a href="" class="font-medium">Settings Updated</a> 
-                            <div class="text-slate-500">04:00 PM</div>
-                        </div>
-                        <div class="form-check form-switch ml-auto">
-                            <div class="w-3 h-3 bg-success rounded-full"></div>
-                        </div>
-                    </div>
+                    </form>
                 </div>
             </div>
-            <!-- END: Recent Activity -->
+            <!-- END: Change Password -->
         </div>
     </div>
     <!-- END: Profile Tab -->
+    
+    <!-- Signature Image Modal -->
+    <div id="signature-modal" class="modal" data-tw-backdrop="static" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="font-medium text-base mr-auto">Signature Image</h2>
+                    <button type="button" class="btn-close" data-tw-dismiss="modal" aria-label="Close">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x">
+                            <path d="M18 6 6 18"></path>
+                            <path d="m6 6 12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body p-6">
+                    <div class="text-center">
+                        <img id="signature-modal-image" src="" alt="Signature" class="max-w-full max-h-96 object-contain mx-auto border rounded-lg shadow-lg">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-tw-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
     
     <!-- BEGIN: Account Tab -->
     <div id="account" class="tab-pane" role="tabpanel" aria-labelledby="account-tab">
@@ -453,38 +509,145 @@
         </div>
     </div>
     <!-- END: Account Tab -->
-    
-    <!-- BEGIN: Change Password Tab -->
-    <div id="change-password" class="tab-pane" role="tabpanel" aria-labelledby="change-password-tab">
-        <div class="intro-y box">
-            <div class="flex items-center px-5 py-5 sm:py-3 border-b border-slate-200/60 dark:border-darkmode-400">
-                <h2 class="font-medium text-base mr-auto">
-                    Change Password
-                </h2>
+
+    <!-- BEGIN: Add Business Tab -->
+    <div id="add-business" class="tab-pane" role="tabpanel" aria-labelledby="add-business-tab">
+        <div class="grid grid-cols-12 gap-6">
+            <!-- BEGIN: Add Business Form -->
+            <div class="col-span-12 mt-6 -mb-6 intro-y">
+                <div class="alert alert-dismissible show box bg-primary text-white flex items-center mb-6" role="alert">
+                    <span>Add New Business: Add a new business to your profile. The My Businesses section will display all your businesses. If the status is approved, the edit button and delete button will not be available. When you update a declined business, its status will automatically reset to pending for re-review.</span>
+                    <button type="button" class="btn-close text-white" data-tw-dismiss="alert" aria-label="Close"> 
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="x" data-lucide="x" class="lucide lucide-x w-4 h-4">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg> 
+                    </button>
+                </div>
             </div>
-            <div class="p-5">
-                <form id="changePasswordForm">
-                    @csrf
-                    <div class="mt-3">
-                        <label for="currentPassword" class="form-label">Current Password</label>
-                        <input id="currentPassword" name="current_password" type="password" class="form-control" required>
-                    </div>
-                    <div class="mt-3">
-                        <label for="newPassword" class="form-label">New Password</label>
-                        <input id="newPassword" name="new_password" type="password" class="form-control" required>
-                    </div>
-                    <div class="mt-3">
-                        <label for="confirmPassword" class="form-label">Confirm New Password</label>
-                        <input id="confirmPassword" name="new_password_confirmation" type="password" class="form-control" required>
-                    </div>
-                    <div class="flex justify-end mt-6">
-                        <button type="submit" class="btn btn-primary">Change Password</button>
-                    </div>
-                </form>
+            <div class="intro-y box col-span-12 lg:col-span-6">
+                <div class="flex items-center px-5 py-5 sm:py-3 border-b border-slate-200/60 dark:border-darkmode-400">
+                    <h2 class="font-medium text-base mr-auto">
+                        Add New Business
+                    </h2>
+                </div>
+                <div class="p-5">
+                    <form id="addBusinessForm">
+                        @csrf
+                        <div class="space-y-5">
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Type of Business *</label>
+                                <input type="text" class="form-control" name="type_of_business" placeholder="Enter type of business" required>
+                            </div>
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Business Name *</label>
+                                <input type="text" class="form-control" name="business_name" placeholder="Enter business name" required>
+                            </div>
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Business Clearance</label>
+                                <input type="file" class="form-control" name="business_clearance" accept=".pdf,.jpg,.jpeg,.png">
+                                <div class="text-xs text-slate-500 mt-1">Upload business clearance document (PDF, JPG, PNG - max 2MB)</div>
+                            </div>
+                            <div class="mb-5">
+                                <label class="form-label font-medium">Address</label>
+                                <textarea class="form-control" name="address" rows="3" placeholder="Enter business address"></textarea>
+                            </div>
+                        </div>
+                        <div class="flex justify-end mt-6">
+                            <button type="submit" class="btn btn-primary">Add Business</button>
+                        </div>
+                    </form>
+                </div>
             </div>
+            <!-- END: Add Business Form -->
+
+            <!-- BEGIN: Business List -->
+            <div class="intro-y box col-span-12 lg:col-span-6">
+                <div class="flex items-center px-5 py-5 sm:py-3 border-b border-slate-200/60 dark:border-darkmode-400">
+                    <h2 class="font-medium text-base mr-auto">
+                        My Businesses
+                    </h2>
+                </div>
+                <div class="p-5">
+                    @if($businesses->count() > 0)
+                        <div class="space-y-4">
+                            @foreach($businesses as $business)
+                                <div class="border rounded-lg p-4 hover:bg-slate-50 transition-colors">
+                                    <div class="flex justify-between items-start mb-3">
+                                        <div>
+                                            <h3 class="font-medium text-lg">{{ $business->business_name }}</h3>
+                                            <p class="text-slate-600">{{ $business->type_of_business }}</p>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <span class="px-2 py-1 text-xs rounded-full {{ $business->status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                                {{ ucfirst($business->status) }}
+                                            </span>
+                                            @if(strtolower($business->status) !== 'approved')
+                                                <button class="btn btn-outline-secondary btn-sm" data-tw-toggle="modal" data-tw-target="#edit-business-modal" data-business-id="{{ $business->id }}">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+                                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                        <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                                    </svg>
+                                                </button>
+                                                @if(strtolower($business->status) !== 'declined')
+                                                    <button class="btn btn-outline-danger btn-sm" data-tw-toggle="modal" data-tw-target="#delete-business-modal" onclick="prepareDeleteBusiness({{ $business->id }}, '{{ $business->business_name }}')">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+                                                            <polyline points="3 6 5 6 21 6"></polyline>
+                                                            <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+                                                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                                                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                                                        </svg>
+                                                    </button>
+                                                @endif
+                                            @endif
+                                        </div>
+                                    </div>
+                                    @if($business->business_clearance)
+                                        <p class="text-sm text-slate-600 mb-2">
+                                            <span class="font-medium">Clearance:</span> 
+                                            <a href="{{ asset('storage/business-clearances/' . $business->business_clearance) }}" 
+                                               target="_blank" 
+                                               class="text-blue-600 hover:text-blue-800 underline">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 inline mr-1">
+                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                    <polyline points="14,2 14,8 20,8"></polyline>
+                                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                                    <polyline points="10,9 9,9 8,9"></polyline>
+                                                </svg>
+                                                View Clearance
+                                            </a>
+                                        </p>
+                                    @endif
+                                    @if($business->address)
+                                        <p class="text-sm text-slate-600">
+                                            <span class="font-medium">Address:</span> {{ $business->address }}
+                                        </p>
+                                    @endif
+                                    @if($business->reason)
+                                        <p class="text-sm text-slate-600">
+                                            <span class="font-medium">Reason:</span> {{ $business->reason }}
+                                        </p>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="text-center py-8">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-slate-400 mx-auto mb-4">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                <polyline points="9,22 9,12 15,12 15,22"></polyline>
+                            </svg>
+                            <p class="text-slate-500">No businesses added yet.</p>
+                            <p class="text-slate-400 text-sm">Add your first business using the form on the left.</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+            <!-- END: Business List -->
         </div>
     </div>
-    <!-- END: Change Password Tab -->
+    <!-- END: Add Business Tab -->
     
     <!-- BEGIN: Settings Tab -->
     <div id="settings" class="tab-pane" role="tabpanel" aria-labelledby="settings-tab">
@@ -796,6 +959,83 @@
                         <button type="button" class="btn btn-outline-secondary w-24" data-tw-dismiss="modal">Cancel</button>
                         <button type="button" class="btn btn-primary w-24" id="confirm-upload-btn">Upload</button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Business Modal -->
+<div id="edit-business-modal" class="modal" data-tw-backdrop="static" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="font-medium text-base mr-auto">Edit Business</h2>
+                <button type="button" class="btn btn-outline-secondary w-8 h-8 mr-1" data-tw-dismiss="modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x w-4 h-4"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body px-5 py-5">
+                <form id="editBusinessForm">
+                    @csrf
+                    <input type="hidden" id="editBusinessId" name="business_id">
+                    <div class="grid grid-cols-1 gap-5">
+                        <div>
+                            <label for="editBusinessType" class="form-label">Type of Business *</label>
+                            <input id="editBusinessType" name="type_of_business" type="text" class="form-control" required>
+                        </div>
+                        <div>
+                            <label for="editBusinessName" class="form-label">Business Name *</label>
+                            <input id="editBusinessName" name="business_name" type="text" class="form-control" required>
+                        </div>
+                        <div>
+                            <label for="editBusinessClearance" class="form-label">Business Clearance</label>
+                            <input id="editBusinessClearance" name="business_clearance" type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                            <div class="text-xs text-slate-500 mt-1">Upload new clearance document (PDF, JPG, PNG - max 2MB) - leave empty to keep current file</div>
+                            <div id="editCurrentClearance" class="mt-3" style="display: none;">
+                                <label class="form-label">Current Clearance:</label>
+                                <div class="mt-2">
+                                    <a id="editCurrentClearanceLink" href="" target="_blank" class="text-blue-600 hover:text-blue-800 underline">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 inline mr-1">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                            <polyline points="14,2 14,8 20,8"></polyline>
+                                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                                            <polyline points="10,9 9,9 8,9"></polyline>
+                                        </svg>
+                                        View Current Clearance
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="editBusinessAddress" class="form-label">Address</label>
+                            <textarea id="editBusinessAddress" name="address" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Form buttons inside the form -->
+                    <div class="modal-footer mt-5">
+                        <button type="button" class="btn btn-outline-secondary w-20 mr-1" data-tw-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary w-20" id="updateBusinessBtn">Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Business Confirmation Modal -->
+<div id="delete-business-modal" class="modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body px-5 py-10">
+                <div class="text-center">
+                    <div class="mb-5">Are you sure you want to delete this business?</div>
+                    <p class="text-red-600 font-medium mb-4" id="deleteBusinessName">Business Name</p>
+                    <input type="hidden" id="deleteBusinessId" />
+                    <button type="button" id="confirmDeleteBusiness" class="btn btn-danger w-24 mr-2">Delete</button>
+                    <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-24">Cancel</button>
                 </div>
             </div>
         </div>
