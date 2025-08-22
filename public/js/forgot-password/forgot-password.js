@@ -18,12 +18,12 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Validate email
             if (!email) {
-                showToast('warning', 'Missing field', 'Please enter your email address');
+                showToast('Please enter your email address', 'warning');
                 return;
             }
             
             if (!isValidEmail(email)) {
-                showToast('error', 'Invalid email', 'Please enter a valid email address');
+                showToast('Please enter a valid email address', 'error');
                 return;
             }
             
@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('CSRF token value:', csrfToken ? csrfToken.getAttribute('content') : 'NOT FOUND');
             
             if (!csrfToken) {
-                showToast('error', 'Error', 'CSRF token not found');
+                showToast('CSRF token not found', 'error');
                 return;
             }
             
@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('Response data:', data);
                 if (data.success) {
                     if (data.show_toast) {
-                        showToast(data.toast_type || 'success', 'OTP Sent', data.message);
+                        showToast(data.message, data.toast_type || 'success');
                     }
                     // Store email in session storage for OTP verification
                     sessionStorage.setItem('reset_email', email);
@@ -78,13 +78,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 1500);
                 } else {
                     if (data.show_toast) {
-                        showToast(data.toast_type || 'error', 'Error', data.message || 'Failed to send OTP');
+                        showToast(data.message || 'Failed to send OTP', data.toast_type || 'error');
                     }
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                showToast('error', 'Error', 'Something went wrong. Please try again.');
+                showToast('Something went wrong. Please try again.', 'error');
             })
             .finally(() => {
                 // Re-enable button
@@ -100,31 +100,40 @@ function isValidEmail(email) {
     return emailRegex.test(email);
 }
 
-function showToast(type, title, message) {
-    console.log('showToast called:', type, title, message);
+// Toast notification function (following announcement pattern)
+function showToast(message, type = 'success') {
+    const toastId = type === 'success' ? 'forgot_password_toast_success' : 'forgot_password_toast_error';
     
-    // Fallback if Toastify is not available
-    if (typeof Toastify === 'undefined') {
-        console.error('Toastify is not loaded');
-        alert(title + ': ' + message);
-        return;
+    if (type === 'error') {
+        // Update error message slot
+        const messageSlot = document.getElementById('forgot_password_error_message_slot');
+        if (messageSlot) {
+            messageSlot.textContent = message;
+        }
     }
     
-    // Show toast using Toastify
+    // Use your notification-toast component's show function
     try {
-        Toastify({
-            text: title + ': ' + message,
-            duration: 3000,
-            gravity: "top",
-            position: "right",
-            style: {
-                background: type === 'success' ? '#10B981' : 
-                           type === 'error' ? '#EF4444' : 
-                           type === 'warning' ? '#F59E0B' : '#6B7280'
+        if (window[`showNotification_${toastId}`]) {
+            window[`showNotification_${toastId}`]();
+        } else {
+            // Fallback: use Toastify if available
+            if (typeof Toastify !== 'undefined') {
+                Toastify({
+                    text: message,
+                    duration: 5000,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: type === 'success' ? "#10b981" : "#ef4444",
+                    stopOnFocus: true,
+                }).showToast();
+            } else {
+                // Ultimate fallback
+                console.log(`${type.toUpperCase()}:`, message);
             }
-        }).showToast();
+        }
     } catch (error) {
         console.error('Error showing toast:', error);
-        alert(title + ': ' + message);
+        console.log(`${type.toUpperCase()}:`, message);
     }
 }
