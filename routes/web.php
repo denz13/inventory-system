@@ -252,7 +252,15 @@ Route::middleware('auth')->group(function() {
     Route::delete('feedback/{id}', [FeedbackController::class, 'destroy'])->name('feedback.destroy');
 
     // Vehicle routes
-    Route::get('vehicle', [VehicleController::class, 'index'])->name('vehicle.index');
+Route::get('vehicle', [VehicleController::class, 'index'])->name('vehicle.index');
+Route::post('vehicle', [VehicleController::class, 'store'])->name('vehicle.store');
+Route::get('vehicle/{id}', [VehicleController::class, 'show'])->name('vehicle.show');
+Route::put('vehicle/{id}', [VehicleController::class, 'update'])->name('vehicle.update');
+Route::delete('vehicle/{id}', [VehicleController::class, 'destroy'])->name('vehicle.destroy');
+        // Soft delete routes
+        Route::patch('vehicle/{id}/restore', [VehicleController::class, 'restore'])->name('vehicle.restore');
+        Route::delete('vehicle/{id}/force', [VehicleController::class, 'forceDelete'])->name('vehicle.force-delete');
+        Route::get('vehicle/trash', [VehicleController::class, 'trash'])->name('vehicle.trash');
 
     
     // // Named route for menu system
