@@ -14,7 +14,22 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
-            MasterSeeder::class,
+            TblAnnouncementSeeder::class,
+            TblAppointmentSeeder::class,
+            TblBankAccountTypeSeeder::class,
+            TblBankAccountCategorySeeder::class,
+            TblBillingManagementSeeder::class,
+            TblBillingManagementListSeeder::class,
+            TblFeedbackSeeder::class,
+            TblIncidentReportSeeder::class,
+            TblOtpSeeder::class,
+            TblServiceManagementTypeSeeder::class,
+            TblServiceManagementCategorySeeder::class,
+            TblServiceManagementComplaintsSeeder::class,
+            TblTenantListSeeder::class,
+            VehicleHomeownersSeeder::class,
+            VehicleHomeownersSupportingDocumentsSeeder::class,
+            VehicleListDetailsHomeownersSeeder::class,
         ]);
     }
 }

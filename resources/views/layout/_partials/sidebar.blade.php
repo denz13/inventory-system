@@ -136,7 +136,7 @@
         </li> --}}
         
         <li class="side-nav__devider my-6"></li>
-        <li>
+        <!-- <li>
             <a href="javascript:;" class="side-menu">
                 <div class="side-menu__icon"> <i data-lucide="edit"></i> </div>
                 <div class="side-menu__title">
@@ -158,7 +158,7 @@
                     </a>
                 </li>
             </ul>
-        </li>
+        </li> -->
         <li>
             <a href="javascript:;" class="side-menu">
                 <div class="side-menu__icon"> <i data-lucide="users"></i> </div>
@@ -684,7 +684,7 @@
                 </li>
             </ul>
         </li> --}}
-        <li>
+        <!-- <li>
             <a href="javascript:;" class="side-menu">
                 <div class="side-menu__icon"> <i data-lucide="hard-drive"></i> </div>
                 <div class="side-menu__title">
@@ -712,6 +712,6 @@
                     </a>
                 </li>
             </ul>
-        </li>
+        </li> -->
     </ul>
 </nav>
