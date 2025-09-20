@@ -1549,24 +1549,30 @@ A VERTICAL event
                             Sign In
                         </h2>
                         @if(isset($announcements) && $announcements->count() > 0)
-                        <div class="col-span-12 mt-8 -mb-8 intro-y">
+                        <div class="col-span-12 mt-8 -mb-8 intro-y" id="announcements-container">
                             @foreach($announcements as $announcement)
-                            <div class="alert alert-dismissible show box bg-primary text-white flex items-center mb-4" role="alert">
+                            <div class="alert alert-dismissible show box bg-primary text-white flex items-center mb-4 announcement-item" 
+                                 data-announcement-id="{{ $announcement->id }}" role="alert">
                                 <div class="flex-1">
                                     <div class="font-semibold mb-1">{{ $announcement->type }}</div>
                                     <div class="text-sm opacity-90">{{ $announcement->description }}</div>
                                 </div>
-                                <button type="button" class="btn-close text-white ml-3" data-tw-dismiss="alert" aria-label="Close"> 
+                                <button type="button" class="btn-close text-white ml-3 announcement-close-btn" 
+                                        data-announcement-id="{{ $announcement->id }}" aria-label="Close"> 
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="x" data-lucide="x" class="lucide lucide-x w-4 h-4"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> 
                                 </button>
                             </div>
                             @endforeach
                         </div>
                         @else
-                        <div class="col-span-12 mt-6 -mb-6 intro-y">
-                            <div class="alert alert-dismissible show box bg-primary text-white flex items-center mb-6" role="alert">
+                        <div class="col-span-12 mt-6 -mb-6 intro-y" id="welcome-message-container">
+                            <div class="alert alert-dismissible show box bg-primary text-white flex items-center mb-6 welcome-message" 
+                                 data-announcement-id="welcome-message" role="alert">
                                 <span>Welcome to Golden Country Homes! Manage all your property accounts in one place.</span>
-                                <button type="button" class="btn-close text-white" data-tw-dismiss="alert" aria-label="Close"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="x" data-lucide="x" class="lucide lucide-x w-4 h-4"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> </button>
+                                <button type="button" class="btn-close text-white announcement-close-btn" 
+                                        data-announcement-id="welcome-message" aria-label="Close"> 
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="x" data-lucide="x" class="lucide lucide-x w-4 h-4"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> 
+                                </button>
                             </div>
                         </div>
                         @endif
@@ -1594,19 +1600,120 @@ A VERTICAL event
         </div>
         
         <!-- Notification templates -->
-        <x-notification-toast id="login_toast_success" type="success" title="Success" message="Login successful" :show-button="false" />
-        <x-notification-toast id="login_toast_error" type="error" title="Login failed" :show-button="false">
+        <x-notification-toast id="login_toast_success" type="success" title="Success" message="Login successful" :show-button="false" position="center" gravity="center" />
+        <x-notification-toast id="login_toast_error" type="error" title="Login failed" :show-button="false" position="center" gravity="center">
             <div id="login-error-message-slot" class="text-slate-500 mt-1"></div>
         </x-notification-toast>
-        <x-notification-toast id="login_toast_warning" type="warning" title="Missing fields" message="Please enter email and password" :show-button="false" />
+        <x-notification-toast id="login_toast_warning" type="warning" title="Missing fields" message="Please enter email and password" :show-button="false" position="center" gravity="center" />
         
         <!-- BEGIN: JS Assets-->
         <!-- END: JS Assets-->
         <style>
         .toastify { background: transparent !important; box-shadow: none !important; }
+        
+        /* Center notification styling */
+        .toastify.toastify-center {
+            left: 50% !important;
+            top: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            right: auto !important;
+            margin: 0 !important;
+        }
+        
+        .toastify-content {
+            background: #fff !important;
+            color: #000 !important;
+            padding: 1.5rem !important;
+            border-radius: 0.75rem !important;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+            border: 1px solid #e5e7eb !important;
+            min-width: 300px !important;
+            max-width: 400px !important;
+        }
+        
+        .toastify-content .font-medium {
+            font-weight: 600 !important;
+            font-size: 1.125rem !important;
+            margin-bottom: 0.5rem !important;
+            color: #1f2937 !important;
+        }
+        
+        .toastify-content .text-slate-500 {
+            color: #6b7280 !important;
+            font-size: 0.875rem !important;
+        }
+        
+        /* CheckCircle SVG icon styling */
+        .toastify-content svg {
+            width: 48px !important;
+            height: 48px !important;
+            margin-right: 1rem !important;
+            color: #10b981 !important;
+        }
         </style>
         <script src="{{ asset('assets/toastify/toastify.js') }}"></script>
-        @stack('scripts')
         <script src="{{ asset('js/login/login.js') }}"></script>
+        @stack('scripts')
+        
+        <!-- Announcement Dismissal Script -->
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Announcement dismissal script loaded');
+            
+            // Clear dismissed announcements on page load so they show again
+            clearDismissedAnnouncements();
+            
+            // Add click event listeners to close buttons
+            const closeButtons = document.querySelectorAll('.announcement-close-btn');
+            console.log('Found close buttons:', closeButtons.length);
+            
+            closeButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const announcementId = this.getAttribute('data-announcement-id');
+                    console.log('Closing announcement:', announcementId);
+                    dismissAnnouncement(announcementId);
+                });
+            });
+        });
+        
+        function clearDismissedAnnouncements() {
+            // Clear any previously dismissed announcements so they show on page reload
+            localStorage.removeItem('dismissedAnnouncements');
+            console.log('Cleared dismissed announcements - all will show on page load');
+        }
+        
+        function dismissAnnouncement(announcementId) {
+            console.log('Dismissing announcement:', announcementId);
+            
+            // Hide the announcement immediately
+            const announcement = document.querySelector(`[data-announcement-id="${announcementId}"]`);
+            if (announcement) {
+                announcement.style.display = 'none';
+                console.log('Announcement hidden successfully');
+            } else {
+                console.log('Announcement not found');
+            }
+            
+            // Store the dismissed announcement ID in localStorage (but it will be cleared on next page load)
+            const dismissedIds = getDismissedAnnouncements();
+            if (!dismissedIds.includes(announcementId)) {
+                dismissedIds.push(announcementId);
+                localStorage.setItem('dismissedAnnouncements', JSON.stringify(dismissedIds));
+                console.log('Stored dismissed ID:', announcementId);
+            }
+        }
+        
+        function getDismissedAnnouncements() {
+            try {
+                const dismissed = localStorage.getItem('dismissedAnnouncements');
+                return dismissed ? JSON.parse(dismissed) : [];
+            } catch (e) {
+                console.error('Error getting dismissed announcements:', e);
+                return [];
+            }
+        }
+        </script>
     
 </body></html>

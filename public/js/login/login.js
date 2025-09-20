@@ -51,10 +51,21 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             var data = await response.json();
             if (data && data.success) {
+                console.log('Login successful, showing notification...');
+                console.log('showNotification_login_toast_success function exists:', typeof window.showNotification_login_toast_success === 'function');
+                
                 if (typeof window.showNotification_login_toast_success === 'function') {
+                    console.log('Calling showNotification_login_toast_success...');
                     window.showNotification_login_toast_success();
+                } else {
+                    console.error('showNotification_login_toast_success function not found!');
                 }
-                window.location.href = '/dashboard';
+                
+                // Wait for notification to be visible before redirecting
+                setTimeout(() => {
+                    console.log('Redirecting to dashboard...');
+                    window.location.href = '/dashboard';
+                }, 2000); // Wait 5 seconds before redirecting
             } else {
                 var msg = (data && data.message) ? data.message : 'Login failed';
                 var slot = document.getElementById('login-error-message-slot');
