@@ -92,6 +92,44 @@ Route::get('/', function () {
 Route::middleware('auth')->group(function() {
     Route::get('logout', [AuthController::class, 'logout'])->name('logout');
     
+    // Notification routes
+    Route::post('notifications/{notification}/mark-read', function($notificationId) {
+        $user = auth()->user();
+        if ($user) {
+            $success = $user->markNotificationAsRead($notificationId);
+            return response()->json(['success' => $success]);
+        }
+        return response()->json(['success' => false], 401);
+    })->name('notifications.mark-read');
+    
+    Route::post('notifications/mark-all-read', function() {
+        $user = auth()->user();
+        if ($user) {
+            // Debug: Check unread count before marking as read
+            $unreadBefore = $user->getUnreadNotificationsCount();
+            
+            $count = $user->markAllNotificationsAsRead();
+            
+            // Debug: Check unread count after marking as read
+            $unreadAfter = $user->getUnreadNotificationsCount();
+            
+            \Log::info('Mark all notifications as read', [
+                'user_id' => $user->id,
+                'unread_before' => $unreadBefore,
+                'unread_after' => $unreadAfter,
+                'marked_count' => $count
+            ]);
+            
+            return response()->json([
+                'success' => true, 
+                'count' => $count,
+                'unread_before' => $unreadBefore,
+                'unread_after' => $unreadAfter
+            ]);
+        }
+        return response()->json(['success' => false], 401);
+    })->name('notifications.mark-all-read');
+    
     // Dashboard route (specific route before wildcard)
     Route::get('dashboard', [RouteController::class, 'index'])->name('dashboard');
     

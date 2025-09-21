@@ -98,28 +98,28 @@ License: You must have a valid license purchased only from themeforest(the above
         </div>
         @include('layout._partials.mobile')
         
-        <!-- BEGIN: Announcement Notifications -->
-        @if(isset($activeAnnouncements) && $activeAnnouncements->count() > 0)
-            <!-- Debug: Show announcement count -->
-            {{-- Found {{ $activeAnnouncements->count() }} announcements --}}
-            @foreach($activeAnnouncements as $index => $announcement)
+        <!-- BEGIN: Database Notifications -->
+        @php
+            $user = auth()->user();
+            $unreadNotifications = $user ? $user->getUnreadNotifications()->get() : collect();
+        @endphp
+        
+        @if($unreadNotifications->count() > 0)
+            @foreach($unreadNotifications as $index => $notification)
                 <x-notification-toast 
-                    :id="'announcement_' . $announcement->id"
-                    type="info"
-                    :title="$announcement->type"
-                    :message="$announcement->description"
+                    :id="'notification_' . $notification->id"
+                    :type="$notification->type"
+                    :title="$notification->title"
+                    :message="$notification->message"
                     :showButton="false"
                     :autoHide="true"
-                    :duration="8000"
+                    :duration="6000"
                     position="right"
                     gravity="top"
                 />
             @endforeach
-        @else
-            <!-- Debug: No announcements found -->
-            {{-- No active announcements found --}}
         @endif
-        <!-- END: Announcement Notifications -->
+        <!-- END: Database Notifications -->
         
         <!-- BEGIN: JS Assets-->
         @vite('resources/js/app.js')
@@ -127,33 +127,56 @@ License: You must have a valid license purchased only from themeforest(the above
         @livewireScripts
         @stack('scripts')
         
-        <!-- BEGIN: Announcement Auto-Display Script -->
-        @if(isset($activeAnnouncements) && $activeAnnouncements->count() > 0)
+        <!-- BEGIN: Database Notifications Auto-Display Script -->
+        @if($unreadNotifications->count() > 0)
         <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // console.log('Announcement script loaded');
-            // Display announcements with staggered timing
-            const announcements = @json($activeAnnouncements);
-            // console.log('Found announcements:', announcements);
+            console.log('Database notifications script loaded');
+            // Display notifications with staggered timing
+            const notifications = @json($unreadNotifications);
+            console.log('Found notifications:', notifications);
             
-            announcements.forEach((announcement, index) => {
+            notifications.forEach((notification, index) => {
                 setTimeout(() => {
-                    const functionName = 'showNotification_announcement_' + announcement.id;
-                    // console.log('Looking for function:', functionName);
+                    const functionName = 'showNotification_notification_' + notification.id;
+                    console.log('Looking for function:', functionName);
                     const showFunction = window[functionName];
-                    // console.log('Function found:', typeof showFunction);
+                    console.log('Function found:', typeof showFunction);
                     if (typeof showFunction === 'function') {
-                        // console.log('Showing announcement:', announcement.type);
+                        console.log('Showing notification:', notification.title);
                         showFunction();
+                        
+                        // Mark notification as read after showing
+                        setTimeout(() => {
+                            markNotificationAsRead(notification.id);
+                        }, 1000);
                     } else {
-                        // console.error('Function not found:', functionName);
+                        console.error('Function not found:', functionName);
                     }
-                }, (index + 1) * 2000); // Show each announcement 2 seconds apart
+                }, (index + 1) * 2000); // Show each notification 2 seconds apart
             });
+            
+            // Function to mark notification as read
+            function markNotificationAsRead(notificationId) {
+                fetch('/notifications/' + notificationId + '/mark-read', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Notification marked as read:', data);
+                })
+                .catch(error => {
+                    console.error('Error marking notification as read:', error);
+                });
+            }
         });
         </script>
         @endif
-        <!-- END: Announcement Auto-Display Script -->
+        <!-- END: Database Notifications Auto-Display Script -->
         <!-- END: JS Assets-->
     </body>
 </html>

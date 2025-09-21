@@ -16,79 +16,200 @@
         <!-- END: Breadcrumb -->
         
         <!-- BEGIN: Notifications -->
+        @php
+            $user = auth()->user();
+            $notifications = $user ? $user->getRecentNotifications(5)->get() : collect();
+            $unreadCount = $user ? $user->getUnreadNotificationsCount() : 0;
+            
+            // Debug: Check if there are actually unread notifications
+            $unreadNotifications = $user ? $user->getUnreadNotifications()->get() : collect();
+            
+            // Debug output (remove this after testing)
+            // {{-- Unread count: {{ $unreadCount }}, Unread notifications: {{ $unreadNotifications->count() }}, Total notifications: {{ $notifications->count() }} --}}
+        @endphp
+        
         <div class="intro-x dropdown mr-4 sm:mr-6">
-            <div class="dropdown-toggle notification notification--bullet cursor-pointer" role="button" aria-expanded="false" data-tw-toggle="dropdown"> <i data-lucide="bell" class="notification__icon dark:text-slate-500"></i> </div>
+            <div class="dropdown-toggle notification cursor-pointer {{ $unreadCount > 0 ? 'notification--bullet' : '' }}" 
+                 role="button" aria-expanded="false" data-tw-toggle="dropdown" id="notification-bell" onclick="markAllNotificationsAsRead()"> 
+                <i data-lucide="bell" class="notification__icon dark:text-slate-500"></i>
+                @if($unreadCount > 0 && $unreadNotifications->count() > 0)
+                    <span class="notification__bullet absolute top-0 right-0 w-2 h-2 bg-danger rounded-full" id="notification-badge"></span>
+                @endif
+            </div>
             <div class="notification-content pt-2 dropdown-menu">
                 <div class="notification-content__box dropdown-content">
-                    <div class="notification-content__title">Notifications</div>
-                    <div class="cursor-pointer relative flex items-center ">
-                        <div class="w-12 h-12 flex-none image-fit mr-1">
-                            <img alt="Midone - HTML Admin Template" class="rounded-full" src="dist/images/profile-1.jpg">
-                            <div class="w-3 h-3 bg-success absolute right-0 bottom-0 rounded-full border-2 border-white"></div>
-                        </div>
-                        <div class="ml-2 overflow-hidden">
-                            <div class="flex items-center">
-                                <a href="javascript:;" class="font-medium truncate mr-5">Russell Crowe</a> 
-                                <div class="text-xs text-slate-400 ml-auto whitespace-nowrap">01:10 PM</div>
-                            </div>
-                            <div class="w-full truncate text-slate-500 mt-0.5">It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem </div>
-                        </div>
+                    <div class="notification-content__title">
+                        Notifications 
+                        @if($unreadCount > 0 && $unreadNotifications->count() > 0)
+                            <span class="ml-2 px-2 py-1 text-xs bg-danger text-white rounded-full">{{ $unreadCount }}</span>
+                        @endif
                     </div>
-                    <div class="cursor-pointer relative flex items-center mt-5">
-                        <div class="w-12 h-12 flex-none image-fit mr-1">
-                            <img alt="Midone - HTML Admin Template" class="rounded-full" src="dist/images/profile-11.jpg">
-                            <div class="w-3 h-3 bg-success absolute right-0 bottom-0 rounded-full border-2 border-white"></div>
-                        </div>
-                        <div class="ml-2 overflow-hidden">
-                            <div class="flex items-center">
-                                <a href="javascript:;" class="font-medium truncate mr-5">Denzel Washington</a> 
-                                <div class="text-xs text-slate-400 ml-auto whitespace-nowrap">01:10 PM</div>
+                    
+                    @if($notifications->count() > 0)
+                        @foreach($notifications as $notification)
+                            <div class="cursor-pointer relative flex items-center {{ $loop->first ? '' : 'mt-5' }} notification-item" 
+                                 data-notification-id="{{ $notification->id }}">
+                                <div class="w-12 h-12 flex-none image-fit mr-1">
+                                    @if($user && $user->photo)
+                                        <img alt="{{ $user->name }}" class="rounded-full" src="{{ asset('storage/profiles/' . $user->photo) }}">
+                                    @else
+                                        <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold">
+                                            {{ $user ? strtoupper(substr($user->name, 0, 1)) : 'U' }}
+                                        </div>
+                                    @endif
+                                    <div class="w-3 h-3 bg-{{ $notification->type === 'success' ? 'success' : ($notification->type === 'error' ? 'danger' : ($notification->type === 'warning' ? 'warning' : 'info')) }} absolute right-0 bottom-0 rounded-full border-2 border-white"></div>
+                                </div>
+                                <div class="ml-2 overflow-hidden">
+                                    <div class="flex items-center">
+                                        <a href="javascript:;" class="font-medium truncate mr-5">{{ $notification->title }}</a> 
+                                        <div class="text-xs text-slate-400 ml-auto whitespace-nowrap">{{ $notification->created_at->format('h:i A') }}</div>
+                                    </div>
+                                    <div class="w-full truncate text-slate-500 mt-0.5">{{ $notification->message }}</div>
+                                    @if($notification->isUnread())
+                                        <div class="text-xs text-primary mt-1">• Unread</div>
+                                    @endif
+                                </div>
                             </div>
-                            <div class="w-full truncate text-slate-500 mt-0.5">Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 20</div>
-                        </div>
-                    </div>
-                    <div class="cursor-pointer relative flex items-center mt-5">
-                        <div class="w-12 h-12 flex-none image-fit mr-1">
-                            <img alt="Midone - HTML Admin Template" class="rounded-full" src="dist/images/profile-3.jpg">
-                            <div class="w-3 h-3 bg-success absolute right-0 bottom-0 rounded-full border-2 border-white"></div>
-                        </div>
-                        <div class="ml-2 overflow-hidden">
-                            <div class="flex items-center">
-                                <a href="javascript:;" class="font-medium truncate mr-5">Arnold Schwarzenegger</a> 
-                                <div class="text-xs text-slate-400 ml-auto whitespace-nowrap">05:09 AM</div>
+                        @endforeach
+                        
+                        @if($notifications->count() >= 5)
+                            <div class="text-center mt-4">
+                                <a href="#" class="text-primary text-sm hover:underline">View All Notifications</a>
                             </div>
-                            <div class="w-full truncate text-slate-500 mt-0.5">There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomi</div>
+                        @endif
+                    @else
+                        <div class="text-center py-8">
+                            <i data-lucide="bell-off" class="w-12 h-12 text-slate-400 mx-auto mb-3"></i>
+                            <div class="text-slate-500">No notifications yet</div>
                         </div>
-                    </div>
-                    <div class="cursor-pointer relative flex items-center mt-5">
-                        <div class="w-12 h-12 flex-none image-fit mr-1">
-                            <img alt="Midone - HTML Admin Template" class="rounded-full" src="dist/images/profile-11.jpg">
-                            <div class="w-3 h-3 bg-success absolute right-0 bottom-0 rounded-full border-2 border-white"></div>
-                        </div>
-                        <div class="ml-2 overflow-hidden">
-                            <div class="flex items-center">
-                                <a href="javascript:;" class="font-medium truncate mr-5">Johnny Depp</a> 
-                                <div class="text-xs text-slate-400 ml-auto whitespace-nowrap">01:10 PM</div>
-                            </div>
-                            <div class="w-full truncate text-slate-500 mt-0.5">There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomi</div>
-                        </div>
-                    </div>
-                    <div class="cursor-pointer relative flex items-center mt-5">
-                        <div class="w-12 h-12 flex-none image-fit mr-1">
-                            <img alt="Midone - HTML Admin Template" class="rounded-full" src="dist/images/profile-4.jpg">
-                            <div class="w-3 h-3 bg-success absolute right-0 bottom-0 rounded-full border-2 border-white"></div>
-                        </div>
-                        <div class="ml-2 overflow-hidden">
-                            <div class="flex items-center">
-                                <a href="javascript:;" class="font-medium truncate mr-5">Al Pacino</a> 
-                                <div class="text-xs text-slate-400 ml-auto whitespace-nowrap">06:05 AM</div>
-                            </div>
-                            <div class="w-full truncate text-slate-500 mt-0.5">It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                    @endif
         </div>
+    </div>
+</div>
+
+<!-- Notification Bell Click Handler -->
+<script>
+// Make function global so it can be called from onclick
+window.markAllNotificationsAsRead = function() {
+    console.log('markAllNotificationsAsRead called');
+    
+    // Hide the red badge immediately (before API call)
+    const badge = document.getElementById('notification-badge');
+    if (badge) {
+        console.log('Hiding notification badge immediately');
+        badge.style.display = 'none';
+        badge.remove();
+    }
+    
+    // Also try to hide by class
+    const badges = document.querySelectorAll('.notification__bullet');
+    badges.forEach(badge => {
+        console.log('Hiding badge by class');
+        badge.style.display = 'none';
+        badge.remove();
+    });
+    
+    // Update the notification title to remove unread count
+    const notificationTitle = document.querySelector('.notification-content__title');
+    if (notificationTitle) {
+        console.log('Updating notification title');
+        notificationTitle.innerHTML = 'Notifications';
+    }
+    
+    // Make API call to mark as read in database
+    fetch('/notifications/mark-all-read', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('All notifications marked as read:', data);
+        console.log('Unread before:', data.unread_before);
+        console.log('Unread after:', data.unread_after);
+        console.log('Marked count:', data.count);
+        
+        // If there were no unread notifications, just return
+        if (data.unread_before === 0) {
+            console.log('No unread notifications to mark as read');
+            return;
+        }
+        
+        // Update all notification items to remove "Unread" indicator
+        const unreadIndicators = document.querySelectorAll('.notification-item .text-primary');
+        unreadIndicators.forEach(indicator => {
+            if (indicator.textContent.includes('• Unread')) {
+                console.log('Hiding unread indicator');
+                indicator.style.display = 'none';
+            }
+        });
+        
+        // Update notification type dots to show as read (remove the colored dot)
+        const notificationDots = document.querySelectorAll('.notification-item .w-3.h-3');
+        notificationDots.forEach(dot => {
+            dot.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'bg-info');
+            dot.classList.add('bg-slate-400');
+        });
+        
+        // Update the notification count dynamically without page refresh
+        console.log('Updating notification count dynamically...');
+        
+        // Remove the notification--bullet class from the bell
+        const bellElement = document.getElementById('notification-bell');
+        if (bellElement) {
+            bellElement.classList.remove('notification--bullet');
+        }
+        
+        // Update the notification title to remove unread count
+        const notificationTitle = document.querySelector('.notification-content__title');
+        if (notificationTitle) {
+            notificationTitle.innerHTML = 'Notifications';
+        }
+        
+        // Force remove any remaining notification bullets
+        const allBullets = document.querySelectorAll('.notification__bullet, .notification-badge, [id*="notification-badge"]');
+        allBullets.forEach(bullet => {
+            bullet.style.display = 'none';
+            bullet.remove();
+        });
+        
+        // Also remove any CSS classes that might show the bullet
+        const bellContainer = document.querySelector('.dropdown-toggle.notification');
+        if (bellContainer) {
+            bellContainer.classList.remove('notification--bullet');
+        }
+        
+        console.log('All UI updates completed');
+        
+    })
+    .catch(error => {
+        console.error('Error marking notifications as read:', error);
+    });
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Notification bell script loaded');
+    
+    const notificationBell = document.getElementById('notification-bell');
+    const notificationBadge = document.getElementById('notification-badge');
+    
+    console.log('Notification bell element:', notificationBell);
+    console.log('Notification badge element:', notificationBadge);
+    
+    if (notificationBell) {
+        notificationBell.addEventListener('click', function(e) {
+            console.log('Notification bell clicked via event listener!');
+            // Don't prevent default to allow dropdown to work
+            markAllNotificationsAsRead();
+        });
+    }
+});
+</script>
         <!-- END: Notifications -->
         <!-- BEGIN: Account Menu -->
         <div class="intro-x dropdown w-8 h-8">
