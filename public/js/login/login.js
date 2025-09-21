@@ -52,7 +52,16 @@ document.addEventListener('DOMContentLoaded', function () {
             var data = await response.json();
             if (data && data.success) {
                 console.log('Login successful, showing notification...');
+                console.log('User data:', data.user);
                 console.log('showNotification_login_toast_success function exists:', typeof window.showNotification_login_toast_success === 'function');
+                
+                // Update notification message with user's name if available
+                if (data.user && data.user.name) {
+                    const successMessage = document.querySelector('#login_toast_success-content .text-slate-500');
+                    if (successMessage) {
+                        successMessage.textContent = `Welcome back, ${data.user.name}! Login successful.`;
+                    }
+                }
                 
                 if (typeof window.showNotification_login_toast_success === 'function') {
                     console.log('Calling showNotification_login_toast_success...');
@@ -65,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 setTimeout(() => {
                     console.log('Redirecting to dashboard...');
                     window.location.href = '/dashboard';
-                }, 2000); // Wait 5 seconds before redirecting
+                }, 2000); // Wait 2 seconds before redirecting
             } else {
                 var msg = (data && data.message) ? data.message : 'Login failed';
                 var slot = document.getElementById('login-error-message-slot');
