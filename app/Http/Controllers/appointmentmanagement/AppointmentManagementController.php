@@ -41,9 +41,17 @@ class AppointmentManagementController extends Controller
 
         try {
             $appointment = tbl_appointment::findOrFail($id);
+            $oldStatus = $appointment->status;
             $appointment->status = $request->status;
             $appointment->remarks = $request->remarks;
             $appointment->save();
+
+            // Log the activity
+            try {
+                $appointment->logCustom("Appointment status changed from '{$oldStatus}' to '{$request->status}' for tracking number: {$appointment->tracking_number}");
+            } catch (\Exception $logError) {
+                \Log::error('Failed to log appointment status change: ' . $logError->getMessage());
+            }
 
             return response()->json([
                 'success' => true,
@@ -62,6 +70,14 @@ class AppointmentManagementController extends Controller
     {
         try {
             $appointment = tbl_appointment::findOrFail($id);
+            
+            // Log the activity before deletion
+            try {
+                $appointment->logCustom("Appointment deleted - Tracking number: {$appointment->tracking_number}, Status: {$appointment->status}");
+            } catch (\Exception $logError) {
+                \Log::error('Failed to log appointment deletion: ' . $logError->getMessage());
+            }
+            
             $appointment->delete();
 
             return response()->json([

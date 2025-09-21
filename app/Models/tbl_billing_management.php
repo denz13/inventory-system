@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\ActivityLogTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -11,7 +12,7 @@ use App\Models\tbl_bank_account_category;
 
 class tbl_billing_management extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, ActivityLogTrait;
 
     protected $table = 'tbl_billing_management';
     protected $primaryKey = 'id';

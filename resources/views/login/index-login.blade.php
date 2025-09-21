@@ -1580,12 +1580,15 @@ A VERTICAL event
                         <div class="intro-x mt-2 text-slate-400 xl:hidden text-center">A few more clicks to sign in to your account. Manage all your e-commerce accounts in one place</div>
                         <div class="intro-x mt-8">
                             <input type="text" id="login-email" class="intro-x login__input form-control py-3 px-4 block" placeholder="Email">
-                            <input type="password" id="login-password" class="intro-x login__input form-control py-3 px-4 block mt-4" placeholder="Password">
+                            <div class="mt-4">
+                                <input type="password" id="login-password" class="intro-x login__input form-control py-3 px-4 block w-full" placeholder="Password">
+                            </div>
+                           
                         </div>
                         <div class="intro-x flex text-slate-600 dark:text-slate-500 text-xs sm:text-sm mt-4">
                             <div class="flex items-center mr-auto">
-                                <input id="remember-me" type="checkbox" class="form-check-input border mr-2">
-                                <label class="cursor-pointer select-none" for="remember-me">Remember me</label>
+                            <input type="checkbox" id="show-password" class="form-check-input border mr-2" onchange="togglePasswordVisibility()">
+                            <span>Show Password</span>
                             </div>
                             <a href="{{ route('forgot-password.index') }}">Forgot Password?</a> 
                         </div>
@@ -1650,9 +1653,56 @@ A VERTICAL event
             margin-right: 1rem !important;
             color: #10b981 !important;
         }
+        
+        /* Password toggle eye icon styling */
+        #toggle-password {
+            background: transparent !important;
+            border: none !important;
+            cursor: pointer !important;
+            /* Temporary: Add background to make icon visible */
+            background-color: rgba(255, 0, 0, 0.1) !important;
+        }
+        
+        #toggle-password svg {
+            pointer-events: none !important;
+            color: #000000 !important;
+            stroke: #000000 !important;
+            fill: none !important;
+        }
+        
+        #toggle-password:hover svg {
+            color: #333333 !important;
+            stroke: #333333 !important;
+        }
+        
+        #login-password {
+            background-color: white !important;
+        }
         </style>
         <script src="{{ asset('assets/toastify/toastify.js') }}"></script>
         <script src="{{ asset('js/login/login.js') }}"></script>
+        
+        <!-- Simple Password Toggle Function -->
+        <script>
+        function togglePasswordVisibility() {
+            console.log('togglePasswordVisibility called');
+            const passwordInput = document.getElementById('login-password');
+            const showPasswordCheckbox = document.getElementById('show-password');
+            
+            if (passwordInput && showPasswordCheckbox) {
+                if (showPasswordCheckbox.checked) {
+                    passwordInput.type = 'text';
+                    console.log('Password shown');
+                } else {
+                    passwordInput.type = 'password';
+                    console.log('Password hidden');
+                }
+            } else {
+                console.error('Elements not found:', {passwordInput: !!passwordInput, showPasswordCheckbox: !!showPasswordCheckbox});
+            }
+        }
+        </script>
+        
         @stack('scripts')
         
         <!-- Announcement Dismissal Script -->
@@ -1676,6 +1726,9 @@ A VERTICAL event
                     dismissAnnouncement(announcementId);
                 });
             });
+            
+            // Password toggle functionality - using simple onclick approach
+            console.log('Password toggle setup complete - using onclick function');
         });
         
         function clearDismissedAnnouncements() {

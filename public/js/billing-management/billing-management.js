@@ -318,6 +318,41 @@ function handleCreateBilling() {
         console.log(key, value);
     }
     
+    // Validate form data
+    const userId = formData.get('user_id');
+    const billingDateRange = formData.get('billing_date_range');
+    const billingItems = [];
+    
+    // Collect billing items
+    for (let [key, value] of formData.entries()) {
+        if (key.startsWith('billing_items[') && key.includes('][description]')) {
+            const index = key.match(/billing_items\[(\d+)\]/)[1];
+            const qty = formData.get(`billing_items[${index}][qty]`);
+            const price = formData.get(`billing_items[${index}][price]`);
+            
+            if (value && qty && price) {
+                billingItems.push({ description: value, qty: qty, price: price });
+            }
+        }
+    }
+    
+    console.log('Parsed billing items:', billingItems);
+    
+    if (!userId) {
+        showToast('Please select a user', 'error');
+        return;
+    }
+    
+    if (!billingDateRange) {
+        showToast('Please select a billing date range', 'error');
+        return;
+    }
+    
+    if (billingItems.length === 0) {
+        showToast('Please add at least one billing item', 'error');
+        return;
+    }
+    
     // Show loading state
     const submitBtn = document.querySelector('button[form="createBillingForm"]');
     const originalText = submitBtn ? submitBtn.innerHTML : '';
@@ -345,15 +380,22 @@ function handleCreateBilling() {
         return response.json();
     })
     .then(data => {
+        console.log('Response data:', data);
         if (data.message) {
             showToast(data.message, 'success');
-            // Close modal and reload page
-            const closeBtn = document.querySelector('#create-billing-modal [data-tw-dismiss="modal"]');
-            if (closeBtn) closeBtn.click();
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
+        } else {
+            console.error('No message in response:', data);
+            showToast('Billing created successfully', 'success');
         }
+        
+        // Always close modal and reload page after successful creation
+        const closeBtn = document.querySelector('#create-billing-modal [data-tw-dismiss="modal"]');
+        if (closeBtn) closeBtn.click();
+        
+        // Reload page to show the new billing
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
     })
     .catch(error => {
         console.error('Error:', error);

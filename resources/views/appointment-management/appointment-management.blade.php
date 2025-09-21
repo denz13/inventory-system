@@ -126,45 +126,52 @@
                                         </svg>
                                         View
                                     </a>
-                                    @if($appointment->status === 'pending')
-                                        <div class="dropdown">
-                                            <button class="dropdown-toggle btn btn-outline-primary btn-sm" aria-expanded="false" data-tw-toggle="dropdown">
-                                                Change Status
-                                            </button>
-                                            <div class="dropdown-menu w-40">
-                                                <ul class="dropdown-content">
-                                                                                                         <li>
-                                                         <a href="javascript:;" class="dropdown-item" data-action="approve" data-appointment-id="{{ $appointment->id }}">
-                                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2 text-success">
-                                                                 <polyline points="9 11 12 14 22 4"></polyline>
-                                                                 <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
-                                                             </svg>
-                                                             Approve
-                                                         </a>
-                                                     </li>
-                                                        <li>
-                                                            <a href="javascript:;" class="dropdown-item" data-action="cancel" data-appointment-id="{{ $appointment->id }}" data-tw-toggle="modal" data-tw-target="#cancel-reason-modal">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2 text-danger">
-                                                                    <circle cx="12" cy="12" r="10"></circle>
-                                                                    <line x1="15" y1="9" x2="9" y2="15"></line>
-                                                                    <line x1="9" y1="9" x2="15" y2="15"></line>
-                                                                </svg>
-                                                                Cancel
-                                                            </a>
-                                                        </li>
-                                                     <li>
-                                                         <a href="javascript:;" class="dropdown-item" data-action="complete" data-appointment-id="{{ $appointment->id }}">
-                                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2 text-info">
-                                                                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                                                 <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                                                             </svg>
-                                                             Complete
-                                                         </a>
-                                                     </li>
-                                                </ul>
-                                            </div>
+                                    <div class="dropdown">
+                                        <button class="dropdown-toggle btn btn-outline-primary btn-sm" aria-expanded="false" data-tw-toggle="dropdown">
+                                            Change Status
+                                        </button>
+                                        <div class="dropdown-menu w-40">
+                                            <ul class="dropdown-content">
+                                                <li>
+                                                    <a href="javascript:;" class="dropdown-item" data-action="approve" data-appointment-id="{{ $appointment->id }}">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2 text-success">
+                                                            <polyline points="9 11 12 14 22 4"></polyline>
+                                                            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+                                                        </svg>
+                                                        Approve
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:;" class="dropdown-item" data-action="cancel" data-appointment-id="{{ $appointment->id }}" data-tw-toggle="modal" data-tw-target="#cancel-reason-modal">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2 text-danger">
+                                                            <circle cx="12" cy="12" r="10"></circle>
+                                                            <line x1="15" y1="9" x2="9" y2="15"></line>
+                                                            <line x1="9" y1="9" x2="15" y2="15"></line>
+                                                        </svg>
+                                                        Cancel
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:;" class="dropdown-item" data-action="complete" data-appointment-id="{{ $appointment->id }}">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2 text-info">
+                                                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                                        </svg>
+                                                        Complete
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:;" class="dropdown-item" data-action="pending" data-appointment-id="{{ $appointment->id }}">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2 text-warning">
+                                                            <circle cx="12" cy="12" r="10"></circle>
+                                                            <path d="M12 6v6l4 2"></path>
+                                                        </svg>
+                                                        Set to Pending
+                                                    </a>
+                                                </li>
+                                            </ul>
                                         </div>
-                                    @endif
+                                    </div>
                                     <a class="flex items-center text-danger ml-2" href="javascript:;" data-action="delete" data-id="{{ $appointment->id }}" data-tw-toggle="modal" data-tw-target="#delete-appointment-modal">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -321,6 +328,30 @@
         </div>
     </div>
     <!-- END: Complete Confirmation Modal -->
+
+    <!-- BEGIN: Pending Confirmation Modal -->
+    <div id="pending-confirmation-modal" class="modal" data-tw-backdrop="static" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body px-5 py-10">
+                    <div class="text-center">
+                        <div class="mb-5">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-3 text-warning">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M12 6v6l4 2"></path>
+                            </svg>
+                            <h3 class="text-lg font-medium mb-2">Set to Pending?</h3>
+                            <p class="text-slate-500">Are you sure you want to set this appointment back to pending status?</p>
+                        </div>
+                        <input type="hidden" id="pendingAppointmentId">
+                        <button type="button" onclick="confirmPendingAppointment()" class="btn btn-warning w-24 mr-2">Set Pending</button>
+                        <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-24">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END: Pending Confirmation Modal -->
 </div>
 @endsection
 

@@ -30,6 +30,7 @@ use App\Http\Controllers\forgotpassword\ForgotPasswordController;
 use App\Http\Controllers\otp\OtpController;
 use App\Http\Controllers\newpassword\NewPasswordController;
 use App\Http\Controllers\vehicle\VehicleController;
+use App\Http\Controllers\NotificationSettings\NotificationSettingsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -275,6 +276,8 @@ Route::middleware('auth')->group(function() {
     // Billing Payment routes
     Route::get('billing-payment', [BillingPaymentController::class, 'index'])->name('billing-payment.index');
     Route::post('billing-payment/process', [BillingPaymentController::class, 'processPayment'])->name('billing-payment.process');
+    Route::put('billing-payment/{billingId}/status', [BillingPaymentController::class, 'updatePaymentStatus'])->name('billing-payment.update-status');
+    Route::get('billing-payment/test-notifications', [BillingPaymentController::class, 'testNotifications'])->name('billing-payment.test-notifications');
 
     // List of Payments routes
     Route::get('list-payments', [ListPaymentsController::class, 'index'])->name('list-payments.index');
@@ -303,5 +306,13 @@ Route::delete('vehicle/{id}', [VehicleController::class, 'destroy'])->name('vehi
     
     // // Named route for menu system
     // Route::get("{page}", [RouteController::class, 'routes'])->name('page.show')->where('page', '.*');
+
+    // Notification Settings routes
+    // Notification Settings Routes
+    Route::get('notification-settings', [NotificationSettingsController::class, 'index'])->name('notification-settings.index');
+    Route::post('notification-settings', [NotificationSettingsController::class, 'store'])->name('notification-settings.store');
+    Route::get('notification-settings/{id}', [NotificationSettingsController::class, 'show'])->name('notification-settings.show');
+    Route::put('notification-settings/{id}', [NotificationSettingsController::class, 'update'])->name('notification-settings.update');
+    Route::delete('notification-settings/{id}', [NotificationSettingsController::class, 'destroy'])->name('notification-settings.destroy');
 });
 
