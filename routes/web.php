@@ -31,6 +31,7 @@ use App\Http\Controllers\otp\OtpController;
 use App\Http\Controllers\newpassword\NewPasswordController;
 use App\Http\Controllers\vehicle\VehicleController;
 use App\Http\Controllers\NotificationSettings\NotificationSettingsController;
+use App\Http\Controllers\PermissionSettings\PermissionSettingsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -293,26 +294,33 @@ Route::middleware('auth')->group(function() {
     Route::delete('feedback/{id}', [FeedbackController::class, 'destroy'])->name('feedback.destroy');
 
     // Vehicle routes
-Route::get('vehicle', [VehicleController::class, 'index'])->name('vehicle.index');
-Route::post('vehicle', [VehicleController::class, 'store'])->name('vehicle.store');
-Route::get('vehicle/{id}', [VehicleController::class, 'show'])->name('vehicle.show');
-Route::put('vehicle/{id}', [VehicleController::class, 'update'])->name('vehicle.update');
-Route::delete('vehicle/{id}', [VehicleController::class, 'destroy'])->name('vehicle.destroy');
-        // Soft delete routes
-        Route::patch('vehicle/{id}/restore', [VehicleController::class, 'restore'])->name('vehicle.restore');
-        Route::delete('vehicle/{id}/force', [VehicleController::class, 'forceDelete'])->name('vehicle.force-delete');
-        Route::get('vehicle/trash', [VehicleController::class, 'trash'])->name('vehicle.trash');
+    Route::get('vehicle', [VehicleController::class, 'index'])->name('vehicle.index');
+    Route::post('vehicle', [VehicleController::class, 'store'])->name('vehicle.store');
+    Route::get('vehicle/{id}', [VehicleController::class, 'show'])->name('vehicle.show');
+    Route::put('vehicle/{id}', [VehicleController::class, 'update'])->name('vehicle.update');
+    Route::delete('vehicle/{id}', [VehicleController::class, 'destroy'])->name('vehicle.destroy');
+    // Soft delete routes
+    Route::patch('vehicle/{id}/restore', [VehicleController::class, 'restore'])->name('vehicle.restore');
+    Route::delete('vehicle/{id}/force', [VehicleController::class, 'forceDelete'])->name('vehicle.force-delete');
+    Route::get('vehicle/trash', [VehicleController::class, 'trash'])->name('vehicle.trash');
 
-    
     // // Named route for menu system
     // Route::get("{page}", [RouteController::class, 'routes'])->name('page.show')->where('page', '.*');
 
     // Notification Settings routes
-    // Notification Settings Routes
-    Route::get('notification-settings', [NotificationSettingsController::class, 'index'])->name('notification-settings.index');
-    Route::post('notification-settings', [NotificationSettingsController::class, 'store'])->name('notification-settings.store');
-    Route::get('notification-settings/{id}', [NotificationSettingsController::class, 'show'])->name('notification-settings.show');
-    Route::put('notification-settings/{id}', [NotificationSettingsController::class, 'update'])->name('notification-settings.update');
-    Route::delete('notification-settings/{id}', [NotificationSettingsController::class, 'destroy'])->name('notification-settings.destroy');
+// Notification Settings Routes
+Route::get('notification-settings', [NotificationSettingsController::class, 'index'])->name('notification-settings.index');
+Route::post('notification-settings', [NotificationSettingsController::class, 'store'])->name('notification-settings.store');
+Route::get('notification-settings/{id}', [NotificationSettingsController::class, 'show'])->name('notification-settings.show');
+Route::put('notification-settings/{id}', [NotificationSettingsController::class, 'update'])->name('notification-settings.update');
+Route::delete('notification-settings/{id}', [NotificationSettingsController::class, 'destroy'])->name('notification-settings.destroy');
+
+// Permission Settings Routes
+Route::get('permission-settings', [PermissionSettingsController::class, 'index'])->name('permission-settings.index');
+Route::post('permission-settings', [PermissionSettingsController::class, 'store'])->name('permission-settings.store');
+Route::get('permission-settings/{id}', [PermissionSettingsController::class, 'show'])->name('permission-settings.show');
+Route::put('permission-settings/{id}', [PermissionSettingsController::class, 'update'])->name('permission-settings.update');
+Route::delete('permission-settings/{id}', [PermissionSettingsController::class, 'destroy'])->name('permission-settings.destroy');
+
 });
 

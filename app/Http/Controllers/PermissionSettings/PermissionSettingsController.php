@@ -1,0 +1,174 @@
+<?php
+
+namespace App\Http\Controllers\PermissionSettings;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\permission_settings;
+use App\Models\permission_settings_list;
+use App\Models\User;
+use App\Models\module;
+use Illuminate\Support\Facades\DB;
+
+class PermissionSettingsController extends Controller
+{
+    public function index()
+    {
+        $permissionSettings = permission_settings::with(['user', 'permissionSettingsList.module'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+        $users = User::where('active', 1)->orderBy('name')->get();
+        $modules = module::where('status', 'active')->orderBy('module_name')->get();
+        
+        return view('permission_settings.permission_settings', compact('permissionSettings', 'users', 'modules'));
+    }
+
+    public function store(Request $request)
+    {
+        try {
+            $request->validate([
+                'users_id' => 'required|exists:users,id',
+                'status' => 'required|in:active,inactive',
+                'permissions' => 'required|array|min:1',
+                'permissions.*' => 'required|exists:module,id'
+            ]);
+
+            DB::beginTransaction();
+
+            // Create permission setting
+            $permissionSetting = permission_settings::create([
+                'users_id' => $request->users_id,
+                'status' => $request->status
+            ]);
+
+            // Create permission settings list entries
+            foreach ($request->permissions as $moduleId) {
+                $module = module::find($moduleId);
+                if ($module) {
+                    permission_settings_list::create([
+                        'permission_settings_id' => $permissionSetting->id,
+                        'permission_allowed' => $module->module_name,
+                        'module_id' => $moduleId,
+                        'status' => 'active'
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            $permissionSetting->load(['user', 'permissionSettingsList.module']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Permission setting created successfully',
+                'setting' => $permissionSetting
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create permission setting: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function show($id)
+    {
+        try {
+            $permissionSetting = permission_settings::with(['user', 'permissionSettingsList.module'])
+                ->findOrFail($id);
+
+            return response()->json([
+                'success' => true,
+                'setting' => $permissionSetting
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Permission setting not found'
+            ], 404);
+        }
+    }
+
+    public function update(Request $request, $id)
+    {
+        try {
+            $request->validate([
+                'users_id' => 'required|exists:users,id',
+                'status' => 'required|in:active,inactive',
+                'permissions' => 'required|array|min:1',
+                'permissions.*' => 'required|exists:module,id'
+            ]);
+
+            DB::beginTransaction();
+
+            $permissionSetting = permission_settings::findOrFail($id);
+
+            // Update permission setting
+            $permissionSetting->update([
+                'users_id' => $request->users_id,
+                'status' => $request->status
+            ]);
+
+            // Delete existing permission settings list entries
+            $permissionSetting->permissionSettingsList()->delete();
+
+            // Create new permission settings list entries
+            foreach ($request->permissions as $moduleId) {
+                $module = module::find($moduleId);
+                if ($module) {
+                    permission_settings_list::create([
+                        'permission_settings_id' => $permissionSetting->id,
+                        'permission_allowed' => $module->module_name,
+                        'module_id' => $moduleId,
+                        'status' => 'active'
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            $permissionSetting->load(['user', 'permissionSettingsList.module']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Permission setting updated successfully',
+                'setting' => $permissionSetting
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update permission setting: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function destroy($id)
+    {
+        try {
+            $permissionSetting = permission_settings::findOrFail($id);
+            
+            // Delete related permission settings list entries
+            $permissionSetting->permissionSettingsList()->delete();
+            
+            // Delete the permission setting
+            $permissionSetting->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Permission setting deleted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete permission setting: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+}

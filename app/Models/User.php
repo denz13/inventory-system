@@ -98,4 +98,49 @@ class User extends Authenticatable
     {
         return $this->photo_url;
     }
+
+    /**
+     * Check if user has permission for a specific module
+     */
+    public function hasPermission($moduleName)
+    {
+        // Check if user has an active permission setting
+        $permissionSetting = \App\Models\permission_settings::where('users_id', $this->id)
+            ->where('status', 'active')
+            ->first();
+
+        if (!$permissionSetting) {
+            return false;
+        }
+
+        // Check if the permission setting has the specific module
+        $hasModule = \App\Models\permission_settings_list::where('permission_settings_id', $permissionSetting->id)
+            ->where('status', 'active')
+            ->whereHas('module', function($query) use ($moduleName) {
+                $query->where('module_name', $moduleName);
+            })
+            ->exists();
+
+        return $hasModule;
+    }
+
+    /**
+     * Get all modules the user has permission for
+     */
+    public function getPermissions()
+    {
+        $permissionSetting = \App\Models\permission_settings::where('users_id', $this->id)
+            ->where('status', 'active')
+            ->first();
+
+        if (!$permissionSetting) {
+            return collect();
+        }
+
+        return \App\Models\permission_settings_list::where('permission_settings_id', $permissionSetting->id)
+            ->where('status', 'active')
+            ->with('module')
+            ->get()
+            ->pluck('module.module_name');
+    }
 }
