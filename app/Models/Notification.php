@@ -18,12 +18,11 @@ class Notification extends Model
         'type',
         'title',
         'message',
-        'data',
         'read_at',
+        'notification_settings_id',
     ];
 
     protected $casts = [
-        'data' => 'array',
         'read_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',

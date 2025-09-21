@@ -412,15 +412,6 @@ function displayBillingDetails(billing) {
                             <label class="form-label text-sm font-semibold text-slate-700">Items Count</label>
                             <input type="text" class="form-control mt-1" value="${billing.billing_items.length} item(s)" readonly>
                         </div>
-                        <div class="mt-6">
-                            <button onclick="handlePayBilling(${billing.id})" class="btn btn-success w-full text-lg py-3">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2">
-                                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                                    <line x1="1" y1="10" x2="23" y2="10"></line>
-                                </svg>
-                                Pay Now - ₱${parseFloat(billing.amount_due).toFixed(2)}
-                            </button>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -480,6 +471,23 @@ function openPaymentModal(billingId, amount) {
     
     // Show step 1 (like complaints modal)
     showPaymentStep(1);
+    
+    // Show the modal using Tailwind UI method
+    const paymentModal = document.getElementById('payment-modal');
+    if (paymentModal) {
+        // Trigger the modal to show
+        paymentModal.classList.add('show');
+        paymentModal.style.display = 'block';
+        document.body.classList.add('modal-open');
+        
+        // Add backdrop
+        const backdrop = document.createElement('div');
+        backdrop.className = 'modal-backdrop fade show';
+        backdrop.id = 'payment-modal-backdrop';
+        document.body.appendChild(backdrop);
+        
+        console.log('Payment modal shown successfully');
+    }
     
     // FilePond is already initialized globally, no need to re-initialize
     console.log('Modal opened, FilePond already available');
@@ -919,9 +927,40 @@ function processPayment() {
 }
 
 function handlePayBilling(billingId) {
-    // This function is kept for backward compatibility
-    // The new modal-based payment system is preferred
-    console.log('Legacy payment function called for billing:', billingId);
+    console.log('handlePayBilling called for billing ID:', billingId);
+    
+    // Get the billing amount from the button text or find it in the DOM
+    const button = event.target.closest('button');
+    const buttonText = button.textContent;
+    const amountMatch = buttonText.match(/₱([\d,]+\.?\d*)/);
+    const amount = amountMatch ? amountMatch[1].replace(',', '') : '0';
+    
+    console.log('Extracted amount from button:', amount);
+    
+    // Close the billing details modal first using Tailwind UI method
+    const billingModal = document.getElementById('view-billing-modal');
+    if (billingModal) {
+        // Use the close button method (same as data-tw-dismiss="modal")
+        const closeBtn = billingModal.querySelector('[data-tw-dismiss="modal"]');
+        if (closeBtn) {
+            closeBtn.click();
+        } else {
+            // Fallback: manually hide the modal
+            billingModal.classList.remove('show');
+            billingModal.style.display = 'none';
+            document.body.classList.remove('modal-open');
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+        }
+    }
+    
+    // Wait a moment for modal to close, then open payment modal
+    setTimeout(() => {
+        console.log('Opening payment modal with billing ID:', billingId, 'amount:', amount);
+        openPaymentModal(billingId, amount);
+    }, 500);
 }
 
 // Toast notification function (following announcement pattern)

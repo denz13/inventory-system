@@ -408,6 +408,12 @@
 <div id="view-billing-modal" class="modal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="font-medium text-base mr-auto">Billing Details</h2>
+                <button type="button" class="btn btn-outline-secondary w-8 h-8 mr-1" data-tw-dismiss="modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x w-4 h-4"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
             <div class="modal-body p-0">
                 <div id="billing-details">
                     <div class="text-center text-slate-500 py-12">
@@ -425,7 +431,12 @@
 <div id="payment-modal" class="modal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            
+            <div class="modal-header">
+                <h2 class="font-medium text-base mr-auto">Payment</h2>
+                <button type="button" class="btn btn-outline-secondary w-8 h-8 mr-1" data-tw-dismiss="modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x w-4 h-4"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
             <div class="modal-body px-6 py-8">
                             <!-- Step Indicator -->
                             <div class="step-indicator">

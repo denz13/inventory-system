@@ -684,34 +684,34 @@
                 </li>
             </ul>
         </li> --}}
-        <!-- <li>
+        <li>
             <a href="javascript:;" class="side-menu">
                 <div class="side-menu__icon"> <i data-lucide="hard-drive"></i> </div>
                 <div class="side-menu__title">
-                    Widgets 
+                     Settings 
                     <div class="side-menu__sub-icon "> <i data-lucide="chevron-down"></i> </div>
                 </div>
             </a>
             <ul class="">
                 <li>
-                    <a href="side-menu-light-chart.html" class="side-menu">
+                    <a href="{{ route('notification-settings.index') }}" class="side-menu">
                         <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
-                        <div class="side-menu__title"> Chart </div>
+                        <div class="side-menu__title"> Notification Settings </div>
                     </a>
                 </li>
                 <li>
                     <a href="side-menu-light-slider.html" class="side-menu">
                         <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
-                        <div class="side-menu__title"> Slider </div>
+                        <div class="side-menu__title"> System Settings </div>
                     </a>
                 </li>
                 <li>
                     <a href="side-menu-light-image-zoom.html" class="side-menu">
                         <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
-                        <div class="side-menu__title"> Image Zoom </div>
+                        <div class="side-menu__title"> Permission Settings </div>
                     </a>
                 </li>
             </ul>
-        </li> -->
+        </li>
     </ul>
 </nav>

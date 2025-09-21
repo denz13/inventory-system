@@ -7,6 +7,10 @@ use Illuminate\Http\Request;
 use App\Models\tbl_billing_management;
 use App\Models\tbl_billing_management_list;
 use App\Models\User;
+use App\Models\Notification;
+use App\Models\notification_settings;
+use App\Models\module;
+use Illuminate\Support\Facades\Auth;
 
 class BillingManagementController extends Controller
 {
@@ -16,6 +20,113 @@ class BillingManagementController extends Controller
         $users = User::all();
         
         return view('billing-management.billing-management', compact('billings', 'users'));
+    }
+
+    /**
+     * Get users who have notification settings for billing management
+     */
+    private function getBillingManagementNotificationUsers()
+    {
+        try {
+            // Find the billing management module
+            $billingModule = module::where('module_name', 'billing management')->first();
+            
+            if (!$billingModule) {
+                \Log::warning('Billing management module not found');
+                return collect();
+            }
+
+            // Get users with notification settings for billing management
+            $notificationSettings = notification_settings::where('module_id', $billingModule->id)
+                ->where('status', 'active')
+                ->with('user')
+                ->get();
+
+            return $notificationSettings->map(function ($setting) {
+                return $setting->user;
+            })->filter(); // Remove any null users
+
+        } catch (\Exception $e) {
+            \Log::error('Error getting billing management notification users: ' . $e->getMessage());
+            return collect();
+        }
+    }
+
+    /**
+     * Send notifications to billing management users
+     */
+    private function sendBillingManagementNotifications($billing, $message)
+    {
+        try {
+            \Log::info('Starting billing management notifications', [
+                'billing_id' => $billing->id,
+                'current_user_id' => Auth::id(),
+                'current_user_name' => Auth::user()->name ?? 'N/A'
+            ]);
+
+            $users = $this->getBillingManagementNotificationUsers();
+            
+            \Log::info('Users to notify', [
+                'total_users_found' => $users->count(),
+                'user_ids' => $users->pluck('id')->toArray(),
+                'user_names' => $users->pluck('name')->toArray()
+            ]);
+            
+            $notificationsSent = 0;
+            foreach ($users as $user) {
+                // Skip the user who created the billing
+                if ($user->id === Auth::id()) {
+                    \Log::info('Skipping notification for billing creator', [
+                        'user_id' => $user->id,
+                        'user_name' => $user->name
+                    ]);
+                    continue;
+                }
+
+                try {
+                    // Get billing management module ID for notification_settings_id
+                    $billingModule = module::where('module_name', 'billing management')->first();
+                    $moduleId = $billingModule ? $billingModule->id : null;
+                    
+                    // Send notification to billing management users
+                    $notification = $user->notifyInfo(
+                        'New Billing Created',
+                        Auth::user()->name . " has created a new billing for " . $billing->user->name . " - Amount: ₱" . number_format($billing->amount_due, 2) . " for Bill #" . str_pad($billing->id, 6, '0', STR_PAD_LEFT) . ". " . $message,
+                        $moduleId
+                    );
+
+                    \Log::info('Billing management notification sent successfully', [
+                        'notification_id' => $notification->id,
+                        'user_id' => $user->id,
+                        'user_name' => $user->name,
+                        'billing_id' => $billing->id
+                    ]);
+
+                    $notificationsSent++;
+
+                } catch (\Exception $e) {
+                    \Log::error('Error sending notification to user', [
+                        'user_id' => $user->id,
+                        'user_name' => $user->name,
+                        'error' => $e->getMessage(),
+                        'billing_id' => $billing->id
+                    ]);
+                }
+            }
+
+            \Log::info('Billing management notifications completed', [
+                'billing_id' => $billing->id,
+                'total_users_found' => $users->count(),
+                'notifications_sent' => $notificationsSent
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error in sendBillingManagementNotifications', [
+                'error' => $e->getMessage(),
+                'billing_id' => $billing->id ?? 'N/A',
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
     }
 
     public function store(Request $request)
@@ -56,6 +167,52 @@ class BillingManagementController extends Controller
                     'price' => $item['price'],
                     'is_pay' => 'No' // Default to not paid
                 ]);
+            }
+
+            // Activity logging for billing creation
+            try {
+                Auth::user()->logCustom(
+                    "Created new billing for " . $billing->user->name . 
+                    " - Amount: ₱" . number_format($billing->amount_due, 2) . 
+                    " - Bill #" . str_pad($billing->id, 6, '0', STR_PAD_LEFT) . 
+                    " - Status: " . $billing->status
+                );
+                \Log::info('Billing creation activity logged successfully', [
+                    'user_id' => Auth::id(),
+                    'billing_id' => $billing->id
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Error logging billing creation activity: ' . $e->getMessage());
+            }
+
+            // Send notification to the user who the billing is for
+            try {
+                // Get billing management module ID for notification_settings_id
+                $billingModule = module::where('module_name', 'billing management')->first();
+                $moduleId = $billingModule ? $billingModule->id : null;
+                
+                // NOTIFICATION 1: For the user who the billing is for
+                $userNotification = $billing->user->notifyInfo(
+                    'New Billing Created',
+                    'A new billing has been created for you - Amount: ₱' . number_format($billing->amount_due, 2) . ' for Bill #' . str_pad($billing->id, 6, '0', STR_PAD_LEFT) . '. Please check your billing details and make payment when ready.',
+                    $moduleId
+                );
+
+                \Log::info('User billing notification sent successfully', [
+                    'notification_id' => $userNotification->id,
+                    'user_id' => $billing->user->id,
+                    'billing_id' => $billing->id
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Error sending billing notification to user: ' . $e->getMessage());
+            }
+
+            // Send notifications to billing management users
+            try {
+                $this->sendBillingManagementNotifications($billing, 'Billing has been created and sent to the user.');
+                \Log::info('Billing management notifications sent successfully');
+            } catch (\Exception $e) {
+                \Log::error('Failed to send billing management notifications: ' . $e->getMessage());
             }
 
             return response()->json([
@@ -119,6 +276,21 @@ class BillingManagementController extends Controller
                     'is_pay' => 'No' // Default to not paid
                 ]);
             }
+
+            // Activity logging for billing update
+            try {
+                Auth::user()->logCustom(
+                    "Updated billing for " . $billing->user->name . 
+                    " - Amount: ₱" . number_format($billing->amount_due, 2) . 
+                    " - Bill #" . str_pad($billing->id, 6, '0', STR_PAD_LEFT)
+                );
+                \Log::info('Billing update activity logged successfully', [
+                    'user_id' => Auth::id(),
+                    'billing_id' => $billing->id
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Error logging billing update activity: ' . $e->getMessage());
+            }
             
             return response()->json([
                 'message' => 'Billing updated successfully',
@@ -133,7 +305,23 @@ class BillingManagementController extends Controller
 
     public function destroy($id)
     {
-        $billing = tbl_billing_management::findOrFail($id);
+        $billing = tbl_billing_management::with('user')->findOrFail($id);
+        
+        // Activity logging for billing deletion
+        try {
+            Auth::user()->logCustom(
+                "Deleted billing for " . $billing->user->name . 
+                " - Amount: ₱" . number_format($billing->amount_due, 2) . 
+                " - Bill #" . str_pad($billing->id, 6, '0', STR_PAD_LEFT)
+            );
+            \Log::info('Billing deletion activity logged successfully', [
+                'user_id' => Auth::id(),
+                'billing_id' => $billing->id
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error logging billing deletion activity: ' . $e->getMessage());
+        }
+
         $billing->delete();
 
         return response()->json([
