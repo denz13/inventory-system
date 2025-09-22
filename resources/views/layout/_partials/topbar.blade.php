@@ -2,8 +2,18 @@
     <div class="h-full flex items-center">
         <!-- BEGIN: Logo -->
         <a href="" class="-intro-x hidden md:flex">
-            <img alt="Midone - HTML Admin Template" class="w-6" src="dist/images/logo.png">
-            <span class="text-white text-lg ml-3"> GCH </span> 
+            @if($topbarTopLogo && $topbarTopLogo->value)
+                <img alt="Topbar Logo" class="w-6" src="{{ asset('storage/' . $topbarTopLogo->value) }}">
+            @else
+                <img alt="Midone - HTML Admin Template" class="w-6" src="dist/images/logo.png">
+            @endif
+            <span class="text-white text-lg ml-3">
+                @if($topbarTopText && $topbarTopText->value)
+                    {{ $topbarTopText->value }}
+                @else
+                    GCH
+                @endif
+            </span> 
         </a>
         <!-- END: Logo -->
         <!-- BEGIN: Breadcrumb -->

@@ -10,7 +10,7 @@
             </a>
             <ul class="">
                 <x-menu.sidebar-single-item key="dashboard" href="{{ url('dashboard') }}" icon="home" text="{{ __('Dashboard') }}" />
-                <li>
+                <!-- <li>
                     <a href="simple-menu-light-dashboard-overview-1.html" class="side-menu">
                         <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
                         <div class="side-menu__title"> Simple Menu </div>
@@ -21,7 +21,7 @@
                         <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
                         <div class="side-menu__title"> Top Menu </div>
                     </a>
-                </li>
+                </li> -->
             </ul>
         </li>
         @if(auth()->user()->hasPermission('message'))
@@ -738,7 +738,7 @@
                 @endif
                 @if(auth()->user()->hasPermission('system settings'))
                 <li>
-                    <a href="side-menu-light-slider.html" class="side-menu">
+                    <a href="{{ route('system-settings.index') }}" class="side-menu">
                         <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
                         <div class="side-menu__title"> System Settings </div>
                     </a>

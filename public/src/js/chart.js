@@ -100,43 +100,75 @@ import Chart from "chart.js/auto";
 
     if ($("#report-pie-chart").length) {
         let ctx = $("#report-pie-chart")[0].getContext("2d");
-        let myPieChart = new Chart(ctx, {
-            type: "pie",
-            data: {
-                labels: [
-                    "31 - 50 Years old",
-                    ">= 50 Years old",
-                    "17 - 30 Years old",
-                ],
-                datasets: [
-                    {
-                        data: [15, 10, 65],
-                        backgroundColor: [
-                            colors.pending(0.9),
-                            colors.warning(0.9),
-                            colors.primary(0.9),
-                        ],
-                        hoverBackgroundColor: [
-                            colors.pending(0.9),
-                            colors.warning(0.9),
-                            colors.primary(0.9),
-                        ],
-                        borderWidth: 5,
-                        borderColor: $("html").hasClass("dark")
-                            ? colors.darkmode[700]()
-                            : colors.white,
-                    },
-                ],
-            },
-            options: {
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false,
+        
+        // Wait for gender data to be available
+        function initializePieChart() {
+            // Get gender data from the page (passed from Livewire)
+            let genderData = window.genderStats || {};
+            let genderLabels = Object.keys(genderData);
+            let genderCounts = Object.values(genderData);
+            
+            // If no gender data, show empty chart
+            if (genderLabels.length === 0) {
+                genderLabels = ['No Data'];
+                genderCounts = [1];
+            }
+            
+            let myPieChart = new Chart(ctx, {
+                type: "pie",
+                data: {
+                    labels: genderLabels,
+                    datasets: [
+                        {
+                            data: genderCounts,
+                            backgroundColor: [
+                                colors.primary(0.9),
+                                colors.pending(0.9),
+                                colors.warning(0.9),
+                                colors.success(0.9),
+                                colors.danger(0.9),
+                            ],
+                            hoverBackgroundColor: [
+                                colors.primary(0.9),
+                                colors.pending(0.9),
+                                colors.warning(0.9),
+                                colors.success(0.9),
+                                colors.danger(0.9),
+                            ],
+                            borderWidth: 5,
+                            borderColor: $("html").hasClass("dark")
+                                ? colors.darkmode[700]()
+                                : colors.white,
+                        },
+                    ],
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false,
+                        },
                     },
                 },
-            },
-        });
+            });
+        }
+        
+        // Try to initialize immediately, if data is available
+        if (window.genderStats) {
+            initializePieChart();
+        } else {
+            // Wait for data to be available
+            let attempts = 0;
+            const maxAttempts = 50; // 5 seconds max wait
+            
+            const checkForData = setInterval(() => {
+                attempts++;
+                if (window.genderStats || attempts >= maxAttempts) {
+                    clearInterval(checkForData);
+                    initializePieChart();
+                }
+            }, 100);
+        }
     }
 
     if ($("#report-donut-chart").length) {
@@ -145,9 +177,8 @@ import Chart from "chart.js/auto";
             type: "doughnut",
             data: {
                 labels: [
-                    "31 - 50 Years old",
-                    ">= 50 Years old",
-                    "17 - 30 Years old",
+                  
+                   
                 ],
                 datasets: [
                     {

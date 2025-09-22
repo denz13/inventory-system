@@ -32,6 +32,8 @@ use App\Http\Controllers\newpassword\NewPasswordController;
 use App\Http\Controllers\vehicle\VehicleController;
 use App\Http\Controllers\NotificationSettings\NotificationSettingsController;
 use App\Http\Controllers\PermissionSettings\PermissionSettingsController;
+use App\Http\Controllers\SystemSettings\SystemSettingsController;
+use App\Http\Controllers\DashboardExportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -321,6 +323,14 @@ Route::post('permission-settings', [PermissionSettingsController::class, 'store'
 Route::get('permission-settings/{id}', [PermissionSettingsController::class, 'show'])->name('permission-settings.show');
 Route::put('permission-settings/{id}', [PermissionSettingsController::class, 'update'])->name('permission-settings.update');
 Route::delete('permission-settings/{id}', [PermissionSettingsController::class, 'destroy'])->name('permission-settings.destroy');
+
+// System Settings Routes
+Route::get('system-settings', [SystemSettingsController::class, 'index'])->name('system-settings.index');
+Route::put('system-settings/{id}', [SystemSettingsController::class, 'update'])->name('system-settings.update');
+
+// Dashboard export routes
+Route::get('dashboard/export/users/excel', [DashboardExportController::class, 'exportUsersToExcel'])->name('dashboard.export.users.excel');
+Route::get('dashboard/export/users/pdf', [DashboardExportController::class, 'exportUsersToPDF'])->name('dashboard.export.users.pdf');
 
 });
 

@@ -1528,17 +1528,39 @@ A VERTICAL event
                 <!-- BEGIN: Login Info -->
                 <div class="hidden xl:flex flex-col min-h-screen">
                     <a href="" class="-intro-x flex items-center pt-5">
-                        <img alt="Midone - HTML Admin Template" class="w-6" src="dist/images/logo.png">
-                        <span class="text-white text-lg ml-3"> GCH </span> 
+                        @if($loginTopLogo && $loginTopLogo->value)
+                            <img alt="Top Logo" class="w-6" src="{{ asset('storage/' . $loginTopLogo->value) }}">
+                        @else
+                            <img alt="Midone - HTML Admin Template" class="w-6" src="dist/images/logo.png">
+                        @endif
+                        <span class="text-white text-lg ml-3">
+                            @if($loginTopText && $loginTopText->value)
+                                {{ $loginTopText->value }}
+                            @else
+                                GCH
+                            @endif
+                        </span> 
                     </a>
                     <div class="my-auto">
-                        <img alt="Midone - HTML Admin Template" class="-intro-x w-1/2 -mt-16" src="dist/images/logo.png">
+                        @if($loginLogo && $loginLogo->value)
+                            <img alt="Login Logo" class="-intro-x w-1/2 -mt-16" src="{{ asset('storage/' . $loginLogo->value) }}">
+                        @else
+                            <img alt="Midone - HTML Admin Template" class="-intro-x w-1/2 -mt-16" src="dist/images/logo.png">
+                        @endif
                         <div class="-intro-x text-white font-medium text-2xl leading-tight mt-10">
-                            Welcome to Golden Country Homes 
-                            {{-- <br>
-                            sign in to your account. --}}
+                            @if($loginCenterText && $loginCenterText->value)
+                                {{ $loginCenterText->value }}
+                            @else
+                                Welcome to Golden Country Homes
+                            @endif
                         </div>
-                        <div class="-intro-x mt-5 text-xs text-white text-opacity-70 dark:text-slate-400">Manage all your property accounts in one place</div>
+                        <div class="-intro-x mt-5 text-xs text-white text-opacity-70 dark:text-slate-400">
+                            @if($loginBottomText && $loginBottomText->value)
+                                {{ $loginBottomText->value }}
+                            @else
+                                Manage all your property accounts in one place
+                            @endif
+                        </div>
                     </div>
                 </div>
                 <!-- END: Login Info -->
