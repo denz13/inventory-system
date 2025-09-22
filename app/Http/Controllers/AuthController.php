@@ -8,6 +8,7 @@ use App\Models\ActivityLog;
 use App\Models\Notification;
 use App\Models\tbl_announcement;
 use App\Models\User;
+use App\Models\system_settings;
 use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
@@ -26,7 +27,32 @@ class AuthController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('login.index-login', compact('announcements'));
+        // Fetch login center text from system settings
+        $loginCenterText = system_settings::where('key', 'login_center_text')
+            ->where('status', 'active')
+            ->first();
+
+        // Fetch login logo from system settings
+        $loginLogo = system_settings::where('key', 'login_logo')
+            ->where('status', 'active')
+            ->first();
+
+        // Fetch login top text from system settings
+        $loginTopText = system_settings::where('key', 'login_top_text')
+            ->where('status', 'active')
+            ->first();
+
+        // Fetch login top logo from system settings
+        $loginTopLogo = system_settings::where('key', 'login_top_logo')
+            ->where('status', 'active')
+            ->first();
+
+        // Fetch login bottom text from system settings
+        $loginBottomText = system_settings::where('key', 'login_bottom_text')
+            ->where('status', 'active')
+            ->first();
+
+        return view('login.index-login', compact('announcements', 'loginCenterText', 'loginLogo', 'loginTopText', 'loginTopLogo', 'loginBottomText'));
     }
 
     /**
