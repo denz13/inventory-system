@@ -431,6 +431,7 @@ Route::get('chat/unread-count', [ChatController::class, 'getUnreadCount'])->name
 Route::get('chat/notifications', [ChatController::class, 'getNotifications'])->name('chat.notifications');
 Route::post('chat/notifications/{notificationId}/read', [ChatController::class, 'markNotificationAsRead'])->name('chat.markNotificationRead');
 Route::post('chat/notifications/read-all', [ChatController::class, 'markAllNotificationsAsRead'])->name('chat.markAllNotificationsRead');
+Route::get('chat/latest-message-sender', [ChatController::class, 'getLatestMessageSender'])->name('chat.latestMessageSender');
 
 // Business routes
 Route::get('business', [BusinessController::class, 'index'])->name('business.index');

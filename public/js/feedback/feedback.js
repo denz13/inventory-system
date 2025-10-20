@@ -536,6 +536,11 @@ function handleCreateFeedback() {
             } else if (data.message) {
                 // Single error message
                 errors.push(data.message);
+                
+                // If it's a banned words error, highlight the banned words
+                if (data.banned_words && data.banned_words.length > 0) {
+                    highlightBannedWords(data.banned_words);
+                }
             }
             
             if (errors.length > 0) {
@@ -630,6 +635,11 @@ function handleUpdateFeedback() {
             } else if (data.message) {
                 // Single error message
                 errors.push(data.message);
+                
+                // If it's a banned words error, highlight the banned words
+                if (data.banned_words && data.banned_words.length > 0) {
+                    highlightBannedWords(data.banned_words);
+                }
             }
             
             if (errors.length > 0) {
@@ -779,6 +789,105 @@ function clearEditFormErrors() {
     if (descriptionError) descriptionError.classList.add('hidden');
     if (ratingError) ratingError.classList.add('hidden');
     if (descriptionInput) descriptionInput.classList.remove('border-red-500');
+}
+
+// Function to highlight banned words in the textarea
+function highlightBannedWords(bannedWords) {
+    const createDescription = document.getElementById('createDescription');
+    const editDescription = document.getElementById('editDescription');
+    
+    // Highlight in create form
+    if (createDescription) {
+        highlightWordsInTextarea(createDescription, bannedWords);
+    }
+    
+    // Highlight in edit form
+    if (editDescription) {
+        highlightWordsInTextarea(editDescription, bannedWords);
+    }
+}
+
+function highlightWordsInTextarea(textarea, bannedWords) {
+    const text = textarea.value;
+    let highlightedText = text;
+    
+    // Create a temporary div to work with HTML
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = text;
+    
+    // Highlight each banned word
+    bannedWords.forEach(word => {
+        const regex = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+        highlightedText = highlightedText.replace(regex, `<span style="background-color: #fef2f2; color: #dc2626; font-weight: bold; padding: 2px 4px; border-radius: 3px;">${word}</span>`);
+    });
+    
+    // Show highlighted text in a temporary overlay
+    showBannedWordsOverlay(textarea, highlightedText, bannedWords);
+}
+
+function showBannedWordsOverlay(textarea, highlightedText, bannedWords) {
+    // Remove existing overlay if any
+    const existingOverlay = document.getElementById('banned-words-overlay');
+    if (existingOverlay) {
+        existingOverlay.remove();
+    }
+    
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'banned-words-overlay';
+    overlay.style.cssText = `
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.95);
+        border: 2px solid #dc2626;
+        border-radius: 8px;
+        padding: 12px;
+        z-index: 1000;
+        font-family: inherit;
+        font-size: inherit;
+        line-height: inherit;
+        overflow: auto;
+        max-height: 200px;
+    `;
+    
+    overlay.innerHTML = `
+        <div style="margin-bottom: 10px;">
+            <strong style="color: #dc2626;">⚠️ Inappropriate Content Detected</strong>
+        </div>
+        <div style="margin-bottom: 10px;">
+            <strong>Banned words found:</strong> ${bannedWords.join(', ')}
+        </div>
+        <div style="margin-bottom: 10px;">
+            <strong>Your text with highlighted banned words:</strong>
+        </div>
+        <div style="border: 1px solid #e5e7eb; padding: 8px; background: #f9fafb; border-radius: 4px;">
+            ${highlightedText}
+        </div>
+        <div style="margin-top: 10px;">
+            <button onclick="this.parentElement.parentElement.remove()" style="background: #dc2626; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">
+                Close
+            </button>
+        </div>
+    `;
+    
+    // Position the overlay relative to the textarea
+    const textareaRect = textarea.getBoundingClientRect();
+    const modalBody = textarea.closest('.modal-body');
+    
+    if (modalBody) {
+        modalBody.style.position = 'relative';
+        modalBody.appendChild(overlay);
+    }
+    
+    // Auto-remove after 10 seconds
+    setTimeout(() => {
+        if (overlay && overlay.parentElement) {
+            overlay.remove();
+        }
+    }, 10000);
 }
 
 // Clear errors when user starts typing or selecting
