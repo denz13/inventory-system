@@ -261,9 +261,9 @@
             <input type="text" data-daterange="true" class="datepicker form-control w-56" placeholder="Filter by date range" id="dateRangeFilter">
             <button type="button" class="btn btn-outline-secondary" id="clearFilterBtn">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1">
-                    <path d="M3 6h18"></path>
-                    <path d="M19 6v14c0 1 -1 2 -2 2H7c-1 0 -2 -1 -2 -2V6"></path>
-                    <path d="M8 6V4c0 -1 1 -2 2 -2h4c1 0 2 1 2 2v2"></path>
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <polyline points="1 20 1 14 7 14"></polyline>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
                 </svg>
                 Show All
             </button>
@@ -284,17 +284,18 @@
     </div>
 
     <!-- BEGIN: Data List -->
-    <div class="intro-y col-span-12 overflow-auto lg:overflow-visible">
-        <table class="table table-report -mt-2">
-            <thead>
-                <tr>
-                    <th class="whitespace-nowrap">BILLING DATE</th>
-                    <th class="text-center whitespace-nowrap">AMOUNT DUE</th>
-                    <th class="text-center whitespace-nowrap">STATUS</th>
-                    <th class="text-center whitespace-nowrap">ITEMS</th>
-                    <th class="text-center whitespace-nowrap">ACTIONS</th>
-                </tr>
-            </thead>
+    <div class="intro-y col-span-12">
+        <div class="overflow-x-auto">
+            <table class="table table-report -mt-2">
+                <thead>
+                    <tr>
+                        <th class="whitespace-nowrap">BILLING DATE</th>
+                        <th class="text-center whitespace-nowrap">AMOUNT DUE</th>
+                        <th class="text-center whitespace-nowrap">STATUS</th>
+                        <th class="text-center whitespace-nowrap">DESCRIPTION</th>
+                        <th class="text-center whitespace-nowrap">ACTIONS</th>
+                    </tr>
+                </thead>
             <tbody>
                 @forelse($userBillings as $billing)
                 <tr class="intro-x" data-status="{{ $billing->status }}" data-billing-date="{{ $billing->billing_date }}">
@@ -340,7 +341,7 @@
                                 View
                             </a>
                             @if($billing->status === 'under review' && $billing->receipt)
-                                <a class="flex items-center mr-3 text-blue-600" href="javascript:;" data-tw-toggle="modal" data-tw-target="#receipt-modal" data-receipt="{{ $billing->receipt }}" data-bill-number="{{ $billing->id }}">
+                                <a class="flex items-center mr-3 text-blue-600" href="javascript:;" data-tw-toggle="modal" data-tw-target="#receipt-modal" data-receipt="{{ $billing->receipt }}" data-bill-number="{{ $billing->id }}" data-receipt-type="user">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1">
                                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                         <polyline points="14,2 14,8 20,8"></polyline>
@@ -349,6 +350,18 @@
                                         <polyline points="10,9 9,9 8,9"></polyline>
                                 </svg>
                                     My Receipt
+                            </a>
+                            @endif
+                            @if($billing->status === 'approved' && $billing->official_receipt)
+                                <a class="flex items-center mr-3 text-green-600" href="javascript:;" data-tw-toggle="modal" data-tw-target="#receipt-modal" data-receipt="{{ $billing->official_receipt }}" data-bill-number="{{ $billing->id }}" data-receipt-type="official">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14,2 14,8 20,8"></polyline>
+                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                        <polyline points="10,9 9,9 8,9"></polyline>
+                                </svg>
+                                    Official Receipt
                             </a>
                             @endif
                             @if($billing->status === 'sent to owners' || $billing->status === 'rejected')
@@ -388,6 +401,7 @@
                 @endforelse
             </tbody>
         </table>
+        </div>
     </div>
     <!-- END: Data List -->
     
@@ -607,25 +621,25 @@
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             
-            <div class="modal-body px-6 py-8">
-                <div class="mb-6">
+            <div class="modal-body px-6 py-8 overflow-visible">
+                <div class="mb-6" id="receipt-header-info">
                     <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
                         <div class="flex items-center justify-between">
                             <span class="text-blue-800 font-medium">Payment Receipt for Bill #<span id="receiptBillNumber"></span></span>
-                            <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">Under Review</span>
+                            <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium" id="receipt-status">Under Review</span>
                         </div>
-                        <div class="text-sm text-blue-600 mt-2">Status: Your payment proof has been submitted and is currently being reviewed.</div>
+                        <div class="text-sm text-blue-600 mt-2" id="receipt-description">Status: Your payment proof has been submitted and is currently being reviewed.</div>
                     </div>
                 </div>
 
                 <div class="receipt-content">
                     <div class="text-center mb-6">
-                        <h3 class="text-lg font-semibold text-slate-800 mb-2">Payment Proof</h3>
-                        <p class="text-slate-500">Below is the payment proof you uploaded</p>
+                        <h3 class="text-lg font-semibold text-slate-800 mb-2" id="receipt-content-title">Payment Proof</h3>
+                        <p class="text-slate-500" id="receipt-content-description">Below is the payment proof you uploaded</p>
                     </div>
                     
                     <!-- Receipt Image/PDF Display -->
-                    <div class="receipt-display bg-slate-50 rounded-lg p-6 min-h-96 flex items-center justify-center">
+                    <div class="receipt-display">
                         <div id="receiptFileDisplay" class="w-full">
                             <!-- Receipt will be loaded here -->
                             <div class="text-center text-slate-500">

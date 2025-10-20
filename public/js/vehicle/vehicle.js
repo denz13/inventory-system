@@ -3,6 +3,50 @@ document.addEventListener('DOMContentLoaded', function () {
     var table = document.getElementById('vehicleTable');
     var editForm = document.getElementById('editVehicleForm');
 
+    // Bind type-of-vehicle radio to hidden inputs (Add)
+    function bindTypeRadios(groupName, hiddenId, otherWrapId, otherInputId) {
+        var radios = document.querySelectorAll('input[name="'+groupName+'"]');
+        var hidden = document.getElementById(hiddenId);
+        var otherWrap = document.getElementById(otherWrapId);
+        var otherInput = document.getElementById(otherInputId);
+        if (!radios.length || !hidden) return;
+        var update = function (val) {
+            if (val === 'others') {
+                if (otherWrap) otherWrap.classList.remove('hidden');
+                if (otherInput) { 
+                    otherInput.addEventListener('input', function(){ hidden.value = otherInput.value; }); 
+                    hidden.value = otherInput.value || ''; 
+                }
+            } else {
+                if (otherWrap) otherWrap.classList.add('hidden');
+                hidden.value = val;
+            }
+        };
+        radios.forEach(function(r){
+            r.addEventListener('change', function(){ update(this.value); });
+            if (r.checked) update(r.value);
+        });
+    }
+
+    bindTypeRadios('add_type_of_vehicle_opt','add_type_of_vehicle','add_other_type_wrap','add_other_type');
+    bindTypeRadios('edit_type_of_vehicle_opt','edit_type_of_vehicle','edit_other_type_wrap','edit_other_type');
+
+    // Reset modals when closed
+    document.getElementById('create-vehicle-modal')?.addEventListener('hidden.bs.modal', function() {
+        if (addForm) addForm.reset();
+        document.getElementById('fileInfo').style.display = 'none';
+        // Reset radio to default (car)
+        var defaultRadio = document.querySelector('input[name="add_type_of_vehicle_opt"][value="car"]');
+        if (defaultRadio) defaultRadio.checked = true;
+        document.getElementById('add_other_type_wrap')?.classList.add('hidden');
+        document.getElementById('add_type_of_vehicle').value = 'car';
+    });
+
+    document.getElementById('edit-vehicle-modal')?.addEventListener('hidden.bs.modal', function() {
+        document.getElementById('edit_other_type_wrap')?.classList.add('hidden');
+        document.getElementById('currentFileInfo').style.display = 'none';
+    });
+
     async function postForm(form, url, method) {
         const formData = new FormData(form);
         if (method && method.toUpperCase() !== 'POST') {
@@ -91,7 +135,33 @@ document.addEventListener('DOMContentLoaded', function () {
                     
                     // Populate form fields
                     document.getElementById('editVehicleId').value = data.data.id;
-                    document.getElementById('editTypeOfVehicle').value = data.data.type_of_vehicle || '';
+                    
+                    // Set vehicle type radio buttons
+                    var vehicleType = data.data.type_of_vehicle || '';
+                    var editRadios = document.querySelectorAll('input[name="edit_type_of_vehicle_opt"]');
+                    var foundMatch = false;
+                    editRadios.forEach(function(r){ 
+                        r.checked = false; // Reset all first
+                        if (r.value === vehicleType) {
+                            r.checked = true;
+                            foundMatch = true;
+                        }
+                    });
+                    
+                    // If type doesn't match preset options, select "others" and show input
+                    if (!foundMatch && vehicleType) {
+                        editRadios.forEach(function(r){ if (r.value === 'others') r.checked = true; });
+                        var wrap = document.getElementById('edit_other_type_wrap');
+                        if (wrap) wrap.classList.remove('hidden');
+                        var other = document.getElementById('edit_other_type');
+                        if (other) other.value = vehicleType;
+                        document.getElementById('edit_type_of_vehicle').value = vehicleType;
+                    } else {
+                        // Hide others field for preset types
+                        var wrap = document.getElementById('edit_other_type_wrap');
+                        if (wrap) wrap.classList.add('hidden');
+                        document.getElementById('edit_type_of_vehicle').value = vehicleType;
+                    }
                     
                     // Check if we have the nested data structure
                     if (data.data.supporting_documents && data.data.supporting_documents.vehicle_details) {
@@ -114,12 +184,30 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
                     }
                     
-                    // Handle current file display
+                    // Handle current file display - support multiple files
                     const currentFileDiv = document.getElementById('currentFileInfo');
                     if (data.data.supporting_documents && data.data.supporting_documents.supporting_documents_attachments) {
-                        const fileName = data.data.supporting_documents.supporting_documents_attachments.split('/').pop();
-                        currentFileDiv.innerHTML = `Current file: ${fileName}`;
-                        currentFileDiv.style.display = 'block';
+                        try {
+                            const files = JSON.parse(data.data.supporting_documents.supporting_documents_attachments);
+                            if (Array.isArray(files) && files.length > 0) {
+                                let fileList = '';
+                                files.forEach((file, index) => {
+                                    const fileName = file.split('/').pop();
+                                    fileList += `<div class="mb-1"><a href="/storage/${file}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">${index + 1}. ${fileName}</a></div>`;
+                                });
+                                currentFileDiv.innerHTML = `<div class="font-medium mb-1">Current files (${files.length}):</div>${fileList}`;
+                                currentFileDiv.style.display = 'block';
+                            } else {
+                                const fileName = data.data.supporting_documents.supporting_documents_attachments.split('/').pop();
+                                currentFileDiv.innerHTML = `Current file: <a href="/storage/${data.data.supporting_documents.supporting_documents_attachments}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">${fileName}</a>`;
+                                currentFileDiv.style.display = 'block';
+                            }
+                        } catch (e) {
+                            // If not JSON, treat as single file (backward compatibility)
+                            const fileName = data.data.supporting_documents.supporting_documents_attachments.split('/').pop();
+                            currentFileDiv.innerHTML = `Current file: <a href="/storage/${data.data.supporting_documents.supporting_documents_attachments}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">${fileName}</a>`;
+                            currentFileDiv.style.display = 'block';
+                        }
                     } else {
                         currentFileDiv.style.display = 'none';
                     }
@@ -149,9 +237,25 @@ document.addEventListener('DOMContentLoaded', function () {
             const color = vehicle.supporting_documents?.vehicle_details?.color_of_vehicle || 'N/A';
             const status = vehicle.status || 'N/A';
             const dateCreated = vehicle.created_at ? new Date(vehicle.created_at).toLocaleString() : 'N/A';
-            const supportingDoc = vehicle.supporting_documents?.supporting_documents_attachments ? 
-                `<a href="/storage/${vehicle.supporting_documents.supporting_documents_attachments}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">View Document</a>` : 
-                'No file uploaded';
+            
+            // Handle multiple files
+            let supportingDoc = 'No files uploaded';
+            if (vehicle.supporting_documents?.supporting_documents_attachments) {
+                try {
+                    const files = JSON.parse(vehicle.supporting_documents.supporting_documents_attachments);
+                    if (Array.isArray(files) && files.length > 0) {
+                        supportingDoc = files.map((file, index) => {
+                            const fileName = file.split('/').pop();
+                            return `<div class="mb-1"><a href="/storage/${file}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">${index + 1}. ${fileName}</a></div>`;
+                        }).join('');
+                    } else {
+                        supportingDoc = `<a href="/storage/${vehicle.supporting_documents.supporting_documents_attachments}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">View Document</a>`;
+                    }
+                } catch (e) {
+                    // If not JSON, treat as single file (backward compatibility)
+                    supportingDoc = `<a href="/storage/${vehicle.supporting_documents.supporting_documents_attachments}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">View Document</a>`;
+                }
+            }
 
             detailsContainer.innerHTML = `
                 <div class="grid grid-cols-12 gap-4">
@@ -259,14 +363,20 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // File input change handlers
+    // File input change handlers - support multiple files
     const createFileInput = document.getElementById('createSupportingDocuments');
     if (createFileInput) {
         createFileInput.addEventListener('change', function() {
-            const file = this.files[0];
+            const files = this.files;
             const fileInfo = document.getElementById('fileInfo');
-            if (file && fileInfo) {
-                fileInfo.innerHTML = `Selected file: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+            if (files && files.length > 0 && fileInfo) {
+                let fileList = '';
+                let totalSize = 0;
+                for (let i = 0; i < files.length; i++) {
+                    totalSize += files[i].size;
+                    fileList += `<div>${i + 1}. ${files[i].name} (${(files[i].size / 1024 / 1024).toFixed(2)} MB)</div>`;
+                }
+                fileInfo.innerHTML = `<div class="font-medium mb-1">Selected ${files.length} file(s):</div>${fileList}<div class="mt-1 font-medium">Total size: ${(totalSize / 1024 / 1024).toFixed(2)} MB</div>`;
                 fileInfo.style.display = 'block';
             } else if (fileInfo) {
                 fileInfo.style.display = 'none';
@@ -277,58 +387,186 @@ document.addEventListener('DOMContentLoaded', function () {
     const editFileInput = document.getElementById('editSupportingDocumentsAttachments');
     if (editFileInput) {
         editFileInput.addEventListener('change', function() {
-            const file = this.files[0];
+            const files = this.files;
             const fileInfo = document.getElementById('currentFileInfo');
-            if (file && fileInfo) {
-                fileInfo.innerHTML = `New file: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+            if (files && files.length > 0 && fileInfo) {
+                let fileList = '';
+                let totalSize = 0;
+                for (let i = 0; i < files.length; i++) {
+                    totalSize += files[i].size;
+                    fileList += `<div>${i + 1}. ${files[i].name} (${(files[i].size / 1024 / 1024).toFixed(2)} MB)</div>`;
+                }
+                fileInfo.innerHTML = `<div class="font-medium mb-1">New ${files.length} file(s) selected:</div>${fileList}<div class="mt-1 font-medium">Total size: ${(totalSize / 1024 / 1024).toFixed(2)} MB</div>`;
                 fileInfo.style.display = 'block';
             }
         });
     }
 
+    // State for filters
+    let currentStatusFilter = 'all';
+
     // Search functionality
-    const searchInput = document.querySelector('input[placeholder="Search..."]');
+    const searchInput = document.getElementById('searchInput');
+    
     if (searchInput) {
-        let searchTimeout;
         searchInput.addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                const searchTerm = this.value.toLowerCase();
-                const rows = document.querySelectorAll('#vehicleTable tbody tr');
-                
-                rows.forEach(row => {
-                    const text = row.textContent.toLowerCase();
-                    if (text.includes(searchTerm)) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
-            }, 300);
+            applyAllFilters();
         });
     }
 
-    // Status filter functionality
-    const filterDropdown = document.querySelector('[data-filter]');
-    if (filterDropdown) {
-        document.addEventListener('click', function(e) {
-            if (e.target.matches('[data-filter]')) {
-                const filterValue = e.target.getAttribute('data-filter');
-                const rows = document.querySelectorAll('#vehicleTable tbody tr');
-                
-                rows.forEach(row => {
-                    if (filterValue === 'all') {
-                        row.style.display = '';
-                    } else {
-                        const statusCell = row.querySelector('td:nth-child(4)'); // Adjust based on status column
-                        if (statusCell && statusCell.textContent.toLowerCase().includes(filterValue.toLowerCase())) {
-                            row.style.display = '';
-                        } else {
-                            row.style.display = 'none';
-                        }
+    // Universal filter handler (matching service-management pattern)
+    document.addEventListener('click', function(e) {
+        if (e.target.matches('[data-filter-type]')) {
+            const filterType = e.target.getAttribute('data-filter-type');
+            const filterValue = e.target.getAttribute('data-filter-value');
+            
+            const dropdown = e.target.closest('.dropdown');
+            
+            // Update the appropriate filter state and button
+            if (filterType === 'status') {
+                currentStatusFilter = filterValue;
+                updateFilterButton('statusFilterBtn', filterValue === 'all' ? 'Status: All' : `Status: ${filterValue}`);
+            }
+            
+            // Apply all filters
+            applyAllFilters();
+            
+            // Close dropdown
+            if (dropdown) {
+                const dropdownToggle = dropdown.querySelector('.dropdown-toggle');
+                if (dropdownToggle) {
+                    dropdownToggle.setAttribute('aria-expanded', 'false');
+                    const dropdownMenu = dropdown.querySelector('.dropdown-menu');
+                    if (dropdownMenu) {
+                        dropdownMenu.classList.remove('show');
                     }
-                });
+                }
+            }
+        }
+    });
+
+    // Reset filters button
+    document.getElementById('resetFiltersBtn')?.addEventListener('click', function() {
+        currentStatusFilter = 'all';
+        
+        if (searchInput) {
+            searchInput.value = '';
+        }
+        
+        // Reset button texts
+        updateFilterButton('statusFilterBtn', 'Status: All');
+        
+        // Apply filters (which will show all)
+        applyAllFilters();
+        
+        showToast('All filters have been reset', 'success');
+    });
+
+    // Update filter button text
+    function updateFilterButton(buttonId, text) {
+        const button = document.getElementById(buttonId);
+        if (button) {
+            // Preserve the icon
+            const icon = button.querySelector('svg');
+            button.textContent = text;
+            if (icon) {
+                button.insertBefore(icon, button.firstChild);
+            }
+        }
+    }
+
+    // Apply all filters (search + status)
+    function applyAllFilters() {
+        const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        const tbody = document.querySelector('#vehicleTable tbody');
+        const vehicleRows = Array.from(document.querySelectorAll('#vehicleTable tbody tr.intro-x'));
+        
+        if (vehicleRows.length === 0) return;
+        
+        let visibleCount = 0;
+        
+        vehicleRows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            const rowStatus = row.getAttribute('data-status');
+            
+            // Check search match
+            const matchesSearch = searchTerm === '' || text.includes(searchTerm);
+            
+            // Check status match
+            const matchesStatus = currentStatusFilter === 'all' || rowStatus === currentStatusFilter;
+            
+            // Show/hide row based on both filters
+            if (matchesSearch && matchesStatus) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
             }
         });
+        
+        // Update filtered count
+        const filteredCountElement = document.getElementById('filtered-count');
+        if (filteredCountElement) {
+            filteredCountElement.textContent = visibleCount;
+        }
+        
+        // Show/hide no results message
+        updateNoResultsMessage(searchTerm, currentStatusFilter, visibleCount, vehicleRows.length);
+    }
+
+    // Update no results message
+    function updateNoResultsMessage(searchTerm, statusFilter, visibleCount, totalRows) {
+        const tbody = document.querySelector('#vehicleTable tbody');
+        let noDataRow = tbody?.querySelector('tr.no-data-found');
+        
+        // Remove existing no data row if it exists
+        if (noDataRow) {
+            noDataRow.remove();
+        }
+        
+        // Check if we should show "no results" message
+        const hasActiveFilters = searchTerm !== '' || currentStatusFilter !== 'all';
+        
+        if (visibleCount === 0 && hasActiveFilters && totalRows > 0 && tbody) {
+            // Create new no data row
+            noDataRow = document.createElement('tr');
+            noDataRow.className = 'no-data-found';
+            noDataRow.innerHTML = `
+                <td colspan="6" class="text-center py-8">
+                    <div class="text-slate-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
+                            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <div class="font-medium">No vehicles found</div>
+                        <div class="text-sm">No vehicles match your current filters. Try adjusting your filters.</div>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(noDataRow);
+        }
+    }
+
+    // Toast notification function
+    function showToast(message, type = 'success') {
+        const toastId = type === 'success' ? 'vehicle_toast_success' : 'vehicle_toast_error';
+        
+        if (type === 'error') {
+            const errorMessageSlot = document.getElementById('vehicle-error-message-slot');
+            if (errorMessageSlot) {
+                errorMessageSlot.textContent = message;
+            }
+        }
+        
+        // Use your notification-toast component's show function
+        try {
+            if (window[`showNotification_${toastId}`]) {
+                window[`showNotification_${toastId}`]();
+            } else {
+                console.log(`${type.toUpperCase()}:`, message);
+            }
+        } catch (error) {
+            console.error('Error showing toast:', error);
+            console.log(`${type.toUpperCase()}:`, message);
+        }
     }
 });

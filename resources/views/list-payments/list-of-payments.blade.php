@@ -88,26 +88,87 @@
         </style>
     </div>
 <div class="grid grid-cols-12 gap-6 mt-5">
-    <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2">
+    <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2 gap-2">
+        <!-- Status Filter -->
         <div class="dropdown"> 
-            <button class="dropdown-toggle btn btn-primary" aria-expanded="false" data-tw-toggle="dropdown">Filter by Status</button> 
+            <button class="dropdown-toggle btn btn-outline-secondary" aria-expanded="false" data-tw-toggle="dropdown" id="statusFilterBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+                Status: All
+            </button> 
             <div class="dropdown-menu w-40"> 
                 <ul class="dropdown-content"> 
-                    <li> <a href="javascript:;" class="dropdown-item" data-filter="all">All Payments</a> </li> 
-                    <li> <a href="javascript:;" class="dropdown-item" data-filter="sent to owners">Pending Payment</a> </li> 
-                    <li> <a href="javascript:;" class="dropdown-item" data-filter="under review">Under Review</a> </li> 
-                    <li> <a href="javascript:;" class="dropdown-item" data-filter="approved">Approved</a> </li> 
-                    <li> <a href="javascript:;" class="dropdown-item" data-filter="rejected">Rejected</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="status" data-filter-value="all">All Status</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="status" data-filter-value="sent to owners">Pending Payment</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="status" data-filter-value="under review">Under Review</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="status" data-filter-value="approved">Approved</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="status" data-filter-value="rejected">Rejected</a> </li> 
                 </ul> 
             </div> 
         </div>
+
+        <!-- Sort by Name -->
+        <div class="dropdown"> 
+            <button class="dropdown-toggle btn btn-outline-secondary" aria-expanded="false" data-tw-toggle="dropdown" id="nameSortBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                    <line x1="4" y1="9" x2="20" y2="9"></line>
+                    <line x1="4" y1="15" x2="20" y2="15"></line>
+                    <line x1="10" y1="3" x2="8" y2="21"></line>
+                    <line x1="16" y1="3" x2="14" y2="21"></line>
+                </svg>
+                Name
+            </button> 
+            <div class="dropdown-menu w-40"> 
+                <ul class="dropdown-content"> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="name-sort" data-filter-value="default">Default</a> </li>
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="name-sort" data-filter-value="a-z">A-Z</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="name-sort" data-filter-value="z-a">Z-A</a> </li> 
+                </ul> 
+            </div> 
+        </div>
+
+        <!-- Filter by Date -->
+        <div class="dropdown"> 
+            <button class="dropdown-toggle btn btn-outline-secondary" aria-expanded="false" data-tw-toggle="dropdown" id="dateFilterBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                Filter by Date
+            </button> 
+            <div class="dropdown-menu w-40"> 
+                <ul class="dropdown-content"> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="date-filter" data-filter-value="all">All Dates</a> </li>
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="date-filter" data-filter-value="today">Today</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="date-filter" data-filter-value="yesterday">Yesterday</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="date-filter" data-filter-value="this-week">This Week</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="date-filter" data-filter-value="last-week">Last Week</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="date-filter" data-filter-value="this-month">This Month</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="date-filter" data-filter-value="last-month">Last Month</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="date-filter" data-filter-value="this-year">This Year</a> </li> 
+                </ul> 
+            </div> 
+        </div>
+
+        <!-- Reset Filters Button -->
+        <button type="button" class="btn btn-outline-danger" id="resetFiltersBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <polyline points="23 20 23 14 17 14"></polyline>
+                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+            </svg>
+            Reset
+        </button>
         
         <div class="hidden md:block mx-auto text-slate-500">
             Showing <span id="filtered-count">{{ $payments->count() }}</span> of <span id="total-count">{{ $payments->total() }}</span> entries
         </div>
         <div class="w-full sm:w-auto mt-3 sm:mt-0 sm:ml-auto md:ml-0">
             <div class="w-56 relative text-slate-500">
-                <input type="text" class="form-control w-56 box pr-10" placeholder="Search..." id="searchInput">
+                <input type="text" class="form-control w-56 box pr-10" placeholder="Search..." id="searchInput" autocomplete="off">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="search" class="lucide lucide-search w-4 h-4 absolute my-auto inset-y-0 mr-3 right-0" data-lucide="search">
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -117,23 +178,24 @@
     </div>
 
     <!-- BEGIN: Data List -->
-    <div class="intro-y col-span-12 overflow-auto lg:overflow-visible">
-        <table class="table table-report -mt-2">
-            <thead>
-                <tr>
-                    <th class="whitespace-nowrap">USER</th>
-                    <th class="whitespace-nowrap">BILL NUMBER</th>
-                    <th class="whitespace-nowrap">BILLING DATE</th>
-                    <th class="whitespace-nowrap">AMOUNT DUE</th>
-                    <th class="whitespace-nowrap">PAYMENT METHOD</th>
-                    <th class="text-center whitespace-nowrap">STATUS</th>
-                    <th class="text-center whitespace-nowrap">DATE CREATED</th>
-                    <th class="text-center whitespace-nowrap">ACTIONS</th>
-                </tr>
-            </thead>
+    <div class="intro-y col-span-12">
+        <div class="overflow-x-auto">
+            <table class="table table-report -mt-2">
+                <thead>
+                    <tr>
+                        <th class="whitespace-nowrap">USER</th>
+                        <th class="whitespace-nowrap">BILL NUMBER</th>
+                        <th class="whitespace-nowrap">BILLING DATE</th>
+                        <th class="whitespace-nowrap">AMOUNT DUE</th>
+                        <th class="whitespace-nowrap">PAYMENT METHOD</th>
+                        <th class="text-center whitespace-nowrap">STATUS</th>
+                        <th class="text-center whitespace-nowrap">DATE CREATED</th>
+                        <th class="text-center whitespace-nowrap">ACTIONS</th>
+                    </tr>
+                </thead>
             <tbody>
                 @forelse($payments as $payment)
-                <tr class="intro-x" data-status="{{ $payment->status }}">
+                <tr class="intro-x" data-status="{{ $payment->status }}" data-date="{{ $payment->created_at ? $payment->created_at->format('Y-m-d H:i:s') : '' }}" data-user-name="{{ $payment->user->name ?? '' }}">
                     <td class="w-40">
                         <div class="flex items-center">
                             <div class="w-10 h-10 image-fit zoom-in">
@@ -225,8 +287,20 @@
                                 </svg>
                                 View
                             </a>
+                            @if($payment->status === 'approved' && $payment->official_receipt)
+                                <a class="flex items-center mr-3 text-green-600" href="javascript:;" data-tw-toggle="modal" data-tw-target="#receipt-modal" data-receipt="{{ $payment->official_receipt }}" data-bill-number="{{ $payment->id }}" data-receipt-type="official">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14,2 14,8 20,8"></polyline>
+                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                        <polyline points="10,9 9,9 8,9"></polyline>
+                                    </svg>
+                                    Official Receipt
+                                </a>
+                            @endif
                             @if($payment->status === 'under review' && $payment->receipt)
-                                <a class="flex items-center mr-3 text-blue-600" href="javascript:;" data-tw-toggle="modal" data-tw-target="#receipt-modal" data-receipt="{{ $payment->receipt }}" data-bill-number="{{ $payment->id }}">
+                                <a class="flex items-center mr-3 text-blue-600" href="javascript:;" data-tw-toggle="modal" data-tw-target="#receipt-modal" data-receipt="{{ $payment->receipt }}" data-bill-number="{{ $payment->id }}" data-receipt-type="user">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1">
                                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                         <polyline points="14,2 14,8 20,8"></polyline>
@@ -286,6 +360,7 @@
                 @endforelse
             </tbody>
         </table>
+        </div>
     </div>
     <!-- END: Data List -->
     
@@ -322,7 +397,7 @@
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header px-6 py-4 border-b border-slate-200">
-                <h2 class="text-xl font-semibold text-slate-800">Payment Receipt</h2>
+                <h2 class="text-xl font-semibold text-slate-800" id="receipt-modal-title">Payment Receipt</h2>
                 <button type="button" class="btn-close" data-tw-dismiss="modal" aria-label="Close">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -330,25 +405,25 @@
                     </svg>
                 </button>
             </div>
-            <div class="modal-body px-6 py-8">
-                <div class="mb-6">
+            <div class="modal-body px-6 py-8 overflow-visible">
+                <div class="mb-6" id="receipt-header-info">
                     <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
                         <div class="flex items-center justify-between">
                             <span class="text-blue-800 font-medium">Payment Receipt for Bill #<span id="receiptBillNumber"></span></span>
-                            <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">Under Review</span>
+                            <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium" id="receipt-status">Under Review</span>
                         </div>
-                        <div class="text-sm text-blue-600 mt-2">Payment proof submitted by user</div>
+                        <div class="text-sm text-blue-600 mt-2" id="receipt-description">Payment proof submitted by user</div>
                     </div>
                 </div>
 
                 <div class="receipt-content">
                     <div class="text-center mb-6">
-                        <h3 class="text-lg font-semibold text-slate-800 mb-2">Payment Proof</h3>
-                        <p class="text-slate-500">Below is the payment proof uploaded by the user</p>
+                        <h3 class="text-lg font-semibold text-slate-800 mb-2" id="receipt-content-title">Payment Proof</h3>
+                        <p class="text-slate-500" id="receipt-content-description">Below is the payment proof uploaded by the user</p>
                     </div>
                     
                     <!-- Receipt Image/PDF Display -->
-                    <div class="receipt-display bg-slate-50 rounded-lg p-6 min-h-96 flex items-center justify-center">
+                    <div class="receipt-display">
                         <div id="receiptFileDisplay" class="w-full">
                             <!-- Receipt will be loaded here -->
                             <div class="text-center text-slate-500">

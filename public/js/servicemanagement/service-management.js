@@ -1,69 +1,52 @@
 document.addEventListener('DOMContentLoaded', function() {
-    let currentFilter = 'all';
+    let currentStatusFilter = 'all';
+    let currentNameSort = 'default';
+    let currentDateFilter = 'all';
     
     // Search functionality
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.addEventListener('input', function() {
             const searchTerm = this.value.toLowerCase().trim();
-            filterServiceRequests(searchTerm, currentFilter);
+            applyFiltersAndSort();
         });
     }
 
-    // Status filter functionality
+    // Universal filter handler for all filter types
     document.addEventListener('click', function(e) {
-        if (e.target.matches('[data-filter]')) {
-            const filterValue = e.target.getAttribute('data-filter');
-            currentFilter = filterValue;
+        if (e.target.matches('[data-filter-type]')) {
+            const filterType = e.target.getAttribute('data-filter-type');
+            const filterValue = e.target.getAttribute('data-filter-value');
             
-            console.log('Filter selected:', filterValue);
+            console.log('Filter clicked:', filterType, filterValue);
             
-            // Update filter button text - use more robust selector
-            let filterBtn = null;
-            
-            // Try to find the button in the same dropdown
             const dropdown = e.target.closest('.dropdown');
-            if (dropdown) {
-                filterBtn = dropdown.querySelector('.dropdown-toggle');
-                console.log('Found dropdown, looking for button inside');
+            
+            // Update the appropriate filter/sort state and button
+            if (filterType === 'status') {
+                currentStatusFilter = filterValue;
+                updateFilterButton('statusFilterBtn', filterValue === 'all' ? 'Status: All' : `Status: ${filterValue}`);
+            } else if (filterType === 'name-sort') {
+                currentNameSort = filterValue;
+                const btnText = filterValue === 'default' ? 'Name' : `Name: ${filterValue.toUpperCase()}`;
+                updateFilterButton('nameSortBtn', btnText);
+            } else if (filterType === 'date-filter') {
+                currentDateFilter = filterValue;
+                const dateTexts = {
+                    'all': 'Filter by Date',
+                    'today': 'Date: Today',
+                    'yesterday': 'Date: Yesterday',
+                    'this-week': 'Date: This Week',
+                    'last-week': 'Date: Last Week',
+                    'this-month': 'Date: This Month',
+                    'last-month': 'Date: Last Month',
+                    'this-year': 'Date: This Year'
+                };
+                updateFilterButton('dateSortBtn', dateTexts[filterValue] || 'Filter by Date');
             }
             
-            // If not found in dropdown, try to find by looking for the filter button
-            if (!filterBtn) {
-                filterBtn = document.querySelector('.dropdown-toggle.btn.btn-primary');
-                console.log('Looking for filter button by class');
-            }
-            
-            console.log('Filter button found:', !!filterBtn);
-            console.log('Filter button element:', filterBtn);
-            
-            if (filterBtn) {
-                console.log('Button before update:', filterBtn.textContent);
-                console.log('Button HTML before update:', filterBtn.innerHTML);
-                
-                if (filterValue === 'all') {
-                    filterBtn.textContent = 'Filter';
-                } else {
-                    filterBtn.textContent = `Filter: ${filterValue}`;
-                }
-                console.log('Filter button text updated to:', filterBtn.textContent);
-                console.log('Button HTML after update:', filterBtn.innerHTML);
-                
-                // Verify the update by checking the DOM again
-                setTimeout(() => {
-                    const verifyBtn = document.querySelector('.dropdown-toggle.btn.btn-primary');
-                    if (verifyBtn) {
-                        console.log('Verification - Button text after update:', verifyBtn.textContent);
-                        console.log('Verification - Button HTML after update:', verifyBtn.innerHTML);
-                    }
-                }, 100);
-            } else {
-                console.error('Filter button not found!');
-            }
-            
-            // Apply filter
-            const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
-            filterServiceRequests(searchTerm, currentFilter);
+            // Apply all filters and sorting
+            applyFiltersAndSort();
             
             // Close dropdown
             if (dropdown) {
@@ -79,41 +62,150 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Filter service requests based on search term and status
-    function filterServiceRequests(searchTerm, statusFilter) {
-        const requestRows = document.querySelectorAll('tbody tr.intro-x');
-        let visibleCount = 0;
+    // Reset filters button
+    document.getElementById('resetFiltersBtn')?.addEventListener('click', function() {
+        currentStatusFilter = 'all';
+        currentNameSort = 'default';
+        currentDateFilter = 'all';
+        
+        if (searchInput) {
+            searchInput.value = '';
+        }
+        
+        // Reset button texts
+        updateFilterButton('statusFilterBtn', 'Status: All');
+        updateFilterButton('nameSortBtn', 'Name');
+        updateFilterButton('dateSortBtn', 'Filter by Date');
+        
+        // Apply filters (which will show all)
+        applyFiltersAndSort();
+        
+        showToast('All filters have been reset', 'success');
+    });
 
-        requestRows.forEach(row => {
+    // Update filter button text
+    function updateFilterButton(buttonId, text) {
+        const button = document.getElementById(buttonId);
+        if (button) {
+            // Preserve the icon
+            const icon = button.querySelector('svg');
+            button.textContent = text;
+            if (icon) {
+                button.insertBefore(icon, button.firstChild);
+            }
+        }
+    }
+
+    // Main function to apply all filters and sorting
+    function applyFiltersAndSort() {
+        const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        const tbody = document.querySelector('tbody');
+        const requestRows = Array.from(document.querySelectorAll('tbody tr.intro-x'));
+        
+        if (requestRows.length === 0) return;
+        
+        // Setup date ranges for filtering
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+        
+        const startOfLastWeek = new Date(startOfWeek);
+        startOfLastWeek.setDate(startOfWeek.getDate() - 7);
+        
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        
+        // Step 1: Filter rows
+        let visibleRows = requestRows.filter(row => {
             const requestText = row.textContent.toLowerCase();
             const statusCell = row.querySelector('td:nth-child(5)'); // Status column
             const status = statusCell ? statusCell.textContent.trim() : '';
             
-            // Check if row matches both search term and status filter
-            const matchesSearch = requestText.includes(searchTerm);
-            const matchesStatus = statusFilter === 'all' || status === statusFilter;
+            // Check if row matches search term and status filter
+            const matchesSearch = searchTerm === '' || requestText.includes(searchTerm);
+            const matchesStatus = currentStatusFilter === 'all' || status === currentStatusFilter;
             
-            const isVisible = matchesSearch && matchesStatus;
-            
-            if (searchTerm === '' && statusFilter === 'all') {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = isVisible ? '' : 'none';
-                if (isVisible) visibleCount++;
+            // Date filter check
+            let matchesDate = true;
+            if (currentDateFilter !== 'all') {
+                const dateAttr = row.getAttribute('data-date');
+                const rowDate = dateAttr ? new Date(dateAttr) : null;
+                
+                if (rowDate && !isNaN(rowDate.getTime())) {
+                    switch (currentDateFilter) {
+                        case 'today':
+                            matchesDate = rowDate >= today;
+                            break;
+                        case 'yesterday':
+                            matchesDate = rowDate >= yesterday && rowDate < today;
+                            break;
+                        case 'this-week':
+                            matchesDate = rowDate >= startOfWeek;
+                            break;
+                        case 'last-week':
+                            matchesDate = rowDate >= startOfLastWeek && rowDate < startOfWeek;
+                            break;
+                        case 'this-month':
+                            matchesDate = rowDate >= startOfMonth;
+                            break;
+                        case 'last-month':
+                            matchesDate = rowDate >= startOfLastMonth && rowDate < startOfMonth;
+                            break;
+                        case 'this-year':
+                            matchesDate = rowDate >= startOfYear;
+                            break;
+                        default:
+                            matchesDate = true;
+                    }
+                } else {
+                    matchesDate = false;
+                }
             }
+            
+            return matchesSearch && matchesStatus && matchesDate;
         });
-
+        
+        // Step 2: Sort visible rows by name if applicable
+        if (currentNameSort !== 'default') {
+            visibleRows.sort((a, b) => {
+                const nameA = a.querySelector('td:nth-child(1) .font-medium')?.textContent.trim().toLowerCase() || '';
+                const nameB = b.querySelector('td:nth-child(1) .font-medium')?.textContent.trim().toLowerCase() || '';
+                
+                if (currentNameSort === 'a-z') {
+                    return nameA.localeCompare(nameB);
+                } else { // z-a
+                    return nameB.localeCompare(nameA);
+                }
+            });
+        }
+        
+        // Step 3: Hide all rows first
+        requestRows.forEach(row => {
+            row.style.display = 'none';
+        });
+        
+        // Step 4: Show and reorder visible rows
+        visibleRows.forEach((row, index) => {
+            row.style.display = '';
+            tbody.appendChild(row); // Move to end (reorder)
+        });
+        
         // Update "No requests found" message
-        updateNoRequestsMessage(searchTerm, statusFilter, visibleCount);
+        updateNoRequestsMessage(searchTerm, currentStatusFilter, visibleRows.length);
         
         // Update filtered count display
-        updateFilteredCount(visibleCount);
+        updateFilteredCount(visibleRows.length);
     }
 
     // Update "No requests found" message based on search
     function updateNoRequestsMessage(searchTerm, statusFilter, visibleCount) {
-        const visibleRows = document.querySelectorAll('tbody tr.intro-x:not([style*="display: none"])');
+        const tbody = document.querySelector('tbody');
+        const allDataRows = document.querySelectorAll('tbody tr.intro-x');
         let noDataRow = document.querySelector('tbody tr.no-data-found');
         
         // Remove existing no data row if it exists
@@ -121,9 +213,11 @@ document.addEventListener('DOMContentLoaded', function() {
             noDataRow.remove();
         }
         
-        if (visibleCount === 0 && (searchTerm !== '' || statusFilter !== 'all')) {
+        // Check if we should show "no results" message
+        const hasActiveFilters = searchTerm !== '' || currentStatusFilter !== 'all' || currentNameSort !== 'default' || currentDateFilter !== 'all';
+        
+        if (visibleCount === 0 && hasActiveFilters && allDataRows.length > 0) {
             // Create new no data row
-            const tbody = document.querySelector('tbody');
             noDataRow = document.createElement('tr');
             noDataRow.className = 'no-data-found';
             noDataRow.innerHTML = `
@@ -133,7 +227,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                         </svg>
                         <div class="font-medium">No service requests found</div>
-                        <div class="text-sm">No service requests match your current filter</div>
+                        <div class="text-sm">No service requests match your current filters. Try adjusting your filters.</div>
                     </div>
                 </td>
             `;
@@ -143,7 +237,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Update filtered count display
     function updateFilteredCount(visibleCount) {
-        const filteredCount = document.getElementById('filteredCount');
+        const filteredCount = document.getElementById('filtered-count');
         if (filteredCount) {
             filteredCount.textContent = visibleCount;
         }
@@ -286,7 +380,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const userEmail = request.user?.email || 'N/A';
                 const description = request.complaint_description || 'N/A';
                 const status = request.status || 'N/A';
-                const dateSubmitted = request.created_at ? new Date(request.created_at).toLocaleString() : 'N/A';
+                const dateSubmitted = request.created_at ? formatDateHuman(request.created_at) : 'N/A';
                 
                 const detailsContainer = document.getElementById('request-details');
                 if (detailsContainer) {
@@ -318,7 +412,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                             <div class="col-span-12 md:col-span-6">
                                 <label class="form-label">Date Submitted</label>
-                                <input type="text" class="form-control" value="${dateSubmitted}" readonly>
+                                <div class="form-control bg-slate-50">${dateSubmitted}</div>
                             </div>
                         </div>
                     `;
@@ -601,4 +695,49 @@ document.addEventListener('DOMContentLoaded', function() {
             declineBtn.disabled = false;
         });
     };
+
+    // Format date to human readable format (like "Yesterday", "2 days ago", etc.)
+    function formatDateHuman(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffSecs = Math.floor(diffMs / 1000);
+        const diffMins = Math.floor(diffSecs / 60);
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+        
+        // Format full date for display
+        const fullDate = date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        let humanReadable = '';
+        
+        if (diffSecs < 60) {
+            humanReadable = 'Just now';
+        } else if (diffMins < 60) {
+            humanReadable = `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+        } else if (diffHours < 24) {
+            humanReadable = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+        } else if (diffDays === 1) {
+            humanReadable = 'Yesterday';
+        } else if (diffDays < 7) {
+            humanReadable = `${diffDays} days ago`;
+        } else if (diffDays < 30) {
+            const weeks = Math.floor(diffDays / 7);
+            humanReadable = `${weeks} week${weeks > 1 ? 's' : ''} ago`;
+        } else if (diffDays < 365) {
+            const months = Math.floor(diffDays / 30);
+            humanReadable = `${months} month${months > 1 ? 's' : ''} ago`;
+        } else {
+            const years = Math.floor(diffDays / 365);
+            humanReadable = `${years} year${years > 1 ? 's' : ''} ago`;
+        }
+        
+        return `<div class="text-slate-700">${humanReadable}</div><div class="text-slate-500 text-xs">${fullDate}</div>`;
+    }
 });

@@ -111,7 +111,6 @@
                     <th class="whitespace-nowrap">IMAGE</th>
                     <th class="whitespace-nowrap">USER</th>
                     <th class="whitespace-nowrap">EMAIL</th>
-                    <th class="whitespace-nowrap">FEEDBACK</th>
                     <th class="text-center whitespace-nowrap">RATING</th>
                     <th class="text-center whitespace-nowrap">STATUS</th>
                     <th class="text-center whitespace-nowrap">DATE CREATED</th>
@@ -123,7 +122,15 @@
                 <tr class="intro-x" data-status="{{ $feedback->status }}" data-rating="{{ $feedback->rating }}">
                     <td class="w-40">
                         <div class="flex items-center justify-center">
-                            <img src="{{ asset('images/profile.png') }}" alt="User Image" class="w-10 h-10 object-cover rounded-full">
+                            <div class="w-10 h-10 image-fit zoom-in">
+                                @if($feedback->user && $feedback->user->photo && !empty(trim($feedback->user->photo)))
+                                    <img alt="{{ $feedback->user->name }}" class="tooltip rounded-full" src="{{ asset('storage/profiles/' . $feedback->user->photo) }}" title="{{ $feedback->user->name }}">
+                                @else
+                                    <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-bold">
+                                        {{ $feedback->user ? strtoupper(substr($feedback->user->name, 0, 1)) : 'U' }}
+                                    </div>
+                                @endif
+                            </div>
                         </div>
                     </td>
                     <td class="w-40">
@@ -131,9 +138,6 @@
                     </td>
                     <td class="w-40">
                         <div class="font-full">{{ $feedback->user->email ?? 'N/A' }}</div>
-                    </td>
-                    <td class="max-w-0 w-full">
-                        <div class="font-medium truncate">{{ Str::limit($feedback->description, 100) }}</div>
                     </td>
                     <td class="text-center">
                         <div class="flex justify-center items-center">
@@ -218,8 +222,8 @@
                     </td>
                 </tr>
                 @empty
-                <tr class="intro-x">
-                    <td colspan="6" class="text-center py-8">
+                <tr class="intro-x" id="no-feedback-row">
+                    <td colspan="7" class="text-center py-8">
                         <div class="text-slate-500">
                             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
                                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -230,6 +234,19 @@
                     </td>
                 </tr>
                 @endforelse
+                <!-- No results message (for filtering/search) -->
+                <tr class="intro-x hidden" id="no-results-row">
+                    <td colspan="7" class="text-center py-8">
+                        <div class="text-slate-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                            <div class="font-medium">No results found</div>
+                            <div class="text-sm">Try adjusting your search or filter criteria</div>
+                        </div>
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>
@@ -254,15 +271,29 @@
                 <form id="createFeedbackForm" method="POST" action="{{ route('feedback.store') }}">
                     <input type="hidden" name="_token" value="{{ csrf_token() }}">
                     
-
-                    
-                    <div class="mb-6">
-                        <label class="form-label text-base font-semibold text-slate-700">Feedback Description</label>
-                        <textarea name="description" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" rows="4" placeholder="Enter feedback description..." required></textarea>
+                    <!-- Error Alert -->
+                    <div id="createFormErrors" class="hidden alert alert-danger bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                        <div class="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 mt-0.5">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                            <div>
+                                <strong class="font-bold">Validation Error!</strong>
+                                <ul id="createErrorList" class="mt-2 list-disc list-inside text-sm"></ul>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="mb-6">
-                        <label class="form-label text-base font-semibold text-slate-700 text-center block">Rating</label>
+                        <label class="form-label text-base font-semibold text-slate-700">Feedback Description <span class="text-red-600">*</span></label>
+                        <textarea name="description" id="createDescription" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" rows="4" placeholder="Enter feedback description..." required></textarea>
+                        <small id="descriptionError" class="text-red-600 hidden mt-1">Description is required</small>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="form-label text-base font-semibold text-slate-700 text-center block">Rating <span class="text-red-600">*</span></label>
                         <div class="flex items-center justify-center mt-4 space-x-3" id="rating-stars">
                             @for($i = 1; $i <= 5; $i++)
                                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="white" stroke="black" stroke-width="2" class="star cursor-pointer hover:fill-yellow-400 hover:stroke-yellow-400 transition-colors duration-200 transform hover:scale-110" data-rating="{{ $i }}">
@@ -274,6 +305,7 @@
                         <div class="text-center mt-3">
                             <small class="text-slate-500">Click on stars to rate (1-5 stars)</small>
                         </div>
+                        <small id="ratingError" class="text-red-600 hidden mt-1 block text-center">Please select a rating</small>
                     </div>
                 </form>
             </div>
@@ -298,12 +330,26 @@
 <div id="view-feedback-modal" class="modal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="font-medium text-base mr-auto">Feedback Details</h2>
+                <button type="button" class="btn btn-outline-secondary w-8 h-8 mr-1" data-tw-dismiss="modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x w-4 h-4">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
             <div class="modal-body p-0">
                 <div id="feedback-details">
                     <div class="text-center text-slate-500 py-12">
                         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
                         <p class="text-lg">Loading feedback details...</p>
                     </div>
+                </div>
+            </div>
+            <div class="modal-footer px-6 py-4 bg-slate-50">
+                <div class="flex justify-end gap-3">
+                    <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary px-6 py-2 mr-2">Close</button>
                 </div>
             </div>
         </div>
@@ -321,15 +367,29 @@
                     <input type="hidden" name="_method" value="PUT">
                     <input type="hidden" id="editFeedbackId">
                     
-
-                    
-                    <div class="mb-6">
-                        <label class="form-label text-base font-semibold text-slate-700">Feedback Description</label>
-                        <textarea name="description" id="editDescription" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" rows="4" required></textarea>
+                    <!-- Error Alert -->
+                    <div id="editFormErrors" class="hidden alert alert-danger bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                        <div class="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 mt-0.5">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                            <div>
+                                <strong class="font-bold">Validation Error!</strong>
+                                <ul id="editErrorList" class="mt-2 list-disc list-inside text-sm"></ul>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="mb-6">
-                        <label class="form-label text-base font-semibold text-slate-700 text-center block">Rating</label>
+                        <label class="form-label text-base font-semibold text-slate-700">Feedback Description <span class="text-red-600">*</span></label>
+                        <textarea name="description" id="editDescription" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" rows="4" required></textarea>
+                        <small id="editDescriptionError" class="text-red-600 hidden mt-1">Description is required</small>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="form-label text-base font-semibold text-slate-700 text-center block">Rating <span class="text-red-600">*</span></label>
                         <div class="flex items-center justify-center mt-4 space-x-3" id="edit-rating-stars">
                             @for($i = 1; $i <= 5; $i++)
                                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="white" stroke="black" stroke-width="2" class="star cursor-pointer hover:fill-yellow-400 hover:stroke-yellow-400 transition-colors duration-200 transform hover:scale-110" data-rating="{{ $i }}">
@@ -341,10 +401,11 @@
                         <div class="text-center mt-3">
                             <small class="text-slate-500">Click on stars to rate (1-5 stars)</small>
                         </div>
+                        <small id="editRatingError" class="text-red-600 hidden mt-1 block text-center">Please select a rating</small>
                     </div>
                     
                     <div class="mb-6">
-                        <label class="form-label text-base font-semibold text-slate-700">Status</label>
+                        <label class="form-label text-base font-semibold text-slate-700">Status <span class="text-red-600">*</span></label>
                         <select name="status" id="editStatus" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" required>
                             <option value="active">Active</option>
                             <option value="inactive">Inactive</option>

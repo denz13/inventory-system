@@ -3,6 +3,245 @@ document.addEventListener('DOMContentLoaded', function () {
   var table = document.getElementById('businessTable');
   var editForm = document.getElementById('editBusinessForm');
 
+  // Filter state
+  let currentStatusFilter = 'all';
+  let currentNameSort = 'default';
+  let currentDateFilter = 'all';
+
+  // Search functionality
+  const searchInput = document.getElementById('searchInput');
+  
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      applyFiltersAndSort();
+    });
+  }
+
+  // Universal filter handler
+  document.addEventListener('click', function(e) {
+    if (e.target.matches('[data-filter-type]')) {
+      const filterType = e.target.getAttribute('data-filter-type');
+      const filterValue = e.target.getAttribute('data-filter-value');
+      
+      const dropdown = e.target.closest('.dropdown');
+      
+      // Update the appropriate filter/sort state and button
+      if (filterType === 'status') {
+        currentStatusFilter = filterValue;
+        updateFilterButton('statusFilterBtn', filterValue === 'all' ? 'Status: All' : `Status: ${filterValue.charAt(0).toUpperCase() + filterValue.slice(1)}`);
+      } else if (filterType === 'name-sort') {
+        currentNameSort = filterValue;
+        const btnText = filterValue === 'default' ? 'Name' : `Name: ${filterValue.toUpperCase()}`;
+        updateFilterButton('nameSortBtn', btnText);
+      } else if (filterType === 'date-filter') {
+        currentDateFilter = filterValue;
+        const dateTexts = {
+          'all': 'Filter by Date',
+          'today': 'Date: Today',
+          'yesterday': 'Date: Yesterday',
+          'this-week': 'Date: This Week',
+          'last-week': 'Date: Last Week',
+          'this-month': 'Date: This Month',
+          'last-month': 'Date: Last Month',
+          'this-year': 'Date: This Year'
+        };
+        updateFilterButton('dateFilterBtn', dateTexts[filterValue] || 'Filter by Date');
+      }
+      
+      // Apply all filters and sorting
+      applyFiltersAndSort();
+      
+      // Close dropdown
+      if (dropdown) {
+        const dropdownToggle = dropdown.querySelector('.dropdown-toggle');
+        if (dropdownToggle) {
+          dropdownToggle.setAttribute('aria-expanded', 'false');
+          const dropdownMenu = dropdown.querySelector('.dropdown-menu');
+          if (dropdownMenu) {
+            dropdownMenu.classList.remove('show');
+          }
+        }
+      }
+    }
+  });
+
+  // Reset filters button
+  document.getElementById('resetFiltersBtn')?.addEventListener('click', function() {
+    currentStatusFilter = 'all';
+    currentNameSort = 'default';
+    currentDateFilter = 'all';
+    
+    if (searchInput) {
+      searchInput.value = '';
+    }
+    
+    // Reset button texts
+    updateFilterButton('statusFilterBtn', 'Status: All');
+    updateFilterButton('nameSortBtn', 'Name');
+    updateFilterButton('dateFilterBtn', 'Filter by Date');
+    
+    // Apply filters (which will show all)
+    applyFiltersAndSort();
+    
+    if (typeof window.showNotification_users_toast_success === 'function') {
+      window.showNotification_users_toast_success();
+    }
+  });
+
+  // Update filter button text
+  function updateFilterButton(buttonId, text) {
+    const button = document.getElementById(buttonId);
+    if (button) {
+      // Preserve the icon
+      const icon = button.querySelector('svg');
+      button.textContent = text;
+      if (icon) {
+        button.insertBefore(icon, button.firstChild);
+      }
+    }
+  }
+
+  // Main function to apply all filters and sorting
+  function applyFiltersAndSort() {
+    const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const tbody = document.querySelector('#businessTable tbody');
+    const businessRows = Array.from(document.querySelectorAll('#businessTable tbody tr.intro-x'));
+    
+    if (businessRows.length === 0) return;
+    
+    // Setup date ranges for filtering
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+    
+    const startOfLastWeek = new Date(startOfWeek);
+    startOfLastWeek.setDate(startOfWeek.getDate() - 7);
+    
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    
+    // Step 1: Filter rows
+    let visibleRows = businessRows.filter(row => {
+      const rowText = row.textContent.toLowerCase();
+      const rowStatus = row.getAttribute('data-status');
+      
+      // Check if row matches search term and status filter
+      const matchesSearch = searchTerm === '' || rowText.includes(searchTerm);
+      const matchesStatus = currentStatusFilter === 'all' || rowStatus === currentStatusFilter;
+      
+      // Date filter check
+      let matchesDate = true;
+      if (currentDateFilter !== 'all') {
+        const dateAttr = row.getAttribute('data-date');
+        const rowDate = dateAttr ? new Date(dateAttr) : null;
+        
+        if (rowDate && !isNaN(rowDate.getTime())) {
+          switch (currentDateFilter) {
+            case 'today':
+              matchesDate = rowDate >= today;
+              break;
+            case 'yesterday':
+              matchesDate = rowDate >= yesterday && rowDate < today;
+              break;
+            case 'this-week':
+              matchesDate = rowDate >= startOfWeek;
+              break;
+            case 'last-week':
+              matchesDate = rowDate >= startOfLastWeek && rowDate < startOfWeek;
+              break;
+            case 'this-month':
+              matchesDate = rowDate >= startOfMonth;
+              break;
+            case 'last-month':
+              matchesDate = rowDate >= startOfLastMonth && rowDate < startOfMonth;
+              break;
+            case 'this-year':
+              matchesDate = rowDate >= startOfYear;
+              break;
+            default:
+              matchesDate = true;
+          }
+        } else {
+          matchesDate = false;
+        }
+      }
+      
+      return matchesSearch && matchesStatus && matchesDate;
+    });
+    
+    // Step 2: Sort visible rows by name if applicable
+    if (currentNameSort !== 'default') {
+      visibleRows.sort((a, b) => {
+        const nameA = a.querySelector('td:nth-child(3)')?.textContent.trim().toLowerCase() || ''; // Owner name column
+        const nameB = b.querySelector('td:nth-child(3)')?.textContent.trim().toLowerCase() || '';
+        
+        if (currentNameSort === 'a-z') {
+          return nameA.localeCompare(nameB);
+        } else { // z-a
+          return nameB.localeCompare(nameA);
+        }
+      });
+    }
+    
+    // Step 3: Hide all rows first
+    businessRows.forEach(row => {
+      row.style.display = 'none';
+    });
+    
+    // Step 4: Show and reorder visible rows
+    visibleRows.forEach((row, index) => {
+      row.style.display = '';
+      tbody.appendChild(row); // Move to end (reorder)
+    });
+    
+    // Update filtered count display
+    const filteredCountElement = document.getElementById('filtered-count');
+    if (filteredCountElement) {
+      filteredCountElement.textContent = visibleRows.length;
+    }
+    
+    // Show/hide no results message
+    updateNoResultsMessage(searchTerm, currentStatusFilter, visibleRows.length, businessRows.length);
+  }
+
+  // Update no results message
+  function updateNoResultsMessage(searchTerm, statusFilter, visibleCount, totalRows) {
+    const tbody = document.querySelector('#businessTable tbody');
+    let noDataRow = tbody?.querySelector('tr.no-data-found');
+    
+    // Remove existing no data row if it exists
+    if (noDataRow) {
+      noDataRow.remove();
+    }
+    
+    // Check if we should show "no results" message
+    const hasActiveFilters = searchTerm !== '' || currentStatusFilter !== 'all' || currentNameSort !== 'default' || currentDateFilter !== 'all';
+    
+    if (visibleCount === 0 && hasActiveFilters && totalRows > 0 && tbody) {
+      // Create new no data row
+      noDataRow = document.createElement('tr');
+      noDataRow.className = 'no-data-found';
+      noDataRow.innerHTML = `
+        <td colspan="9" class="text-center py-8">
+          <div class="text-slate-500">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
+              <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <div class="font-medium">No businesses found</div>
+            <div class="text-sm">No businesses match your current filters. Try adjusting your filters.</div>
+          </div>
+        </td>
+      `;
+      tbody.appendChild(noDataRow);
+    }
+  }
+
+  // Helper function to post forms
   async function postForm(form, url, method) {
     const formData = new FormData(form);
     if (method && method.toUpperCase() !== 'POST') {
@@ -120,7 +359,7 @@ document.addEventListener('DOMContentLoaded', function () {
           
           if (data.business_clearance) {
             currentClearanceDiv.style.display = 'block';
-            currentClearanceLink.href = '/storage/business-clearances/' + data.business_clearance;
+            currentClearanceLink.href = '/storage/' + data.business_clearance;
             currentClearanceLink.textContent = 'View Current Clearance';
           } else {
             currentClearanceDiv.style.display = 'none';
@@ -153,7 +392,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const reason = business.reason || 'N/A';
       const dateCreated = business.created_at ? new Date(business.created_at).toLocaleString() : 'N/A';
       const clearanceFile = business.business_clearance ? 
-        `<a href="/storage/business-clearances/${business.business_clearance}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">View Clearance</a>` : 
+        `<a href="/storage/${business.business_clearance}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">View Clearance</a>` : 
         'No file uploaded';
 
       detailsContainer.innerHTML = `

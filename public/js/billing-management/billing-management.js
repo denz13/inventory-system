@@ -1,9 +1,241 @@
+// Tom Select will be initialized automatically by tom-select.js
+
 // Billing Management JavaScript
 document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
     addInitialBillingItem();
     initializeDateRangeWatcher();
+    initializeUserSelectHandler();
+    initializeRoleFilter();
 });
+
+function initializeUserSelectHandler() {
+    // Monitor user select changes for auto-populating billing date range
+    const userSelect = document.querySelector('select[name="user_id"]');
+    if (userSelect) {
+        userSelect.addEventListener('change', function() {
+            const userId = this.value;
+            if (userId) {
+                fetchAndSetUserBillingDateRange(userId);
+            } else {
+                // Clear date range if no user selected
+                const dateRangeInput = document.querySelector('input[name="billing_date_range"]');
+                if (dateRangeInput) {
+                    dateRangeInput.value = '';
+                }
+            }
+        });
+        
+        console.log('User select handler initialized for auto-populating billing date range');
+    }
+}
+
+function initializeRoleFilter() {
+    const roleFilter = document.getElementById('roleFilter');
+    const userSelect = document.getElementById('userSelect');
+    
+    if (!roleFilter || !userSelect) {
+        console.log('Role filter or user select not found');
+        return;
+    }
+    
+    // Store all user options
+    let allUserOptions = [];
+    
+    // Wait for Tom Select to initialize
+    setTimeout(function() {
+        const tomSelectInstance = userSelect.tomselect;
+        
+        if (tomSelectInstance) {
+            // Store all original options
+            Object.keys(tomSelectInstance.options).forEach(key => {
+                const option = tomSelectInstance.options[key];
+                allUserOptions.push({
+                    value: option.value,
+                    text: option.text,
+                    role: option.$option ? option.$option.getAttribute('data-role') : ''
+                });
+            });
+            
+            console.log('Tom Select found, stored', allUserOptions.length, 'user options');
+        } else {
+            // Fallback: Get from original select element
+            const options = userSelect.querySelectorAll('option');
+            options.forEach(option => {
+                if (option.value) { // Skip empty option
+                    allUserOptions.push({
+                        value: option.value,
+                        text: option.textContent,
+                        role: option.getAttribute('data-role')
+                    });
+                }
+            });
+            
+            console.log('Tom Select not found, stored', allUserOptions.length, 'user options from original select');
+        }
+    }, 500);
+    
+    // Handle role filter change
+    roleFilter.addEventListener('change', function() {
+        const selectedRole = this.value;
+        console.log('Role filter changed to:', selectedRole || 'All Roles');
+        
+        setTimeout(function() {
+            const tomSelectInstance = userSelect.tomselect;
+            
+            if (tomSelectInstance) {
+                // Clear existing options
+                tomSelectInstance.clearOptions();
+                
+                // Filter and add options based on selected role
+                const filteredOptions = selectedRole 
+                    ? allUserOptions.filter(opt => opt.role === selectedRole)
+                    : allUserOptions;
+                
+                console.log('Filtered to', filteredOptions.length, 'users');
+                
+                // Add filtered options
+                filteredOptions.forEach(option => {
+                    tomSelectInstance.addOption({
+                        value: option.value,
+                        text: option.text,
+                        role: option.role
+                    });
+                });
+                
+                // Clear current selection
+                tomSelectInstance.clear();
+                
+                // Refresh the dropdown
+                tomSelectInstance.refreshOptions(false);
+            }
+        }, 100);
+    });
+    
+    console.log('Role filter initialized');
+}
+
+async function fetchAndSetUserBillingDateRange(userId) {
+    try {
+        console.log('Fetching billing date range for user ID:', userId);
+        
+        const response = await fetch(`/billing-management/user/${userId}/date-range`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch billing date range');
+        }
+        
+        const result = await response.json();
+        console.log('API Response:', result);
+        
+        if (result.success && result.data) {
+            const dateRange = result.data.date_range;
+            const dateRangeInput = document.querySelector('input[name="billing_date_range"]');
+            
+            console.log('Found date range input:', dateRangeInput);
+            console.log('Setting date range input value to:', dateRange);
+            
+            if (dateRangeInput) {
+                // Parse the date range to get start and end dates
+                const dates = dateRange.split(' - ');
+                if (dates.length === 2) {
+                    const startDate = new Date(dates[0].trim());
+                    const endDate = new Date(dates[1].trim());
+                    
+                    console.log('Parsed dates:', { startDate, endDate });
+                    
+                    // Wait a bit for any date picker initialization
+                    setTimeout(() => {
+                        console.log('Current input value before update:', dateRangeInput.value);
+                        
+                        // Try to destroy existing litepicker if it exists
+                        if (dateRangeInput._litepicker) {
+                            console.log('Destroying existing litepicker...');
+                            try {
+                                dateRangeInput._litepicker.destroy();
+                            } catch (e) {
+                                console.log('Error destroying litepicker:', e);
+                            }
+                        }
+                        
+                        // Set the value first
+                        dateRangeInput.value = dateRange;
+                        console.log('Input value after setting:', dateRangeInput.value);
+                        
+                        // Recreate litepicker with the correct dates
+                        if (typeof Litepicker !== 'undefined') {
+                            console.log('Creating new litepicker with dates...');
+                            try {
+                                const newPicker = new Litepicker({
+                                    element: dateRangeInput,
+                                    autoApply: false,
+                                    singleMode: false,
+                                    numberOfColumns: 2,
+                                    numberOfMonths: 2,
+                                    showWeekNumbers: true,
+                                    format: 'DD MMM, YYYY',
+                                    startDate: startDate,
+                                    endDate: endDate,
+                                    dropdowns: {
+                                        minYear: 1990,
+                                        maxYear: null,
+                                        months: true,
+                                        years: true
+                                    }
+                                });
+                                
+                                console.log('New litepicker created successfully');
+                                console.log('Final input value:', dateRangeInput.value);
+                                
+                                // Trigger events to notify other components
+                                dateRangeInput.dispatchEvent(new Event('change', { bubbles: true }));
+                                dateRangeInput.dispatchEvent(new Event('input', { bubbles: true }));
+                                
+                            } catch (e) {
+                                console.error('Error creating new litepicker:', e);
+                            }
+                        } else {
+                            console.log('Litepicker not available, just setting value');
+                            // Fallback: just set the value and trigger events
+                            dateRangeInput.value = dateRange;
+                            dateRangeInput.dispatchEvent(new Event('change', { bubbles: true }));
+                            dateRangeInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+                    }, 500); // Increased timeout
+                }
+                
+                console.log('Billing date range auto-populated:', {
+                    user_id: result.data.user_id,
+                    user_name: result.data.user_name,
+                    date_range: dateRange,
+                    is_reactivated: result.data.is_reactivated,
+                    registration_date: result.data.registration_date,
+                    last_update_date: result.data.last_update_date,
+                    input_value: dateRangeInput.value
+                });
+                
+                // Show info toast
+                const infoMessage = result.data.is_reactivated 
+                    ? `Billing period based on reactivation date: ${result.data.last_update_date}`
+                    : `Billing period based on registration date: ${result.data.registration_date}`;
+                
+                showToast(infoMessage, 'info');
+            } else {
+                console.error('Date range input not found!');
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching billing date range:', error);
+        showToast('Could not auto-populate billing date range. Please select manually.', 'error');
+    }
+}
 
 function initializeEventListeners() {
     // Search and filter functionality
@@ -424,18 +656,22 @@ function showToast(message, type = 'success') {
     
     // Use your notification-toast component's show function
     try {
-        if (window[`showNotification_${toastId}`]) {
+        if (window[`showNotification_${toastId}`] && type !== 'info') {
             window[`showNotification_${toastId}`]();
         } else {
             // Fallback: use Toastify if available
             if (typeof Toastify !== 'undefined') {
+                const backgroundColor = type === 'success' ? "#10b981" : 
+                                      type === 'error' ? "#ef4444" : 
+                                      "#3b82f6"; // Blue for info
+                
                 Toastify({
                     text: message,
                     duration: 5000,
                     gravity: "top",
                     position: "right",
                     className: "toastify-content",
-                    backgroundColor: type === 'success' ? "#10b981" : "#ef4444",
+                    backgroundColor: backgroundColor,
                     stopOnFocus: true,
                 }).showToast();
             } else {
@@ -545,6 +781,39 @@ function initializeDateRangeWatcher() {
     });
 }
 
+// Tom Select Initialization
+function initializeTomSelect() {
+    // Initialize Tom Select for user dropdown in create modal
+    const userSelect = document.querySelector('#create-billing-modal select[name="user_id"]');
+    if (userSelect) {
+        new TomSelect(userSelect, {
+            placeholder: 'Search and select a user...',
+            allowEmptyOption: true,
+            create: false,
+            sortField: {
+                field: 'text',
+                direction: 'asc'
+            },
+            render: {
+                option: function(data, escape) {
+                    return '<div class="flex items-center justify-between p-2">' +
+                        '<div>' +
+                            '<div class="font-medium text-slate-800">' + escape(data.text.split(' (')[0]) + '</div>' +
+                            '<div class="text-sm text-slate-500">' + escape(data.text.split(' (')[1]?.replace(')', '') || '') + '</div>' +
+                        '</div>' +
+                    '</div>';
+                },
+                item: function(data, escape) {
+                    return '<div class="flex items-center">' +
+                        '<div class="font-medium text-slate-800">' + escape(data.text.split(' (')[0]) + '</div>' +
+                        '<div class="text-sm text-slate-500 ml-2">(' + escape(data.text.split(' (')[1]?.replace(')', '') || '') + '</div>' +
+                    '</div>';
+                }
+            }
+        });
+    }
+}
+
 function loadBillingDetails(billingId) {
     const billingDetailsDiv = document.getElementById('billing-details');
     
@@ -580,81 +849,52 @@ function loadBillingDetails(billingId) {
 function displayBillingDetails(billing) {
     const billingDetailsDiv = document.getElementById('billing-details');
     
-    const createdDate = billing.created_at ? 
-        new Date(billing.created_at).toLocaleString() : 'N/A';
-    
     let itemsHtml = '';
     billing.billing_items.forEach((item, index) => {
         const total = (item.qty * item.price).toFixed(2);
         itemsHtml += `
             <tr>
-                <td class="border-b border-slate-200 py-3">${index + 1}</td>
-                <td class="border-b border-slate-200 py-3">${item.description}</td>
-                <td class="border-b border-slate-200 py-3 text-center">${item.qty}</td>
-                <td class="border-b border-slate-200 py-3 text-right">₱${parseFloat(item.price).toFixed(2)}</td>
-                <td class="border-b border-slate-200 py-3 text-right font-medium">₱${total}</td>
+                <td class="border-b border-slate-200 py-3 px-4">${index + 1}</td>
+                <td class="border-b border-slate-200 py-3 px-4">${item.description}</td>
+                <td class="border-b border-slate-200 py-3 px-4 text-center">${item.qty}</td>
+                <td class="border-b border-slate-200 py-3 px-4 text-right">₱${parseFloat(item.price).toFixed(2)}</td>
+                <td class="border-b border-slate-200 py-3 px-4 text-right font-medium">₱${total}</td>
             </tr>
         `;
     });
     
     billingDetailsDiv.innerHTML = `
         <div class="p-6">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <!-- Billing Information -->
-                <div class="bg-blue-50 p-6 rounded-lg border border-blue-200">
-                    <h3 class="font-semibold text-lg mb-6 text-blue-800 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2">
-                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                            <polyline points="22,6 12,13 2,6"></polyline>
-                        </svg>
-                        Billing Information
-                    </h3>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="form-label text-sm font-semibold text-slate-700">Billing Date</label>
-                            <input type="text" class="form-control mt-1" value="${billing.billing_date}" readonly>
-                        </div>
-                        <div>
-                            <label class="form-label text-sm font-semibold text-slate-700">Status</label>
-                            <input type="text" class="form-control mt-1 bg-green-100 text-green-800" value="${billing.status}" readonly>
-                        </div>
-                        <div>
-                            <label class="form-label text-sm font-semibold text-slate-700">Created Date</label>
-                            <input type="text" class="form-control mt-1" value="${createdDate}" readonly>
-                        </div>
-                    </div>
-                </div>
+            <!-- Billing Information -->
+            <div class="bg-blue-50 p-6 rounded-lg border border-blue-200 mb-6">
+                <h3 class="font-semibold text-lg mb-4 text-blue-800 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                    Billing Information
+                </h3>
                 
-                <!-- User Information -->
-                <div class="bg-green-50 p-6 rounded-lg border border-green-200">
-                    <h3 class="font-semibold text-lg mb-6 text-green-800 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
-                        User Information
-                    </h3>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="form-label text-sm font-semibold text-slate-700">Name</label>
-                            <input type="text" class="form-control mt-1" value="${billing.user.name}" readonly>
-                        </div>
-                        <div>
-                            <label class="form-label text-sm font-semibold text-slate-700">Email</label>
-                            <input type="text" class="form-control mt-1" value="${billing.user.email}" readonly>
-                        </div>
-                        <div>
-                            <label class="form-label text-sm font-semibold text-slate-700">Total Amount Due</label>
-                            <input type="text" class="form-control mt-1 bg-yellow-100 text-yellow-800 font-bold" value="₱${parseFloat(billing.amount_due).toFixed(2)}" readonly>
-                        </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="form-label text-sm font-semibold text-slate-700">Billing Date</label>
+                        <div class="form-control mt-1 p-3 bg-white border border-slate-300 rounded-lg">${billing.billing_date}</div>
+                    </div>
+                    <div>
+                        <label class="form-label text-sm font-semibold text-slate-700">Name</label>
+                        <div class="form-control mt-1 p-3 bg-white border border-slate-300 rounded-lg">${billing.user.name}</div>
+                    </div>
+                    <div>
+                        <label class="form-label text-sm font-semibold text-slate-700">Email</label>
+                        <div class="form-control mt-1 p-3 bg-white border border-slate-300 rounded-lg">${billing.user.email}</div>
                     </div>
                 </div>
             </div>
             
             <!-- Billing Items Section -->
-            <div class="mt-8">
-                <div class="bg-orange-50 p-6 rounded-lg border border-orange-200">
-                    <h3 class="font-semibold text-lg mb-6 text-orange-800 flex items-center">
+            <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+                <div class="bg-slate-50 px-6 py-4 border-b border-slate-200">
+                    <h3 class="font-semibold text-lg text-slate-800 flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2">
                             <path d="M9 12l2 2 4-4"></path>
                             <path d="M21 12c.552 0 1-.448 1-1V5c0-.552-.448-1-1-1H3c-.552 0-1 .448-1 1v6c0 .552.448 1 1 1h18z"></path>
@@ -662,26 +902,27 @@ function displayBillingDetails(billing) {
                         </svg>
                         Billing Items (${billing.billing_items.length} items)
                     </h3>
-                    <div class="bg-white rounded-lg border overflow-hidden">
-                        <table class="w-full">
-                            <thead class="bg-slate-50">
-                                <tr>
-                                    <th class="text-left py-3 px-4 font-semibold text-slate-700">#</th>
-                                    <th class="text-left py-3 px-4 font-semibold text-slate-700">Description</th>
-                                    <th class="text-center py-3 px-4 font-semibold text-slate-700">Qty</th>
-                                    <th class="text-right py-3 px-4 font-semibold text-slate-700">Price</th>
-                                    <th class="text-right py-3 px-4 font-semibold text-slate-700">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${itemsHtml}
-                                <tr class="bg-slate-100 font-bold">
-                                    <td colspan="4" class="py-4 px-4 text-right">TOTAL AMOUNT DUE:</td>
-                                    <td class="py-4 px-4 text-right text-lg">₱${parseFloat(billing.amount_due).toFixed(2)}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="text-left py-3 px-4 font-semibold text-slate-700">#</th>
+                                <th class="text-left py-3 px-4 font-semibold text-slate-700">Description</th>
+                                <th class="text-center py-3 px-4 font-semibold text-slate-700">Qty</th>
+                                <th class="text-right py-3 px-4 font-semibold text-slate-700">Price</th>
+                                <th class="text-right py-3 px-4 font-semibold text-slate-700">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsHtml}
+                            <tr class="bg-slate-100 font-bold">
+                                <td colspan="4" class="py-4 px-4 text-right text-slate-700">TOTAL AMOUNT DUE:</td>
+                                <td class="py-4 px-4 text-right text-lg text-blue-600">₱${parseFloat(billing.amount_due).toFixed(2)}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -898,4 +1139,37 @@ function initializeDateRangeWatcher() {
             }
         }, 100);
     });
+}
+
+// Tom Select Initialization
+function initializeTomSelect() {
+    // Initialize Tom Select for user dropdown in create modal
+    const userSelect = document.querySelector('#create-billing-modal select[name="user_id"]');
+    if (userSelect) {
+        new TomSelect(userSelect, {
+            placeholder: 'Search and select a user...',
+            allowEmptyOption: true,
+            create: false,
+            sortField: {
+                field: 'text',
+                direction: 'asc'
+            },
+            render: {
+                option: function(data, escape) {
+                    return '<div class="flex items-center justify-between p-2">' +
+                        '<div>' +
+                            '<div class="font-medium text-slate-800">' + escape(data.text.split(' (')[0]) + '</div>' +
+                            '<div class="text-sm text-slate-500">' + escape(data.text.split(' (')[1]?.replace(')', '') || '') + '</div>' +
+                        '</div>' +
+                    '</div>';
+                },
+                item: function(data, escape) {
+                    return '<div class="flex items-center">' +
+                        '<div class="font-medium text-slate-800">' + escape(data.text.split(' (')[0]) + '</div>' +
+                        '<div class="text-sm text-slate-500 ml-2">(' + escape(data.text.split(' (')[1]?.replace(')', '') || '') + '</div>' +
+                    '</div>';
+                }
+            }
+        });
+    }
 }

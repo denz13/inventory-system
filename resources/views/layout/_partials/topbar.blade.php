@@ -84,7 +84,7 @@
                         
                         @if($notifications->count() >= 5)
                             <div class="text-center mt-4">
-                                <a href="#" class="text-primary text-sm hover:underline">View All Notifications</a>
+                                <a href="javascript:;" class="text-primary text-sm hover:underline" data-tw-toggle="modal" data-tw-target="#all-notifications-modal">View All Notifications</a>
                             </div>
                         @endif
                     @else
@@ -221,6 +221,143 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
         <!-- END: Notifications -->
+
+        <!-- BEGIN: All Notifications Modal -->
+        <div id="all-notifications-modal" class="modal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="font-medium text-base mr-auto">All Notifications</h2>
+                        <button class="btn btn-outline-secondary hidden sm:flex" data-tw-dismiss="modal">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                            Close
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="all-notifications-content" class="max-h-[500px] overflow-y-auto">
+                            <!-- Notifications will be loaded here via JavaScript -->
+                            <div class="text-center py-8">
+                                <svg class="animate-spin h-8 w-8 text-primary mx-auto mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <div class="text-slate-500">Loading notifications...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END: All Notifications Modal -->
+
+        <script>
+        // Load all notifications when modal is opened
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('all-notifications-modal');
+            if (modal) {
+                modal.addEventListener('show.tw.modal', function() {
+                    loadAllNotifications();
+                });
+            }
+        });
+
+        function loadAllNotifications() {
+            const contentDiv = document.getElementById('all-notifications-content');
+            
+            fetch('/notifications/all', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.notifications && data.notifications.length > 0) {
+                    let html = '<div class="space-y-4">';
+                    
+                    data.notifications.forEach((notification, index) => {
+                        const typeColor = notification.type === 'success' ? 'success' : 
+                                        (notification.type === 'error' ? 'danger' : 
+                                        (notification.type === 'warning' ? 'warning' : 'info'));
+                        
+                        const isUnread = notification.is_read == 0 || notification.is_read === false;
+                        const readStatus = isUnread ? '<span class="text-xs text-primary font-medium">• Unread</span>' : '<span class="text-xs text-slate-400">• Read</span>';
+                        
+                        html += `
+                            <div class="flex items-start p-4 ${isUnread ? 'bg-primary/5' : 'bg-slate-50'} rounded-lg hover:bg-slate-100 transition-colors">
+                                <div class="flex-shrink-0 mr-3">
+                                    <div class="w-10 h-10 bg-${typeColor} rounded-full flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-start justify-between">
+                                        <p class="text-sm font-medium text-slate-900">${notification.title}</p>
+                                        <span class="text-xs text-slate-500 ml-2 whitespace-nowrap">${formatNotificationDate(notification.created_at)}</span>
+                                    </div>
+                                    <p class="text-sm text-slate-600 mt-1">${notification.message}</p>
+                                    <div class="flex items-center mt-2 gap-3">
+                                        ${readStatus}
+                                        <span class="text-xs text-slate-400">${notification.created_at_human || ''}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += '</div>';
+                    contentDiv.innerHTML = html;
+                } else {
+                    contentDiv.innerHTML = `
+                        <div class="text-center py-12">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="text-slate-300 mx-auto mb-4">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                <line x1="12" y1="9" x2="12" y2="13"></line>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                            <div class="text-slate-500 font-medium">No notifications found</div>
+                            <div class="text-slate-400 text-sm mt-1">You're all caught up!</div>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading notifications:', error);
+                contentDiv.innerHTML = `
+                    <div class="text-center py-12">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="text-danger mx-auto mb-4">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <div class="text-slate-500 font-medium">Error loading notifications</div>
+                        <div class="text-slate-400 text-sm mt-1">Please try again later</div>
+                    </div>
+                `;
+            });
+        }
+
+        function formatNotificationDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffInSeconds = Math.floor((now - date) / 1000);
+            
+            if (diffInSeconds < 60) return 'Just now';
+            if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+            if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+            if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+            
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+        </script>
+
         <!-- BEGIN: Account Menu -->
         <div class="intro-x dropdown w-8 h-8">
             <div class="dropdown-toggle w-8 h-8 rounded-full overflow-hidden shadow-lg image-fit zoom-in scale-110" role="button" aria-expanded="false" data-tw-toggle="dropdown">
@@ -254,7 +391,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <hr class="dropdown-divider border-white/[0.08]">
                     </li>
                     <li>
-                        <a href="{{ route('logout') }}" class="dropdown-item hover:bg-white/5"> <i data-lucide="toggle-right" class="w-4 h-4 mr-2"></i> Logout </a>
+                        <a href="javascript:void(0);" onclick="performLogout()" class="dropdown-item hover:bg-white/5"> <i data-lucide="toggle-right" class="w-4 h-4 mr-2"></i> Logout </a>
                     </li>
                 </ul>
             </div>

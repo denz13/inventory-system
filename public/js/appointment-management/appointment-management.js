@@ -331,14 +331,109 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
   }
+
+  // Search functionality
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    let timeout;
+    searchInput.addEventListener('input', function(e) {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        try {
+          const searchTerm = (this.value || '').toLowerCase();
+          filterTableRowsBySearch(searchTerm);
+        } catch (error) {
+          console.error('Search error:', error);
+          filterTableRowsBySearch('');
+        }
+      }, 300);
+    });
+  }
+
+  // Filter table rows by search term
+  function filterTableRowsBySearch(searchTerm) {
+    const rows = document.querySelectorAll('tbody tr.intro-x:not(#no-results-row)');
+    let visibleCount = 0;
+    
+    rows.forEach(row => {
+      if (!searchTerm) {
+        // If no search term, show all rows
+        row.style.display = '';
+        visibleCount++;
+        return;
+      }
+      
+      // Get all text content from the row
+      const rowText = row.textContent || '';
+      const lowerRowText = rowText.toLowerCase();
+      
+      // Check if search term is found anywhere in the row
+      if (lowerRowText.includes(searchTerm)) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+    
+    updateFilteredCount(visibleCount);
+    toggleNoResultsMessage(visibleCount);
+  }
+
+  // Update filtered count display
+  function updateFilteredCount(count) {
+    const filteredCountElement = document.getElementById('filtered-count');
+    if (filteredCountElement) {
+      filteredCountElement.textContent = count;
+    }
+  }
+
+  // Toggle no results message
+  function toggleNoResultsMessage(visibleCount) {
+    const noResultsRow = document.getElementById('no-results-row');
+    const dataRows = document.querySelectorAll('tbody tr.intro-x:not(#no-results-row)');
+    
+    // If there are data rows (appointments exist)
+    if (dataRows.length > 0) {
+      // Show/hide "No results found" based on visible count
+      if (noResultsRow) {
+        if (visibleCount === 0) {
+          noResultsRow.classList.remove('hidden');
+          noResultsRow.style.display = '';
+        } else {
+          noResultsRow.classList.add('hidden');
+          noResultsRow.style.display = 'none';
+        }
+      }
+    } else {
+      // No data rows exist
+      if (noResultsRow) {
+        noResultsRow.classList.add('hidden');
+        noResultsRow.style.display = 'none';
+      }
+    }
+  }
 });
 
 // Confirm approve appointment function
 window.confirmApproveAppointment = function() {
   const appointmentId = document.getElementById('approveAppointmentId').value;
+  const remarks = document.getElementById('approveRemarks').value;
   
   if (!appointmentId) {
     console.error('No appointment ID found for approval');
+    return;
+  }
+  
+  if (!remarks.trim()) {
+    // Show error notification for missing remarks
+    const slot = document.getElementById('appointments-error-message-slot');
+    if (slot) slot.textContent = 'Please provide remarks for approval';
+    if (typeof window.showNotification_appointments_toast_error === 'function') {
+      window.showNotification_appointments_toast_error();
+    }
+    // Focus on the remarks field
+    document.getElementById('approveRemarks').focus();
     return;
   }
   
@@ -356,7 +451,7 @@ window.confirmApproveAppointment = function() {
   
   const formData = new FormData();
   formData.append('status', 'approved');
-  formData.append('remarks', 'Your appointment is approved and you may now go to office at that time and date that in your appointment');
+  formData.append('remarks', remarks);
   formData.append('_token', document.querySelector('input[name="_token"]').value);
   formData.append('_method', 'PUT');
   
@@ -407,9 +502,22 @@ window.confirmApproveAppointment = function() {
 // Confirm complete appointment function
 window.confirmCompleteAppointment = function() {
   const appointmentId = document.getElementById('completeAppointmentId').value;
+  const remarks = document.getElementById('completeRemarks').value;
   
   if (!appointmentId) {
     console.error('No appointment ID found for completion');
+    return;
+  }
+  
+  if (!remarks.trim()) {
+    // Show error notification for missing remarks
+    const slot = document.getElementById('appointments-error-message-slot');
+    if (slot) slot.textContent = 'Please provide remarks for completion';
+    if (typeof window.showNotification_appointments_toast_error === 'function') {
+      window.showNotification_appointments_toast_error();
+    }
+    // Focus on the remarks field
+    document.getElementById('completeRemarks').focus();
     return;
   }
   
@@ -427,7 +535,7 @@ window.confirmCompleteAppointment = function() {
   
   const formData = new FormData();
   formData.append('status', 'completed');
-  formData.append('remarks', 'Your appointment has been completed successfully');
+  formData.append('remarks', remarks);
   formData.append('_token', document.querySelector('input[name="_token"]').value);
   formData.append('_method', 'PUT');
   

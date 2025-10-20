@@ -17,8 +17,16 @@ class IncidentReportManagementController extends Controller
             ->paginate(10);
 
         $guards = User::where('role', 'security personnel')->where('active', true)->get();
+        
+        // Get unique locations from incident reports
+        $locations = tbl_incident_report::whereNotNull('location_of_incident')
+            ->where('location_of_incident', '!=', '')
+            ->distinct()
+            ->pluck('location_of_incident')
+            ->sort()
+            ->values();
 
-        return view('incident-report-management.incident-report-management', compact('incidentReports', 'guards'));
+        return view('incident-report-management.incident-report-management', compact('incidentReports', 'guards', 'locations'));
     }
 
     public function show($id): JsonResponse

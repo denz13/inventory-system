@@ -2,24 +2,97 @@ document.addEventListener('DOMContentLoaded', function() {
     let selectedType = null;
     let selectedCategory = null;
     
+    // Filter state
+    let currentServiceTypeFilter = 'all';
+    let currentCategoryFilter = 'all';
+    let currentStatusFilter = 'all';
+    let currentDateFilter = 'all';
+    
     // Search functionality
     const searchInput = document.getElementById('searchInput');
     const clearSearchBtn = document.getElementById('clearSearch');
     
+    // Universal filter handler
+    document.addEventListener('click', function(e) {
+        if (e.target.matches('[data-filter-type]')) {
+            const filterType = e.target.getAttribute('data-filter-type');
+            const filterValue = e.target.getAttribute('data-filter-value');
+            
+            const dropdown = e.target.closest('.dropdown');
+            
+            // Update the appropriate filter/sort state and button
+            if (filterType === 'service-type') {
+                currentServiceTypeFilter = filterValue;
+                updateFilterButton('serviceTypeFilterBtn', filterValue === 'all' ? 'Service Type: All' : `Service Type: ${filterValue}`);
+            } else if (filterType === 'category') {
+                currentCategoryFilter = filterValue;
+                updateFilterButton('categoryFilterBtn', filterValue === 'all' ? 'Category: All' : `Category: ${filterValue}`);
+            } else if (filterType === 'status') {
+                currentStatusFilter = filterValue;
+                updateFilterButton('statusFilterBtn', filterValue === 'all' ? 'Status: All' : `Status: ${filterValue.charAt(0).toUpperCase() + filterValue.slice(1)}`);
+            } else if (filterType === 'date-filter') {
+                currentDateFilter = filterValue;
+                const dateTexts = {
+                    'all': 'Filter by Date',
+                    'today': 'Date: Today',
+                    'yesterday': 'Date: Yesterday',
+                    'this-week': 'Date: This Week',
+                    'last-week': 'Date: Last Week',
+                    'this-month': 'Date: This Month',
+                    'last-month': 'Date: Last Month'
+                };
+                updateFilterButton('dateFilterBtn', dateTexts[filterValue] || 'Filter by Date');
+            }
+            
+            // Apply all filters and sorting
+            applyFiltersAndSort();
+            
+            // Close dropdown
+            if (dropdown) {
+                const dropdownToggle = dropdown.querySelector('.dropdown-toggle');
+                if (dropdownToggle) {
+                    dropdownToggle.setAttribute('aria-expanded', 'false');
+                    const dropdownMenu = dropdown.querySelector('.dropdown-menu');
+                    if (dropdownMenu) {
+                        dropdownMenu.classList.remove('show');
+                    }
+                }
+            }
+        }
+    });
+    
+    // Reset filters button
+    document.getElementById('resetFiltersBtn')?.addEventListener('click', function() {
+        currentServiceTypeFilter = 'all';
+        currentCategoryFilter = 'all';
+        currentStatusFilter = 'all';
+        currentDateFilter = 'all';
+        
+        if (searchInput) {
+            searchInput.value = '';
+        }
+        
+        // Reset button texts
+        updateFilterButton('serviceTypeFilterBtn', 'Service Type: All');
+        updateFilterButton('categoryFilterBtn', 'Category: All');
+        updateFilterButton('statusFilterBtn', 'Status: All');
+        updateFilterButton('dateFilterBtn', 'Filter by Date');
+        
+        // Apply filters (which will show all)
+        applyFiltersAndSort();
+    });
+    
     if (searchInput) {
         // Search as you type
         searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase().trim();
-            filterComplaints(searchTerm);
-            updateClearButton(searchTerm);
+            applyFiltersAndSort();
         });
         
         // Search on Enter key
         searchInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                const searchTerm = this.value.toLowerCase().trim();
-                filterComplaints(searchTerm);
+                applyFiltersAndSort();
             }
         });
         
@@ -32,125 +105,132 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Clear search functionality
-    if (clearSearchBtn) {
-        clearSearchBtn.addEventListener('click', function() {
-            searchInput.value = '';
-            filterComplaints('');
-            updateClearButton('');
-            clearNoDataMessage();
-            searchInput.focus();
-        });
-    }
-    
-    // Clear no data message
-    function clearNoDataMessage() {
-        const noDataRow = document.querySelector('tbody tr.no-data-found');
-        if (noDataRow) {
-            noDataRow.remove();
+    // Update filter button text
+    function updateFilterButton(buttonId, text) {
+        const button = document.getElementById(buttonId);
+        if (button) {
+            // Preserve the icon
+            const icon = button.querySelector('svg');
+            button.textContent = text;
+            if (icon) {
+                button.insertBefore(icon, button.firstChild);
+            }
         }
     }
     
-    // Update clear button visibility
-    function updateClearButton(searchTerm) {
-        if (clearSearchBtn) {
-            clearSearchBtn.style.display = searchTerm ? 'block' : 'none';
-        }
-    }
-    
-    // Filter complaints based on search term
-    function filterComplaints(searchTerm) {
-        const complaintRows = document.querySelectorAll('tbody tr.intro-x');
-        let visibleCount = 0;
+    // Main function to apply all filters and sorting
+    function applyFiltersAndSort() {
+        const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        const tbody = document.querySelector('tbody');
+        const complaintRows = Array.from(document.querySelectorAll('tbody tr.intro-x'));
         
-        complaintRows.forEach(row => {
-            // Get specific columns to search
-            const serviceType = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
-            const category = row.querySelector('td:nth-child(3)')?.textContent.toLowerCase() || '';
-            const description = row.querySelector('td:nth-child(4)')?.textContent.toLowerCase() || '';
-            const status = row.querySelector('td:nth-child(5)')?.textContent.toLowerCase() || '';
-            const date = row.querySelector('td:nth-child(6)')?.textContent.toLowerCase() || '';
+        if (complaintRows.length === 0) return;
+        
+        // Setup date ranges for filtering
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+        
+        const startOfLastWeek = new Date(startOfWeek);
+        startOfLastWeek.setDate(startOfWeek.getDate() - 7);
+        
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        
+        // Step 1: Filter rows
+        let visibleRows = complaintRows.filter(row => {
+            const rowText = row.textContent.toLowerCase();
+            const rowServiceType = row.getAttribute('data-service-type');
+            const rowCategory = row.getAttribute('data-category');
+            const rowStatus = row.getAttribute('data-status');
             
-            const searchableText = `${serviceType} ${category} ${description} ${status} ${date}`;
-            const isVisible = searchableText.includes(searchTerm);
+            // Check if row matches search term, service type, category, and status filter
+            const matchesSearch = searchTerm === '' || rowText.includes(searchTerm);
+            const matchesServiceType = currentServiceTypeFilter === 'all' || rowServiceType === currentServiceTypeFilter;
+            const matchesCategory = currentCategoryFilter === 'all' || rowCategory === currentCategoryFilter;
+            const matchesStatus = currentStatusFilter === 'all' || rowStatus === currentStatusFilter;
             
-            if (searchTerm === '') {
-                row.style.display = '';
-                removeHighlighting(row);
-            } else {
-                row.style.display = isVisible ? '' : 'none';
-                if (isVisible) {
-                    visibleCount++;
-                    highlightSearchTerm(row, searchTerm);
+            // Date filter check
+            let matchesDate = true;
+            if (currentDateFilter !== 'all') {
+                const dateAttr = row.getAttribute('data-date');
+                const rowDate = dateAttr ? new Date(dateAttr) : null;
+                
+                if (rowDate && !isNaN(rowDate.getTime())) {
+                    switch (currentDateFilter) {
+                        case 'today':
+                            matchesDate = rowDate >= today;
+                            break;
+                        case 'yesterday':
+                            matchesDate = rowDate >= yesterday && rowDate < today;
+                            break;
+                        case 'this-week':
+                            matchesDate = rowDate >= startOfWeek;
+                            break;
+                        case 'last-week':
+                            matchesDate = rowDate >= startOfLastWeek && rowDate < startOfWeek;
+                            break;
+                        case 'this-month':
+                            matchesDate = rowDate >= startOfMonth;
+                            break;
+                        case 'last-month':
+                            matchesDate = rowDate >= startOfLastMonth && rowDate < startOfMonth;
+                            break;
+                        default:
+                            matchesDate = true;
+                    }
+                } else {
+                    matchesDate = false;
                 }
             }
+            
+            return matchesSearch && matchesServiceType && matchesCategory && matchesStatus && matchesDate;
         });
         
-        // Update "No complaints found" message
-        updateNoComplaintsMessage(searchTerm, visibleCount);
+        // Step 2: Hide all rows first
+        complaintRows.forEach(row => {
+            row.style.display = 'none';
+        });
         
-        // Show search results count
-        updateSearchResultsCount(searchTerm, visibleCount);
+        // Step 3: Show and reorder visible rows
+        visibleRows.forEach((row, index) => {
+            row.style.display = '';
+            tbody.appendChild(row); // Move to end (reorder)
+        });
         
-        // Clear no data message if there are results
-        if (visibleCount > 0) {
-            clearNoDataMessage();
+        // Update filtered count display
+        const filteredCountElement = document.getElementById('filtered-count');
+        if (filteredCountElement) {
+            filteredCountElement.textContent = visibleRows.length;
         }
-    }
-    
-    // Highlight search terms in visible rows
-    function highlightSearchTerm(row, searchTerm) {
-        if (!searchTerm) return;
         
-        const cells = row.querySelectorAll('td');
-        cells.forEach(cell => {
-            const originalText = cell.textContent;
-            const highlightedText = originalText.replace(
-                new RegExp(`(${searchTerm})`, 'gi'),
-                '<mark class="bg-yellow-200 px-1 rounded">$1</mark>'
-            );
-            if (highlightedText !== originalText) {
-                cell.innerHTML = highlightedText;
-            }
-        });
+        // Show/hide no results message
+        updateNoResultsMessage(searchTerm, currentStatusFilter, visibleRows.length, complaintRows.length);
     }
     
-    // Remove highlighting from rows
-    function removeHighlighting(row) {
-        const cells = row.querySelectorAll('td');
-        cells.forEach(cell => {
-            if (cell.innerHTML.includes('<mark>')) {
-                cell.innerHTML = cell.innerHTML.replace(/<mark[^>]*>(.*?)<\/mark>/g, '$1');
-            }
-        });
-    }
-    
-    // Update search results count
-    function updateSearchResultsCount(searchTerm, visibleCount) {
-        const totalRows = document.querySelectorAll('tbody tr.intro-x').length;
-        const resultsCount = document.getElementById('searchResultsCount');
-        
-        if (searchTerm && resultsCount) {
-            resultsCount.textContent = `Showing ${visibleCount} of ${totalRows} complaints`;
-            resultsCount.style.display = 'block';
-        } else if (resultsCount) {
-            resultsCount.style.display = 'none';
-        }
-    }
-    
-    // Update "No complaints found" message based on search
-    function updateNoComplaintsMessage(searchTerm, visibleCount) {
-        const visibleRows = document.querySelectorAll('tbody tr.intro-x:not([style*="display: none"])');
-        let noDataRow = document.querySelector('tbody tr.no-data-found');
+    // Update no results message
+    function updateNoResultsMessage(searchTerm, statusFilter, visibleCount, totalRows) {
+        const tbody = document.querySelector('tbody');
+        let noDataRow = tbody?.querySelector('tr.no-data-found');
         
         // Remove existing no data row if it exists
         if (noDataRow) {
             noDataRow.remove();
         }
         
-        if (visibleCount === 0 && searchTerm !== '') {
+        // Check if we should show "no results" message
+        const hasActiveFilters = searchTerm !== '' || 
+                                 currentServiceTypeFilter !== 'all' || 
+                                 currentCategoryFilter !== 'all' ||
+                                 currentStatusFilter !== 'all' || 
+                                 currentDateFilter !== 'all';
+        
+        if (visibleCount === 0 && hasActiveFilters && totalRows > 0 && tbody) {
             // Create new no data row
-            const tbody = document.querySelector('tbody');
             noDataRow = document.createElement('tr');
             noDataRow.className = 'no-data-found';
             noDataRow.innerHTML = `
@@ -160,8 +240,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                         </svg>
                         <div class="font-medium">No complaints found</div>
-                        <div class="text-sm">No complaints match your search: "<span class="font-medium text-slate-700">${searchTerm}</span>"</div>
-                        <div class="text-xs mt-2 text-slate-400">Try adjusting your search terms or clear the search</div>
+                        <div class="text-sm">No complaints match your current filters. Try adjusting your filters.</div>
                     </div>
                 </td>
             `;
@@ -328,36 +407,23 @@ document.addEventListener('DOMContentLoaded', function() {
         
         fetch(this.action, {
             method: 'POST',
-            body: formData,
             headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
-            }
+            },
+            body: formData
         })
         .then(response => response.json())
         .then(data => {
             if (data.message) {
                 showToast(data.message, 'success');
-                
-                // Close modal and reset
-                const modal = document.getElementById('request-service-modal');
-                // Use Tailwind modal system instead of Bootstrap
-                if (modal) {
-                    modal.classList.remove('show');
-                    document.body.classList.remove('modal-open');
-                    // Trigger modal close event
-                    const closeEvent = new Event('click');
-                    modal.dispatchEvent(closeEvent);
-                }
-                
-                this.reset();
-                showStep(1);
-                selectedType = null;
-                selectedCategory = null;
-                
-                // Clear selections
-                document.querySelectorAll('.service-type-option, .category-option').forEach(opt => {
-                    opt.classList.remove('selected');
-                });
+                // Close modal and reload page
+                const closeBtn = document.querySelector('#request-service-modal [data-tw-dismiss="modal"]');
+                if (closeBtn) closeBtn.click();
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
             }
         })
         .catch(error => {
@@ -426,12 +492,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(`/complaints/${complaintId}`)
             .then(response => response.json())
             .then(complaint => {
-                                 // Debug: Log the complaint data
-                 console.log('Complaint data received:', complaint);
-                 console.log('Service Type:', complaint.service_category?.service_type);
-                 console.log('Service Category:', complaint.service_category);
-                
-                                 const detailsContainer = document.getElementById('complaint-details');
+                const detailsContainer = document.getElementById('complaint-details');
                  detailsContainer.innerHTML = `
                      <div class="grid grid-cols-12 gap-4">
                          <div class="col-span-12 md:col-span-6">
@@ -444,7 +505,7 @@ document.addEventListener('DOMContentLoaded', function() {
                          </div>
                         <div class="col-span-12">
                             <label class="form-label">Description</label>
-                            <textarea class="form-control" rows="4" readonly>${complaint.complaint_description || 'N/A'}</textarea>
+                            <textarea class="form-control" rows="8" readonly>${complaint.complaint_description || 'N/A'}</textarea>
                         </div>
                         <div class="col-span-12 md:col-span-6">
                             <label class="form-label">Status</label>
@@ -508,10 +569,6 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         submitBtn.disabled = true;
         
-        // Debug: Log form data
-        console.log('Form action:', this.action);
-        console.log('Form data:', Object.fromEntries(formData));
-        
         // Ensure _method field is included
         if (!formData.has('_method')) {
             formData.append('_method', 'PUT');
@@ -519,27 +576,20 @@ document.addEventListener('DOMContentLoaded', function() {
         
         fetch(this.action, {
             method: 'POST',
-            body: formData,
             headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
-            }
+            },
+            body: formData
         })
-        .then(response => {
-            // Debug: Log response details
-            console.log('Response status:', response.status);
-            console.log('Response headers:', response.headers);
-            
-            // Check if response is JSON
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                throw new Error('Server returned non-JSON response. Status: ' + response.status);
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
             if (data.message) {
                 showToast(data.message, 'success');
-                // Close modal and reload page to refresh the list
+                // Close modal and reload page
+                const closeBtn = document.querySelector('#edit-complaint-modal [data-tw-dismiss="modal"]');
+                if (closeBtn) closeBtn.click();
                 setTimeout(() => {
                     window.location.reload();
                 }, 1000);
@@ -564,23 +614,18 @@ document.addEventListener('DOMContentLoaded', function() {
             fetch(`/complaints/${complaintId}`, {
                 method: 'DELETE',
                 headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
                 }
             })
-            .then(response => {
-                // Check if response is JSON
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    throw new Error('Server returned non-JSON response. Status: ' + response.status);
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 if (data.message) {
                     showToast(data.message, 'success');
-                    // Close modal and reload page to refresh the list
-                    document.getElementById('delete-confirmation-modal').classList.remove('show');
-                    document.body.classList.remove('modal-open');
+                    // Close modal and reload page
+                    const closeBtn = document.querySelector('#delete-confirmation-modal [data-tw-dismiss="modal"]');
+                    if (closeBtn) closeBtn.click();
                     setTimeout(() => {
                         window.location.reload();
                     }, 1000);

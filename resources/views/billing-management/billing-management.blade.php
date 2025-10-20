@@ -68,9 +68,9 @@
             <input type="text" data-daterange="true" class="datepicker form-control w-56" placeholder="Filter by date range" id="dateRangeFilter">
             <button type="button" class="btn btn-outline-secondary" id="clearFilterBtn">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1">
-                    <path d="M3 6h18"></path>
-                    <path d="M19 6v14c0 1 -1 2 -2 2H7c-1 0 -2 -1 -2 -2V6"></path>
-                    <path d="M8 6V4c0 -1 1 -2 2 -2h4c1 0 2 1 2 2v2"></path>
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <polyline points="1 20 1 14 7 14"></polyline>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
                 </svg>
                 Show All
             </button>
@@ -111,7 +111,62 @@
                         <div class="text-slate-500 text-xs mt-0.5">{{ $billing->user->email ?? 'N/A' }}</div>
                     </td>
                     <td class="whitespace-nowrap">
-                        <div class="font-medium">{{ $billing->billing_date }}</div>
+                        <div class="font-medium flex items-center">
+                            @php
+                                // Extract the end date from the billing date range
+                                $billingDateRange = $billing->billing_date;
+                                $isOverdue = false;
+                                $showWarning = false;
+                                $overdueText = '';
+                                
+                                // Check if billing is not approved
+                                $isNotApproved = strtolower($billing->status) !== 'approved';
+                                
+                                if (strpos($billingDateRange, ' - ') !== false) {
+                                    $dateParts = explode(' - ', $billingDateRange);
+                                    if (count($dateParts) >= 2) {
+                                        $endDate = trim($dateParts[1]);
+                                        try {
+                                            $billingEndDate = \Carbon\Carbon::parse($endDate);
+                                            $isOverdue = $billingEndDate->isPast();
+                                            
+                                            if ($isOverdue) {
+                                                $now = \Carbon\Carbon::now();
+                                                $daysOverdue = $now->diffInDays($billingEndDate);
+                                                $monthsOverdue = $now->diffInMonths($billingEndDate);
+                                                
+                                                if ($monthsOverdue >= 1) {
+                                                    $overdueText = "Overdue by {$monthsOverdue} month" . ($monthsOverdue > 1 ? 's' : '');
+                                                } else {
+                                                    $overdueText = "Overdue by {$daysOverdue} day" . ($daysOverdue > 1 ? 's' : '');
+                                                }
+                                            }
+                                        } catch (\Exception $e) {
+                                            // If parsing fails, don't show warning
+                                            $isOverdue = false;
+                                        }
+                                    }
+                                }
+                                
+                                // Show warning only if not approved AND overdue
+                                $showWarning = $isNotApproved && $isOverdue;
+                            @endphp
+                            
+                            @if($showWarning)
+                                <div class="relative inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2 text-red-500 cursor-pointer hover:text-red-600 transition-colors duration-200 clickable-warning-icon" data-tooltip="{{ $overdueText }} - Not Approved" data-billing-id="{{ $billing->id }}" data-user-name="{{ $billing->user->name ?? 'Unknown User' }}" data-user-email="{{ $billing->user->email ?? 'N/A' }}" data-overdue-text="{{ $overdueText }}" title="Click for details">
+                                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                    </svg>
+                                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 invisible transition-all duration-200 pointer-events-none z-50 whitespace-nowrap tooltip-content">
+                                        {{ $overdueText }} - Not Approved
+                                        <div class="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                                    </div>
+                                </div>
+                            @endif
+                            {{ $billing->billing_date }}
+                        </div>
                     </td>
                     <td class="text-center">
                         <div class="font-medium text-primary">₱{{ number_format($billing->amount_due, 2) }}</div>
@@ -202,11 +257,24 @@
                     <!-- User and Basic Info -->
                     <div class="grid grid-cols-12 gap-4 mb-6">
                         <div class="col-span-12">
+                            <label class="form-label text-base font-semibold text-slate-700">Filter by Role</label>
+                            <select id="roleFilter" class="form-control mt-2 p-3 border border-slate-300 rounded-lg">
+                                <option value="">All Roles</option>
+                                @foreach($roles as $role)
+                                    <option value="{{ $role }}">{{ ucfirst($role) }}</option>
+                                @endforeach
+                            </select>
+                            <small class="text-slate-500">Filter users by their role</small>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-12 gap-4 mb-6">
+                        <div class="col-span-12">
                             <label class="form-label text-base font-semibold text-slate-700">Select User</label>
-                            <select name="user_id" class="form-control mt-2 p-3 border border-slate-300 rounded-lg" required>
+                            <select name="user_id" id="userSelect" data-placeholder="Search and select a user..." class="tom-select w-full" required>
                                 <option value="">Choose User</option>
                                 @foreach($users as $user)
-                                    <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }})</option>
+                                    <option value="{{ $user->id }}" data-role="{{ $user->role }}">{{ $user->name }} ({{ $user->email }})</option>
                                 @endforeach
                             </select>
                         </div>
@@ -357,8 +425,133 @@
 </div>
 <!-- END: Delete Confirmation Modal -->
 
+<!-- BEGIN: Overdue Billing Alert Modal -->
+<div id="overdue-billing-modal" class="modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-body p-0">
+                <div class="p-8 text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-20 h-20 text-red-500 mx-auto mt-3">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    <div class="text-3xl mt-5 font-bold text-red-600">Overdue Billing Alert</div>
+                    <div class="text-slate-600 mt-4">
+                        <div class="font-semibold text-2xl mb-2">
+                            <span class="text-primary" id="user-name-text"></span>
+                        </div>
+                        <div class="text-base text-slate-500 mb-4" id="user-email-text"></div>
+                        <div class="text-lg mb-4 mt-4">
+                            <span class="text-red-600 font-medium" id="overdue-status-text"></span>
+                            <span class="text-slate-500"> - Not Approved</span>
+                        </div>
+                        <div class="mt-5 p-5 bg-red-50 border-2 border-red-200 rounded-xl">
+                            <div class="text-red-800 font-semibold text-lg mb-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-2 w-5 h-5">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                </svg>
+                                This billing requires immediate attention!
+                            </div>
+                            <div class="text-red-600 text-base">Please review and take appropriate action to avoid penalties.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer px-8 py-4 bg-slate-50">
+                <div class="flex justify-end gap-3">
+                    <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary px-6 py-2.5">Close</button>
+                    <button type="button" class="btn btn-primary px-6 py-2.5" id="view-billing-details-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-2 w-4 h-4">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                        View Details
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- END: Overdue Billing Alert Modal -->
+
 @endsection
 
 @push('scripts')
     <script src="{{ asset('js/billing-management/billing-management.js') }}"></script>
+    <script src="{{ asset('js/tom-select.js') }}"></script>
+    <script>
+        // Custom tooltip functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle tooltip hover events
+            document.querySelectorAll('[data-tooltip]').forEach(function(element) {
+                const tooltip = element.querySelector('.tooltip-content');
+                
+                element.addEventListener('mouseenter', function() {
+                    if (tooltip) {
+                        tooltip.classList.remove('opacity-0', 'invisible');
+                        tooltip.classList.add('opacity-100', 'visible');
+                    }
+                });
+                
+                element.addEventListener('mouseleave', function() {
+                    if (tooltip) {
+                        tooltip.classList.remove('opacity-100', 'visible');
+                        tooltip.classList.add('opacity-0', 'invisible');
+                    }
+                });
+            });
+            
+            // Handle clickable warning icon clicks
+            document.querySelectorAll('.clickable-warning-icon').forEach(function(icon) {
+                icon.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const billingId = this.getAttribute('data-billing-id');
+                    const userName = this.getAttribute('data-user-name');
+                    const userEmail = this.getAttribute('data-user-email');
+                    const overdueText = this.getAttribute('data-overdue-text');
+                    
+                    // Populate modal with user and billing details
+                    document.getElementById('user-name-text').textContent = userName;
+                    document.getElementById('user-email-text').textContent = userEmail;
+                    document.getElementById('overdue-status-text').textContent = overdueText;
+                    
+                    // Store billing ID for view details button
+                    document.getElementById('view-billing-details-btn').setAttribute('data-billing-id', billingId);
+                    
+                    // Show modal using Tailwind modal system
+                    const modal = tailwind.Modal.getOrCreateInstance(document.querySelector('#overdue-billing-modal'));
+                    modal.show();
+                });
+            });
+            
+            // Handle view billing details button
+            const viewDetailsBtn = document.getElementById('view-billing-details-btn');
+            if (viewDetailsBtn) {
+                viewDetailsBtn.addEventListener('click', function() {
+                    const billingId = this.getAttribute('data-billing-id');
+                    
+                    // Close overdue modal first
+                    const overdueModal = tailwind.Modal.getInstance(document.querySelector('#overdue-billing-modal'));
+                    if (overdueModal) {
+                        overdueModal.hide();
+                    }
+                    
+                    // Wait a bit then open billing details modal
+                    setTimeout(function() {
+                        // Find and trigger the view button
+                        const viewButton = document.querySelector(`[data-tw-target="#view-billing-modal"][data-billing-id="${billingId}"]`);
+                        if (viewButton) {
+                            viewButton.click();
+                        }
+                    }, 300);
+                });
+            }
+        });
+    </script>
 @endpush

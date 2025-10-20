@@ -85,22 +85,114 @@
             .step-dot.completed {
                 background-color: #10b981;
             }
+            
+            /* Table responsive styles */
+            .overflow-x-auto {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .table-report {
+                border-collapse: separate;
+                border-spacing: 0;
+            }
+            
+            /* Custom scrollbar for better UX */
+            .overflow-x-auto::-webkit-scrollbar {
+                height: 8px;
+            }
+            
+            .overflow-x-auto::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 10px;
+            }
+            
+            .overflow-x-auto::-webkit-scrollbar-thumb {
+                background: #888;
+                border-radius: 10px;
+            }
+            
+            .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+                background: #555;
+            }
         </style>
     </div>
 <div class="grid grid-cols-12 gap-6 mt-5">
-    <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2">
+    <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2 gap-2">
+        <!-- Status Filter -->
         <div class="dropdown"> 
-            <button class="dropdown-toggle btn btn-primary" aria-expanded="false" data-tw-toggle="dropdown">Filter by Status</button> 
-            <div class="dropdown-menu w-40"> 
+            <button class="dropdown-toggle btn btn-primary" aria-expanded="false" data-tw-toggle="dropdown" id="statusFilterBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+                Status: All
+            </button> 
+            <div class="dropdown-menu w-48"> 
                 <ul class="dropdown-content"> 
-                    <li> <a href="javascript:;" class="dropdown-item" data-filter="all">All Reports</a> </li> 
-                    <li> <a href="javascript:;" class="dropdown-item" data-filter="Pending">Pending</a> </li> 
-                    <li> <a href="javascript:;" class="dropdown-item" data-filter="Under Investigation">Under Investigation</a> </li> 
-                    <li> <a href="javascript:;" class="dropdown-item" data-filter="Resolved">Resolved</a> </li> 
-                    <li> <a href="javascript:;" class="dropdown-item" data-filter="Closed">Closed</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="status" data-filter-value="all">All Reports</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="status" data-filter-value="Pending">Pending</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="status" data-filter-value="Under Investigation">Under Investigation</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="status" data-filter-value="Resolved">Resolved</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="status" data-filter-value="Closed">Closed</a> </li> 
                 </ul> 
             </div> 
         </div>
+
+        <!-- Location Filter -->
+        <div class="dropdown"> 
+            <button class="dropdown-toggle btn btn-outline-secondary" aria-expanded="false" data-tw-toggle="dropdown" id="locationFilterBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                Filter by Location
+            </button> 
+            <div class="dropdown-menu w-56" style="max-height: 300px; overflow-y: auto;"> 
+                <ul class="dropdown-content"> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="location" data-filter-value="all">All Locations</a> </li>
+                    @forelse($locations as $location)
+                        <li> <a href="javascript:;" class="dropdown-item" data-filter-type="location" data-filter-value="{{ $location }}">{{ $location }}</a> </li>
+                    @empty
+                        <li class="dropdown-item text-slate-500 text-sm">No locations available</li>
+                    @endforelse
+                </ul> 
+            </div> 
+        </div>
+
+        <!-- Date Filter -->
+        <div class="dropdown"> 
+            <button class="dropdown-toggle btn btn-outline-secondary" aria-expanded="false" data-tw-toggle="dropdown" id="dateFilterBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                Filter by Date
+            </button> 
+            <div class="dropdown-menu w-40"> 
+                <ul class="dropdown-content"> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="date" data-filter-value="all">All Dates</a> </li>
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="date" data-filter-value="today">Today</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="date" data-filter-value="yesterday">Yesterday</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="date" data-filter-value="this-week">This Week</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="date" data-filter-value="last-week">Last Week</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="date" data-filter-value="this-month">This Month</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="date" data-filter-value="last-month">Last Month</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="date" data-filter-value="this-year">This Year</a> </li> 
+                </ul> 
+            </div> 
+        </div>
+
+        <!-- Reset Filters Button -->
+        <button type="button" class="btn btn-outline-danger" id="resetFiltersBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <polyline points="23 20 23 14 17 14"></polyline>
+                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+            </svg>
+            Reset
+        </button>
         
         <div class="hidden md:block mx-auto text-slate-500">
             Showing <span id="filtered-count">{{ $incidentReports->count() }}</span> of <span id="total-count">{{ $incidentReports->total() }}</span> entries
@@ -117,8 +209,10 @@
     </div>
 
     <!-- BEGIN: Data List -->
-    <div class="intro-y col-span-12 overflow-auto lg:overflow-visible">
-        <table class="table table-report -mt-2">
+    <div class="intro-y col-span-12 overflow-x-auto">
+        <div class="min-w-full inline-block align-middle">
+            <div class="overflow-hidden">
+                <table class="table table-report -mt-2 min-w-full">
             <thead>
                 <tr>
                     <th class="whitespace-nowrap">REPORTER</th>
@@ -133,7 +227,7 @@
             </thead>
             <tbody>
                 @forelse($incidentReports as $report)
-                <tr class="intro-x" data-status="{{ $report->status }}">
+                <tr class="intro-x" data-status="{{ $report->status }}" data-date="{{ $report->created_at ? $report->created_at->format('Y-m-d H:i:s') : '' }}" data-location="{{ $report->location_of_incident ?? '' }}">
                     <td class="w-40">
                         <div class="flex items-center">
                             <div class="w-10 h-10 image-fit zoom-in">
@@ -274,7 +368,9 @@
                 </tr>
                 @endforelse
             </tbody>
-        </table>
+                </table>
+            </div>
+        </div>
     </div>
     <!-- END: Data List -->
     

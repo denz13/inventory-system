@@ -1,30 +1,241 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Filter functionality
-    document.querySelectorAll('[data-filter]').forEach(filterBtn => {
-        filterBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const filterValue = this.getAttribute('data-filter');
-            
-            // Update button text
-            const dropdownButton = document.querySelector('.dropdown-toggle');
-            if (filterValue === 'all') {
-                dropdownButton.textContent = 'Filter by Status';
-            } else {
-                dropdownButton.textContent = this.textContent;
-            }
-            
-            // Filter table rows
-            filterTableRows(filterValue);
-        });
-    });
-    
+    // Filter state
+    let currentStatusFilter = 'all';
+    let currentNameSort = 'default';
+    let currentDateFilter = 'all';
+
     // Search functionality
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            filterTableRowsBySearch(searchTerm);
+            applyFiltersAndSort();
         });
+    }
+
+    // Universal filter handler
+    document.addEventListener('click', function(e) {
+        if (e.target.matches('[data-filter-type]')) {
+            const filterType = e.target.getAttribute('data-filter-type');
+            const filterValue = e.target.getAttribute('data-filter-value');
+            
+            const dropdown = e.target.closest('.dropdown');
+            
+            // Update the appropriate filter/sort state and button
+            if (filterType === 'status') {
+                currentStatusFilter = filterValue;
+                const statusText = filterValue === 'all' ? 'Status: All' : 
+                                 filterValue === 'sent to owners' ? 'Status: Pending Payment' :
+                                 filterValue === 'under review' ? 'Status: Under Review' :
+                                 `Status: ${filterValue.charAt(0).toUpperCase() + filterValue.slice(1)}`;
+                updateFilterButton('statusFilterBtn', statusText);
+            } else if (filterType === 'name-sort') {
+                currentNameSort = filterValue;
+                const btnText = filterValue === 'default' ? 'Name' : `Name: ${filterValue.toUpperCase()}`;
+                updateFilterButton('nameSortBtn', btnText);
+            } else if (filterType === 'date-filter') {
+                currentDateFilter = filterValue;
+                const dateTexts = {
+                    'all': 'Filter by Date',
+                    'today': 'Date: Today',
+                    'yesterday': 'Date: Yesterday',
+                    'this-week': 'Date: This Week',
+                    'last-week': 'Date: Last Week',
+                    'this-month': 'Date: This Month',
+                    'last-month': 'Date: Last Month',
+                    'this-year': 'Date: This Year'
+                };
+                updateFilterButton('dateFilterBtn', dateTexts[filterValue] || 'Filter by Date');
+            }
+            
+            // Apply all filters and sorting
+            applyFiltersAndSort();
+            
+            // Close dropdown
+            if (dropdown) {
+                const dropdownToggle = dropdown.querySelector('.dropdown-toggle');
+                if (dropdownToggle) {
+                    dropdownToggle.setAttribute('aria-expanded', 'false');
+                    const dropdownMenu = dropdown.querySelector('.dropdown-menu');
+                    if (dropdownMenu) {
+                        dropdownMenu.classList.remove('show');
+                    }
+                }
+            }
+        }
+    });
+
+    // Reset filters button
+    document.getElementById('resetFiltersBtn')?.addEventListener('click', function() {
+        currentStatusFilter = 'all';
+        currentNameSort = 'default';
+        currentDateFilter = 'all';
+        
+        if (searchInput) {
+            searchInput.value = '';
+        }
+        
+        // Reset button texts
+        updateFilterButton('statusFilterBtn', 'Status: All');
+        updateFilterButton('nameSortBtn', 'Name');
+        updateFilterButton('dateFilterBtn', 'Filter by Date');
+        
+        // Apply filters (which will show all)
+        applyFiltersAndSort();
+        
+        showToast('Filters reset successfully', 'success');
+    });
+
+    // Update filter button text
+    function updateFilterButton(buttonId, text) {
+        const button = document.getElementById(buttonId);
+        if (button) {
+            // Preserve the icon
+            const icon = button.querySelector('svg');
+            button.textContent = text;
+            if (icon) {
+                button.insertBefore(icon, button.firstChild);
+            }
+        }
+    }
+
+    // Main function to apply all filters and sorting
+    function applyFiltersAndSort() {
+        const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        const tbody = document.querySelector('tbody');
+        const paymentRows = Array.from(document.querySelectorAll('tbody tr.intro-x'));
+        
+        if (paymentRows.length === 0) return;
+        
+        // Setup date ranges for filtering
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+        
+        const startOfLastWeek = new Date(startOfWeek);
+        startOfLastWeek.setDate(startOfWeek.getDate() - 7);
+        
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        
+        // Step 1: Filter rows
+        let visibleRows = paymentRows.filter(row => {
+            const rowText = row.textContent.toLowerCase();
+            const rowStatus = row.getAttribute('data-status');
+            
+            // Check if row matches search term and status filter
+            const matchesSearch = searchTerm === '' || rowText.includes(searchTerm);
+            const matchesStatus = currentStatusFilter === 'all' || rowStatus === currentStatusFilter;
+            
+            // Date filter check
+            let matchesDate = true;
+            if (currentDateFilter !== 'all') {
+                const dateAttr = row.getAttribute('data-date');
+                const rowDate = dateAttr ? new Date(dateAttr) : null;
+                
+                if (rowDate && !isNaN(rowDate.getTime())) {
+                    switch (currentDateFilter) {
+                        case 'today':
+                            matchesDate = rowDate >= today;
+                            break;
+                        case 'yesterday':
+                            matchesDate = rowDate >= yesterday && rowDate < today;
+                            break;
+                        case 'this-week':
+                            matchesDate = rowDate >= startOfWeek;
+                            break;
+                        case 'last-week':
+                            matchesDate = rowDate >= startOfLastWeek && rowDate < startOfWeek;
+                            break;
+                        case 'this-month':
+                            matchesDate = rowDate >= startOfMonth;
+                            break;
+                        case 'last-month':
+                            matchesDate = rowDate >= startOfLastMonth && rowDate < startOfMonth;
+                            break;
+                        case 'this-year':
+                            matchesDate = rowDate >= startOfYear;
+                            break;
+                        default:
+                            matchesDate = true;
+                    }
+                } else {
+                    matchesDate = false;
+                }
+            }
+            
+            return matchesSearch && matchesStatus && matchesDate;
+        });
+        
+        // Step 2: Sort visible rows by name if applicable
+        if (currentNameSort !== 'default') {
+            visibleRows.sort((a, b) => {
+                const nameA = a.getAttribute('data-user-name')?.toLowerCase() || '';
+                const nameB = b.getAttribute('data-user-name')?.toLowerCase() || '';
+                
+                if (currentNameSort === 'a-z') {
+                    return nameA.localeCompare(nameB);
+                } else { // z-a
+                    return nameB.localeCompare(nameA);
+                }
+            });
+        }
+        
+        // Step 3: Hide all rows first
+        paymentRows.forEach(row => {
+            row.style.display = 'none';
+        });
+        
+        // Step 4: Show and reorder visible rows
+        visibleRows.forEach((row, index) => {
+            row.style.display = '';
+            tbody.appendChild(row); // Move to end (reorder)
+        });
+        
+        // Update filtered count display
+        const filteredCountElement = document.getElementById('filtered-count');
+        if (filteredCountElement) {
+            filteredCountElement.textContent = visibleRows.length;
+        }
+        
+        // Show/hide no results message
+        updateNoResultsMessage(searchTerm, currentStatusFilter, visibleRows.length, paymentRows.length);
+    }
+
+    // Update no results message
+    function updateNoResultsMessage(searchTerm, statusFilter, visibleCount, totalRows) {
+        const tbody = document.querySelector('tbody');
+        let noDataRow = tbody?.querySelector('tr.no-data-found');
+        
+        // Remove existing no data row if it exists
+        if (noDataRow) {
+            noDataRow.remove();
+        }
+        
+        // Check if we should show "no results" message
+        const hasActiveFilters = searchTerm !== '' || currentStatusFilter !== 'all' || currentNameSort !== 'default' || currentDateFilter !== 'all';
+        
+        if (visibleCount === 0 && hasActiveFilters && totalRows > 0 && tbody) {
+            // Create new no data row
+            noDataRow = document.createElement('tr');
+            noDataRow.className = 'no-data-found';
+            noDataRow.innerHTML = `
+                <td colspan="8" class="text-center py-8">
+                    <div class="text-slate-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
+                            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <div class="font-medium">No payments found</div>
+                        <div class="text-sm">No payments match your current filters. Try adjusting your filters.</div>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(noDataRow);
+        }
     }
     
     // View billing modal functionality
@@ -40,7 +251,8 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', function() {
             const receiptPath = this.getAttribute('data-receipt');
             const billNumber = this.getAttribute('data-bill-number');
-            openReceiptModal(receiptPath, billNumber);
+            const receiptType = this.getAttribute('data-receipt-type') || 'user';
+            openReceiptModal(receiptPath, billNumber, receiptType);
         });
     });
     
@@ -224,71 +436,62 @@ function showError(message) {
     `;
 }
 
-function filterTableRows(status) {
-    const rows = document.querySelectorAll('tbody tr[data-status]');
-    let visibleCount = 0;
-    
-    rows.forEach(row => {
-        const rowStatus = row.getAttribute('data-status');
-        
-        if (status === 'all' || rowStatus === status) {
-            row.style.display = '';
-            visibleCount++;
-        } else {
-            row.style.display = 'none';
-        }
-    });
-    
-    // Update filtered count
-    const filteredCountElement = document.getElementById('filtered-count');
-    if (filteredCountElement) {
-        filteredCountElement.textContent = visibleCount;
-    }
-}
-
-function filterTableRowsBySearch(searchTerm) {
-    const rows = document.querySelectorAll('tbody tr[data-status]');
-    let visibleCount = 0;
-    
-    rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        
-        if (text.includes(searchTerm)) {
-            row.style.display = '';
-            visibleCount++;
-        } else {
-            row.style.display = 'none';
-        }
-    });
-    
-    // Update filtered count
-    const filteredCountElement = document.getElementById('filtered-count');
-    if (filteredCountElement) {
-        filteredCountElement.textContent = visibleCount;
-    }
-}
-
-function openReceiptModal(receiptPath, billNumber) {
-    console.log('Opening receipt modal for:', receiptPath, 'Bill:', billNumber);
+function openReceiptModal(receiptPath, billNumber, receiptType = 'user') {
+    console.log('Opening receipt modal for:', receiptPath, 'Bill:', billNumber, 'Type:', receiptType);
     
     // Set bill number
     document.getElementById('receiptBillNumber').textContent = billNumber.toString().padStart(6, '0');
     
+    // Update modal title and header based on receipt type
+    const modalTitle = document.getElementById('receipt-modal-title');
+    const receiptStatus = document.getElementById('receipt-status');
+    const receiptDescription = document.getElementById('receipt-description');
+    const headerInfo = document.getElementById('receipt-header-info');
+    const contentTitle = document.getElementById('receipt-content-title');
+    const contentDescription = document.getElementById('receipt-content-description');
+    
+    if (receiptType === 'official') {
+        modalTitle.textContent = 'Official Receipt';
+        receiptStatus.textContent = 'Approved';
+        receiptStatus.className = 'px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium';
+        receiptDescription.textContent = 'Official payment receipt generated by system';
+        contentTitle.textContent = 'Official Payment Receipt';
+        contentDescription.textContent = 'Below is the official payment receipt generated by the system';
+        headerInfo.querySelector('.bg-blue-50').className = 'bg-green-50 p-4 rounded-lg border border-green-200';
+        headerInfo.querySelector('.text-blue-800').className = 'text-green-800 font-medium';
+        headerInfo.querySelector('.text-blue-600').className = 'text-green-600 mt-2';
+    } else {
+        modalTitle.textContent = 'Payment Receipt';
+        receiptStatus.textContent = 'Under Review';
+        receiptStatus.className = 'px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium';
+        receiptDescription.textContent = 'Payment proof submitted by user';
+        contentTitle.textContent = 'Payment Proof';
+        contentDescription.textContent = 'Below is the payment proof uploaded by the user';
+        headerInfo.querySelector('.bg-green-50, .bg-blue-50').className = 'bg-blue-50 p-4 rounded-lg border border-blue-200';
+        headerInfo.querySelector('.text-green-800, .text-blue-800').className = 'text-blue-800 font-medium';
+        headerInfo.querySelector('.text-green-600, .text-blue-600').className = 'text-blue-600 mt-2';
+    }
+    
     // Display receipt file
-    displayReceiptFile(receiptPath);
+    displayReceiptFile(receiptPath, receiptType);
     
     // Set up download button
     setupDownloadButton(receiptPath);
 }
 
-function displayReceiptFile(receiptPath) {
+function displayReceiptFile(receiptPath, receiptType = 'user') {
     const receiptDisplay = document.getElementById('receiptFileDisplay');
     const fileUrl = `/storage/${receiptPath}`;
     
     // Get file extension to determine file type
     const fileExtension = receiptPath.split('.').pop().toLowerCase();
     
-    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension)) {
+    if (receiptType === 'official' && fileExtension === 'html') {
+        // Display official HTML receipt in iframe without container
+        receiptDisplay.innerHTML = `
+            <iframe src="${fileUrl}" class="w-full border rounded-lg shadow-lg" style="height: auto; min-height: 600px;"></iframe>
+        `;
+    } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension)) {
         // Display image
         receiptDisplay.innerHTML = `
             <div class="text-center">

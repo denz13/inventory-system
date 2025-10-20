@@ -20,6 +20,7 @@ class tbl_billing_management extends Model
         'user_id',
         'billing_date',
         'receipt',
+        'official_receipt',
         'amount_due',
         'status',
         'payment_account_id',

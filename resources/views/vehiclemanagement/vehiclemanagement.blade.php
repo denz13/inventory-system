@@ -23,7 +23,7 @@
             </style>
             </div>
         <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2">
-            <button class="btn btn-primary shadow-md mr-2" data-tw-toggle="modal" data-tw-target="#add-vehicle-modal">Add New Vehicle</button>
+            <!-- <button class="btn btn-primary shadow-md mr-2" data-tw-toggle="modal" data-tw-target="#add-vehicle-modal">Add New Vehicle</button> -->
 
             <!-- BEGIN: Add Vehicle Modal -->
             <div id="add-vehicle-modal" class="modal" data-tw-backdrop="static" tabindex="-1" aria-hidden="true">
@@ -50,89 +50,59 @@
                                                 <input type="text" id="add_other_type" class="form-control" placeholder="Specify other type">
                                             </div>
                                         </div>
-                                        <div class="col-span-12">
-                                            <label class="form-label">Owner Type</label>
-                                            <div class="flex flex-wrap gap-6 mt-2">
-                                                <label class="flex items-center gap-2"><input type="radio" name="add_owner_type" value="homeowner" class="form-check-input" checked> <span>Homeowner</span></label>
-                                                <label class="flex items-center gap-2"><input type="radio" name="add_owner_type" value="non_homeowner" class="form-check-input"> <span>Non Homeowner</span></label>
-                                            </div>
-                                        </div>
-                                        <div id="add_homeowner_wrap" class="col-span-12 md:col-span-6">
-                                            <label class="form-label">Owner</label>
-                                            <select name="user_id" id="add_user_id" class="form-select">
+                                        <div class="col-span-12 md:col-span-6">
+                                            <label class="form-label">Owner *</label>
+                                            <select name="user_id" id="add_user_id" class="form-select" required>
                                                 <option value="">Select owner</option>
                                                 @foreach($owners as $owner)
                                                     <option value="{{ $owner->id }}">{{ $owner->name }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
-                                        <div id="add_non_homeowner_wrap" class="col-span-12 grid grid-cols-12 gap-4 hidden">
-                                            <input type="hidden" id="add_non_homeowners" name="non_homeowners">
-                                            <div class="col-span-12 md:col-span-4">
-                                                <label class="form-label">Surname</label>
-                                                <input type="text" id="add_nh_surname" class="form-control" placeholder="Surname">
-                                            </div>
-                                            <div class="col-span-12 md:col-span-4">
-                                                <label class="form-label">First Name</label>
-                                                <input type="text" id="add_nh_firstname" class="form-control" placeholder="First Name">
-                                            </div>
-                                            <div class="col-span-12 md:col-span-4">
-                                                <label class="form-label">Middle Name</label>
-                                                <input type="text" id="add_nh_middlename" class="form-control" placeholder="Middle Name (optional)">
-                                            </div>
-                                        </div>
                                         <div class="col-span-12 md:col-span-6">
-                                            <label class="form-label">In case of emergency name</label>
-                                            <input type="text" name="incase_of_emergency_name" class="form-control">
-                                        </div>
-                                        <div class="col-span-12 md:col-span-6">
-                                            <label class="form-label">In case of emergency number</label>
-                                            <input type="text" name="incase_of_emergency_number" class="form-control">
-                                        </div>
-                                        <div class="col-span-12 md:col-span-6">
-                                            <label class="form-label">Status</label>
+                                            <label class="form-label">Status *</label>
                                             <select name="status" class="form-select" required>
-                                                <option value="active">active</option>
-                                                <option value="inactive">inactive</option>
+                                                <option value="Pending">Pending</option>
+                                                <option value="Active">Active</option>
+                                                <option value="Inactive">Inactive</option>
                                             </select>
                                         </div>
 
                                         <div class="col-span-12">
                                             <label class="form-label mb-3">Vehicle Details</label>
-                                            <div id="vehicleDetailsRepeater" class="space-y-5">
-                                                <div class="vehicle-detail-group grid grid-cols-12 gap-4">
-                                                    <div class="col-span-12 md:col-span-6">
-                                                        <label class="form-label">Plate Number</label>
-                                                        <input type="text" name="plate_number[]" class="form-control">
-                                                    </div>
-                                                    <div class="col-span-12 md:col-span-6">
-                                                        <label class="form-label">OR Number</label>
-                                                        <input type="text" name="or_number[]" class="form-control">
-                                                    </div>
-                                                    <div class="col-span-12 md:col-span-6">
-                                                        <label class="form-label">CR Number</label>
-                                                        <input type="text" name="cr_number[]" class="form-control">
-                                                    </div>
-                                                    <div class="col-span-12 md:col-span-6">
-                                                        <label class="form-label">Vehicle Model</label>
-                                                        <input type="text" name="vehicle_model[]" class="form-control">
-                                                    </div>
-                                                    <div class="col-span-12 md:col-span-6">
-                                                        <label class="form-label">Color</label>
-                                                        <input type="text" name="color[]" class="form-control">
-                                                    </div>
-                                                    <div class="col-span-12 md:col-span-6">
-                                                        <label class="form-label">Sticker Control Number</label>
-                                                        <input type="text" name="sticker_control_number[]" class="form-control">
-                                                    </div>
-                                                    <div class="col-span-12 flex justify-end">
-                                                        <button type="button" class="btn btn-outline-danger w-24 remove-detail hidden">Remove</button>
-                                                    </div>
+                                            <div class="grid grid-cols-12 gap-4">
+                                                <div class="col-span-12 md:col-span-6">
+                                                    <label class="form-label">Plate Number *</label>
+                                                    <input type="text" name="plate_number" class="form-control" required>
+                                                </div>
+                                                <div class="col-span-12 md:col-span-6">
+                                                    <label class="form-label">OR Number *</label>
+                                                    <input type="text" name="or_no" class="form-control" required>
+                                                </div>
+                                                <div class="col-span-12 md:col-span-6">
+                                                    <label class="form-label">CR Number *</label>
+                                                    <input type="text" name="cr_no" class="form-control" required>
+                                                </div>
+                                                <div class="col-span-12 md:col-span-6">
+                                                    <label class="form-label">Vehicle Model *</label>
+                                                    <input type="text" name="vehicle_model" class="form-control" required>
+                                                </div>
+                                                <div class="col-span-12 md:col-span-6">
+                                                    <label class="form-label">Color *</label>
+                                                    <input type="text" name="color_of_vehicle" class="form-control" required>
+                                                </div>
+                                                <div class="col-span-12 md:col-span-6">
+                                                    <label class="form-label">Sticker Control Number</label>
+                                                    <input type="text" name="vehicle_sticker_control_no" class="form-control" placeholder="Optional">
                                                 </div>
                                             </div>
-                                            <div class="mt-3">
-                                                <button type="button" id="addDetailRow" class="btn btn-outline-primary w-36">Add More Vehicle</button>
-                                            </div>
+                                        </div>
+
+                                        <div class="col-span-12">
+                                            <label class="form-label">Supporting Documents</label>
+                                            <input type="file" name="supporting_documents_attachments[]" id="addSupportingDocuments" class="form-control" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" multiple>
+                                            <div class="text-xs text-slate-500 mt-1">You can select multiple files. Accepted formats: PDF, DOC, DOCX, JPG, JPEG, PNG (Max: 10MB per file)</div>
+                                            <div id="addFileInfo" class="text-xs text-blue-600 mt-1" style="display: none;"></div>
                                         </div>
         </div>
 
@@ -152,7 +122,7 @@
             <div class="hidden md:block mx-auto text-slate-500">Showing {{ $vehicles->firstItem() }} to {{ $vehicles->lastItem() }} of {{ $vehicles->total() }} entries</div>
             <div class="w-full sm:w-auto mt-3 sm:mt-0 sm:ml-auto md:ml-0">
                 <div class="w-56 relative text-slate-500">
-                    <input type="text" class="form-control w-56 box pr-10" placeholder="Search...">
+                    <input type="text" class="form-control w-56 box pr-10" placeholder="Search..." id="searchInput" autocomplete="off">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round" icon-name="search"
@@ -163,51 +133,77 @@
             </div>
         </div>
     </div>
-        <div class="intro-y col-span-12 overflow-auto lg:overflow-visible">
-            <table class="table table-report -mt-2" id="vehicleTable">
-                <thead>
-                    <tr>
-                        <th class="whitespace-nowrap">TYPE</th>
-                        <th class="whitespace-nowrap">OWNER</th>
-                        <th class="whitespace-nowrap">EMERGENCY NAME</th>
-                        <th class="whitespace-nowrap">EMERGENCY NUMBER</th>
-                        <th class="whitespace-nowrap">PLATE NO.</th>
-                        <th class="whitespace-nowrap">OR NO.</th>
-                        <th class="whitespace-nowrap">CR NO.</th>
-                        <th class="whitespace-nowrap">MODEL</th>
-                        <th class="whitespace-nowrap">COLOR</th>
-                        <th class="whitespace-nowrap">STICKER CTRL #</th>
-                        <th class="text-center whitespace-nowrap">STATUS</th>
-                        <th class="text-center whitespace-nowrap">ACTIONS</th>
-                    </tr>
-                </thead>
+        <div class="intro-y col-span-12">
+            <div class="overflow-x-auto">
+                <div class="min-w-full inline-block align-middle">
+                    <div class="overflow-hidden">
+                        <table class="table table-report -mt-2 min-w-full" id="vehicleTable">
+                            <thead>
+                                <tr>
+                                    <th class="whitespace-nowrap">TYPE</th>
+                                    <th class="whitespace-nowrap">OWNER</th>
+                                    <th class="whitespace-nowrap">PLATE NO.</th>
+                                    <th class="whitespace-nowrap">OR NO.</th>
+                                    <th class="whitespace-nowrap">CR NO.</th>
+                                    <th class="whitespace-nowrap">MODEL</th>
+                                    <th class="whitespace-nowrap">COLOR</th>
+                                    <th class="whitespace-nowrap">STICKER CTRL #</th>
+                                    <th class="text-center whitespace-nowrap">DOCUMENTS</th>
+                                    <th class="text-center whitespace-nowrap">STATUS</th>
+                                    <th class="text-center whitespace-nowrap">ACTIONS</th>
+                                </tr>
+                            </thead>
                 <tbody>
-                    @foreach ($vehicles as $veh)
-                        <tr class="intro-x">
+                    @forelse ($vehicles as $veh)
+                        <tr class="intro-x" data-status="{{ $veh->status }}">
                             <td class="whitespace-nowrap">{{ $veh->type_of_vehicle }}</td>
-                            <td class="whitespace-nowrap">{{ optional($veh->user)->name ?: $veh->non_homeowners }}</td>
-                            <td class="whitespace-nowrap">{{ $veh->incase_of_emergency_name ?: '-' }}</td>
-                            <td class="whitespace-nowrap">{{ $veh->incase_of_emergency_number ?: '-' }}</td>
-                            @php $d = optional(\App\Models\vehicle_details::where('vehicle_management_id',$veh->id)->first()); @endphp
-                            <td class="whitespace-nowrap">{{ $d->plate_number ?: '-' }}</td>
-                            <td class="whitespace-nowrap">{{ $d->or_number ?: '-' }}</td>
-                            <td class="whitespace-nowrap">{{ $d->cr_number ?: '-' }}</td>
-                            <td class="whitespace-nowrap">{{ $d->vehicle_model ?: '-' }}</td>
-                            <td class="whitespace-nowrap">{{ $d->color ?: '-' }}</td>
-                            <td class="whitespace-nowrap">{{ $d->sticker_control_number ?: '-' }}</td>
+                            <td class="whitespace-nowrap">{{ optional($veh->user)->name ?: 'N/A' }}</td>
+                            @php 
+                                $details = $veh->supportingDocuments?->vehicleDetails;
+                            @endphp
+                            <td class="whitespace-nowrap">{{ $details->plate_number ?? '-' }}</td>
+                            <td class="whitespace-nowrap">{{ $details->or_no ?? '-' }}</td>
+                            <td class="whitespace-nowrap">{{ $details->cr_no ?? '-' }}</td>
+                            <td class="whitespace-nowrap">{{ $details->vehicle_model ?? '-' }}</td>
+                            <td class="whitespace-nowrap">{{ $details->color_of_vehicle ?? '-' }}</td>
+                            <td class="whitespace-nowrap">{{ $details->stickerControl->control_number ?? '-' }}</td>
+                            <td class="whitespace-nowrap text-center">
+                                @if($veh->supportingDocuments && $veh->supportingDocuments->supporting_documents_attachments)
+                                    @php
+                                        $files = json_decode($veh->supportingDocuments->supporting_documents_attachments, true);
+                                        $fileCount = is_array($files) ? count($files) : 1;
+                                    @endphp
+                                    <span class="text-xs text-blue-600 font-medium">{{ $fileCount }} file(s)</span>
+                                @else
+                                    <span class="text-slate-400 text-xs">No files</span>
+                                @endif
+                            </td>
                             <td class="w-40">
-                                @php $isActive = ($veh->status === 'active'); @endphp
-                                <div
-                                    class="flex items-center justify-center {{ $isActive ? 'text-success' : 'text-danger' }}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" stroke-linejoin="round" icon-name="check-square"
-                                        data-lucide="check-square" class="lucide lucide-check-square w-4 h-4 mr-2">
-                                        <polyline points="9 11 12 14 22 4"></polyline>
-                                        <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
-                                    </svg>
-                                    {{ $isActive ? 'Active' : 'Inactive' }}
-        </div>
+                                <div class="flex items-center justify-center 
+                                    @if($veh->status === 'Active') text-success
+                                    @elseif($veh->status === 'Inactive') text-slate-500
+                                    @elseif($veh->status === 'Pending') text-warning
+                                    @else text-slate-500
+                                    @endif">
+                                    @if($veh->status === 'Active')
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                                            <polyline points="9 11 12 14 22 4"></polyline>
+                                            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+                                        </svg>
+                                    @elseif($veh->status === 'Pending')
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <path d="M12 6v6l4 2"></path>
+                                        </svg>
+                                    @else
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <line x1="15" y1="9" x2="9" y2="15"></line>
+                                            <line x1="9" y1="9" x2="15" y2="15"></line>
+                                        </svg>
+                                    @endif
+                                    {{ $veh->status }}
+                                </div>
                             </td>
                             <td class="table-report__action w-56">
                                 <div class="flex justify-center items-center">
@@ -231,7 +227,37 @@
                                         </svg>
                                         Edit
                                     </a>
-                                    <a class="flex items-center text-danger" href="javascript:;" data-action="delete" data-id="{{ $veh->id }}" data-tw-toggle="modal" data-tw-target="#delete-vehicle-modal">
+                                    @if($veh->status === 'Pending')
+                                    <div class="dropdown">
+                                        <button class="dropdown-toggle btn btn-outline-primary btn-sm" aria-expanded="false" data-tw-toggle="dropdown">
+                                            Update Status
+                                        </button>
+                                        <div class="dropdown-menu w-40">
+                                            <ul class="dropdown-content">
+                                                <li>
+                                                    <a href="javascript:;" class="dropdown-item" data-action="approve" data-vehicle-id="{{ $veh->id }}">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2 text-success">
+                                                            <polyline points="9 11 12 14 22 4"></polyline>
+                                                            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+                                                        </svg>
+                                                        Approve
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:;" class="dropdown-item" data-action="decline" data-vehicle-id="{{ $veh->id }}">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2 text-danger">
+                                                            <circle cx="12" cy="12" r="10"></circle>
+                                                            <line x1="15" y1="9" x2="9" y2="15"></line>
+                                                            <line x1="9" y1="9" x2="15" y2="15"></line>
+                                                        </svg>
+                                                        Decline
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    @endif
+                                    <a class="flex items-center text-danger ml-3" href="javascript:;" data-action="delete" data-id="{{ $veh->id }}" data-tw-toggle="modal" data-tw-target="#delete-vehicle-modal">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                             stroke-linecap="round" stroke-linejoin="round" icon-name="trash-2"
@@ -245,13 +271,59 @@
                                         </svg>
                                         Delete
                                     </a>
-    </div>
+                                </div>
                             </td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr class="intro-x">
+                            <td colspan="11" class="text-center py-8">
+                                <div class="text-slate-500">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
+                                        <path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3"></path>
+                                    </svg>
+                                    <div class="font-medium">No vehicles found</div>
+                                    <div class="text-sm">Start by adding your first vehicle</div>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
+                    </div>
                 </div>
+            </div>
+            <style>
+                /* Custom scrollbar styling */
+                .overflow-x-auto::-webkit-scrollbar {
+                    height: 8px;
+                }
+                .overflow-x-auto::-webkit-scrollbar-track {
+                    background: #f1f1f1;
+                    border-radius: 10px;
+                }
+                .overflow-x-auto::-webkit-scrollbar-thumb {
+                    background: #888;
+                    border-radius: 10px;
+                }
+                .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+                    background: #555;
+                }
+                
+                /* Fix for long filenames in modals */
+                .modal-body a {
+                    word-break: break-all;
+                    overflow-wrap: break-word;
+                    white-space: normal;
+                    display: inline-block;
+                    max-width: 100%;
+                }
+                
+                .modal-body .text-xs {
+                    word-break: break-word;
+                    overflow-wrap: break-word;
+                }
+            </style>
+        </div>
 
         <!-- BEGIN: Delete Modal -->
         <div id="delete-vehicle-modal" class="modal" tabindex="-1" aria-hidden="true">
@@ -296,89 +368,58 @@
                                         </div>
                                     </div>
                                     <div class="col-span-12 md:col-span-6">
-                                        <label class="form-label">Owner</label>
-                                        <div class="mb-2">
-                                            <div class="flex flex-wrap gap-6 mt-2">
-                                                <label class="flex items-center gap-2"><input type="radio" name="edit_owner_type" value="homeowner" class="form-check-input" checked> <span>Homeowner</span></label>
-                                                <label class="flex items-center gap-2"><input type="radio" name="edit_owner_type" value="non_homeowner" class="form-check-input"> <span>Non Homeowner</span></label>
-                                            </div>
-                                        </div>
-                                        <div id="edit_homeowner_wrap">
-                                        <select id="edit_user_id" name="user_id" class="form-select">
+                                        <label class="form-label">Owner *</label>
+                                        <select id="edit_user_id" name="user_id" class="form-select" required>
                                             <option value="">Select owner</option>
                                             @foreach($owners as $owner)
                                                 <option value="{{ $owner->id }}">{{ $owner->name }}</option>
                                             @endforeach
                                         </select>
-                                        </div>
-                                        <div id="edit_non_homeowner_wrap" class="grid grid-cols-12 gap-4 mt-3 hidden">
-                                            <input type="hidden" id="edit_non_homeowners" name="non_homeowners">
-                                            <div class="col-span-12 md:col-span-4">
-                                                <label class="form-label">Surname</label>
-                                                <input type="text" id="edit_nh_surname" class="form-control" placeholder="Surname">
-                                            </div>
-                                            <div class="col-span-12 md:col-span-4">
-                                                <label class="form-label">First Name</label>
-                                                <input type="text" id="edit_nh_firstname" class="form-control" placeholder="First Name">
-                                            </div>
-                                            <div class="col-span-12 md:col-span-4">
-                                                <label class="form-label">Middle Name</label>
-                                                <input type="text" id="edit_nh_middlename" class="form-control" placeholder="Middle Name (optional)">
-                                            </div>
-                                        </div>
                                     </div>
                                     <div class="col-span-12 md:col-span-6">
-                                        <label class="form-label">Emergency Name</label>
-                                        <input type="text" id="edit_incase_of_emergency_name" name="incase_of_emergency_name" class="form-control">
-                                    </div>
-                                    <div class="col-span-12 md:col-span-6">
-                                        <label class="form-label">Emergency Number</label>
-                                        <input type="text" id="edit_incase_of_emergency_number" name="incase_of_emergency_number" class="form-control">
-                                    </div>
-                                    <div class="col-span-12 md:col-span-6">
-                                        <label class="form-label">Status</label>
+                                        <label class="form-label">Status *</label>
                                         <select id="edit_status" name="status" class="form-select" required>
-                                            <option value="active">active</option>
-                                            <option value="inactive">inactive</option>
+                                            <option value="Pending">Pending</option>
+                                            <option value="Active">Active</option>
+                                            <option value="Inactive">Inactive</option>
                                         </select>
                                     </div>
 
                                     <div class="col-span-12">
                                         <label class="form-label mb-3">Vehicle Details</label>
-                                        <div id="editVehicleDetailsRepeater" class="space-y-5">
-                                            <div class="vehicle-detail-group grid grid-cols-12 gap-4">
-                                                <div class="col-span-12 md:col-span-6">
-                                                    <label class="form-label">Plate Number</label>
-                                                    <input type="text" name="plate_number[]" class="form-control">
-                                                </div>
-                                                <div class="col-span-12 md:col-span-6">
-                                                    <label class="form-label">OR Number</label>
-                                                    <input type="text" name="or_number[]" class="form-control">
-                                                </div>
-                                                <div class="col-span-12 md:col-span-6">
-                                                    <label class="form-label">CR Number</label>
-                                                    <input type="text" name="cr_number[]" class="form-control">
-                                                </div>
-                                                <div class="col-span-12 md:col-span-6">
-                                                    <label class="form-label">Vehicle Model</label>
-                                                    <input type="text" name="vehicle_model[]" class="form-control">
-                                                </div>
-                                                <div class="col-span-12 md:col-span-6">
-                                                    <label class="form-label">Color</label>
-                                                    <input type="text" name="color[]" class="form-control">
-                                                </div>
-                                                <div class="col-span-12 md:col-span-6">
-                                                    <label class="form-label">Sticker Control Number</label>
-                                                    <input type="text" name="sticker_control_number[]" class="form-control">
-                                                </div>
-                                                <div class="col-span-12 flex justify-end">
-                                                    <button type="button" class="btn btn-outline-danger w-24 remove-detail hidden">Remove</button>
-                                                </div>
+                                        <div class="grid grid-cols-12 gap-4">
+                                            <div class="col-span-12 md:col-span-6">
+                                                <label class="form-label">Plate Number *</label>
+                                                <input type="text" name="plate_number" id="edit_plate_number" class="form-control" required>
+                                            </div>
+                                            <div class="col-span-12 md:col-span-6">
+                                                <label class="form-label">OR Number *</label>
+                                                <input type="text" name="or_no" id="edit_or_no" class="form-control" required>
+                                            </div>
+                                            <div class="col-span-12 md:col-span-6">
+                                                <label class="form-label">CR Number *</label>
+                                                <input type="text" name="cr_no" id="edit_cr_no" class="form-control" required>
+                                            </div>
+                                            <div class="col-span-12 md:col-span-6">
+                                                <label class="form-label">Vehicle Model *</label>
+                                                <input type="text" name="vehicle_model" id="edit_vehicle_model" class="form-control" required>
+                                            </div>
+                                            <div class="col-span-12 md:col-span-6">
+                                                <label class="form-label">Color *</label>
+                                                <input type="text" name="color_of_vehicle" id="edit_color_of_vehicle" class="form-control" required>
+                                            </div>
+                                            <div class="col-span-12 md:col-span-6">
+                                                <label class="form-label">Sticker Control Number</label>
+                                                <input type="text" name="vehicle_sticker_control_no" id="edit_vehicle_sticker_control_no" class="form-control" placeholder="Optional">
                                             </div>
                                         </div>
-                                        <div class="mt-3">
-                                            <button type="button" id="editAddDetailRow" class="btn btn-outline-primary w-36">Add More Vehicle</button>
-                                        </div>
+                                    </div>
+
+                                    <div class="col-span-12">
+                                        <label class="form-label">Supporting Documents</label>
+                                        <input type="file" name="supporting_documents_attachments[]" id="editSupportingDocuments" class="form-control" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" multiple>
+                                        <div class="text-xs text-slate-500 mt-1">You can select multiple files. Accepted formats: PDF, DOC, DOCX, JPG, JPEG, PNG (Max: 10MB per file)</div>
+                                        <div id="editFileInfo" class="text-xs text-blue-600 mt-1" style="display: none;"></div>
                                     </div>
     </div>
 
@@ -404,47 +445,44 @@
 
                             <div class="grid grid-cols-12 gap-4">
                                 <div class="col-span-12 md:col-span-6">
-                                    <div class="text-slate-500 text-xs">Vehicle Owner</div>
-                                    <div id="view_owner_name_text" class="font-medium"></div>
+                                    <label class="form-label">Vehicle Type</label>
+                                    <input type="text" id="view_type_of_vehicle_text" class="form-control capitalize" readonly>
                                 </div>
                                 <div class="col-span-12 md:col-span-6">
-                                    <div class="text-slate-500 text-xs">Contact Number</div>
-                                    <div id="view_contact_text" class="font-medium"></div>
+                                    <label class="form-label">Owner</label>
+                                    <input type="text" id="view_owner_name_text" class="form-control" readonly>
                                 </div>
                                 <div class="col-span-12 md:col-span-6">
-                                    <div class="text-slate-500 text-xs">Type of Vehicle</div>
-                                    <div id="view_type_of_vehicle_text" class="font-medium capitalize"></div>
+                                    <label class="form-label">Plate Number</label>
+                                    <input type="text" id="view_plate_number" class="form-control" readonly>
                                 </div>
                                 <div class="col-span-12 md:col-span-6">
-                                    <div class="text-slate-500 text-xs">Status</div>
-                                    <div id="view_status_text" class="font-medium capitalize"></div>
+                                    <label class="form-label">Vehicle Model</label>
+                                    <input type="text" id="view_vehicle_model" class="form-control" readonly>
                                 </div>
                                 <div class="col-span-12 md:col-span-6">
-                                    <div class="text-slate-500 text-xs">Emergency Name</div>
-                                    <div id="view_emergency_name_text" class="font-medium"></div>
+                                    <label class="form-label">OR Number</label>
+                                    <input type="text" id="view_or_no" class="form-control" readonly>
                                 </div>
                                 <div class="col-span-12 md:col-span-6">
-                                    <div class="text-slate-500 text-xs">Emergency Number</div>
-                                    <div id="view_emergency_number_text" class="font-medium"></div>
+                                    <label class="form-label">CR Number</label>
+                                    <input type="text" id="view_cr_no" class="form-control" readonly>
                                 </div>
-
-                                <div class="col-span-12 mt-4 w-full max-w-full overflow-auto lg:overflow-visible">
-                                    <div class="text-slate-700 font-medium mb-2">Description</div>
-                                    <div class="w-full max-w-full">
-                                        <table class="table w-full whitespace-nowrap min-w-[720px]">
-                                            <thead>
-                                                <tr>
-                                                    <th>Plate No.</th>
-                                                    <th>OR No.</th>
-                                                    <th>CR No.</th>
-                                                    <th>Vehicle Model</th>
-                                                    <th>Color of Car</th>
-                                                    <th>Car Sticker Control No.</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="viewDetailsTableBody"></tbody>
-                                        </table>
-                                    </div>
+                                <div class="col-span-12 md:col-span-6">
+                                    <label class="form-label">Color</label>
+                                    <input type="text" id="view_color_of_vehicle" class="form-control" readonly>
+                                </div>
+                                <div class="col-span-12 md:col-span-6">
+                                    <label class="form-label">Sticker Control Number</label>
+                                    <input type="text" id="view_vehicle_sticker_control_no" class="form-control" readonly>
+                                </div>
+                                <div class="col-span-12 md:col-span-6">
+                                    <label class="form-label">Status</label>
+                                    <input type="text" id="view_status_text" class="form-control capitalize" readonly>
+                                </div>
+                                <div class="col-span-12">
+                                    <label class="form-label">Supporting Documents</label>
+                                    <div id="view_supporting_documents" class="form-control bg-slate-50"></div>
                                 </div>
                             </div>
 
@@ -457,13 +495,129 @@
             </div>
         </div>
         <!-- END: View Modal -->
+
+        <!-- BEGIN: Approve Confirmation Modal -->
+        <div id="approve-confirmation-modal" class="modal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-body px-5 py-10">
+                        <div class="text-center">
+                            <div class="mb-5">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-3 text-success">
+                                    <polyline points="9 11 12 14 22 4"></polyline>
+                                    <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+                                </svg>
+                                <h3 class="text-lg font-medium mb-2">Approve Vehicle?</h3>
+                                <p class="text-slate-500">Are you sure you want to approve this vehicle registration?</p>
+                            </div>
+                            <input type="hidden" id="approveVehicleId">
+                        </div>
+                    </div>
+                    <div class="modal-footer px-5 py-3">
+                        <div class="flex justify-end gap-2">
+                            <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-24">Cancel</button>
+                            <button type="button" onclick="confirmApprove()" class="btn btn-success w-24">Approve</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END: Approve Confirmation Modal -->
+
+        <!-- BEGIN: Decline Reason Modal -->
+        <div id="decline-reason-modal" class="modal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-body px-5 py-10">
+                        <form id="declineReasonForm">
+                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="_method" value="PUT">
+                            <input type="hidden" id="declineVehicleId" name="vehicle_id">
+                            
+                            <div class="mb-6">
+                                <label class="form-label">Reason for Decline</label>
+                                <textarea name="reason" id="declineReason" class="form-control" rows="4" placeholder="Please provide a reason for declining this vehicle registration..." required></textarea>
+                                <div class="text-slate-500 text-xs mt-1">This reason will be recorded and visible to the user.</div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer px-5 py-3">
+                        <div class="flex justify-end gap-2">
+                            <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-24">Cancel</button>
+                            <button type="button" onclick="confirmDecline()" class="btn btn-danger w-24">Decline</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END: Decline Reason Modal -->
+
+        <!-- BEGIN: Set Validity Date Modal -->
+        <div id="valid-until-modal" class="modal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-body px-5 py-10">
+                        <form id="validUntilForm">
+                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                            <input type="hidden" id="validUntilStickerId" name="sticker_id">
+                            
+                            <div class="text-center mb-6">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-3 text-success">
+                                    <polyline points="9 11 12 14 22 4"></polyline>
+                                    <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+                                </svg>
+                                <h3 class="text-lg font-medium mb-2">Vehicle Approved!</h3>
+                                <p class="text-slate-500">Control Number: <span id="displayControlNumber" class="font-semibold text-slate-700"></span></p>
+                            </div>
+                            
+                            <div class="mb-6">
+                                <label class="form-label">Set Validity Date</label>
+                                <input type="date" name="valid_until" id="validUntilDate" class="form-control" required>
+                                <div class="text-slate-500 text-xs mt-1">Select the date until which this vehicle registration is valid.</div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer px-5 py-3">
+                        <div class="flex justify-end gap-2">
+                            <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-24">Cancel</button>
+                            <button type="button" onclick="confirmValidUntil()" class="btn btn-success w-24">Set Date</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END: Set Validity Date Modal -->
     <!-- END: Users Layout -->
     <!-- BEGIN: Pagination -->
         <x-pagination :current-page="$vehicles->currentPage()" :total-pages="$vehicles->lastPage()" :per-page="$vehicles->perPage()" :show-per-page-selector="true" :show-first-last="true" />
     <!-- END: Pagination -->
 </div>
+<!-- BEGIN: Notification Toasts -->
+<x-notification-toast 
+    id="vehicle_management_toast_success" 
+    type="success" 
+    title="Success!" 
+    :showButton="false" 
+>
+    <div id="vehicle-management-success-message-slot" class="text-slate-500 mt-1">Action completed successfully</div>
+</x-notification-toast>
+
+<x-notification-toast 
+    id="vehicle_management_toast_error" 
+    type="error" 
+    title="Error!" 
+    :showButton="false"
+>
+    <div id="vehicle-management-error-message-slot" class="text-slate-500 mt-1">An error occurred</div>
+</x-notification-toast>
+<!-- END: Notification Toasts -->
+
 @endsection
 
 @push('scripts')
+    <!-- Toastify for notifications -->
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.css">
+    
     <script src="{{ asset('js/vehiclemanagement/vehiclemanagement.js') }}"></script>
 @endpush

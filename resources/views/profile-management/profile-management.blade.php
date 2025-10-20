@@ -104,15 +104,17 @@
         <li id="profile-tab" class="nav-item" role="presentation">
             <a href="javascript:;" class="nav-link py-4 flex items-center active" data-tw-target="#profile" aria-controls="profile" aria-selected="true" role="tab"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="user" class="lucide lucide-user w-4 h-4 mr-2" data-lucide="user"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> Profile </a>
         </li>
-        <li id="add-business-tab" class="nav-item" role="presentation">
+        <!-- <li id="add-business-tab" class="nav-item" role="presentation">
             <a href="javascript:;" class="nav-link py-4 flex items-center" data-tw-target="#add-business" aria-selected="false" role="tab"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="shield" class="lucide lucide-shield w-4 h-4 mr-2" data-lucide="shield"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> Add Business </a>
-        </li>
+        </li> -->
+        @if($user->hasLandlordTenantAccess())
         <li id="add-tenant-tab" class="nav-item" role="presentation">
             <a href="javascript:;" class="nav-link py-4 flex items-center" data-tw-target="#add-tenant" aria-selected="false" role="tab"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="users" class="lucide lucide-users w-4 h-4 mr-2" data-lucide="users"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 00-3-3.87"></path><path d="M16 3.13a4 4 0 010 7.75"></path></svg> Add Tenant </a>
         </li>
-        <li id="settings-tab" class="nav-item" role="presentation">
+        @endif
+        <!-- <li id="settings-tab" class="nav-item" role="presentation">
             <a href="javascript:;" class="nav-link py-4 flex items-center" data-tw-target="#settings" aria-selected="false" role="tab"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="settings" class="lucide lucide-settings w-4 h-4 mr-2" data-lucide="settings"><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg> Settings </a>
-        </li>
+        </li> -->
     </ul>
 </div>
 
@@ -511,9 +513,8 @@
     <!-- END: Account Tab -->
 
     <!-- BEGIN: Add Business Tab -->
-    <div id="add-business" class="tab-pane" role="tabpanel" aria-labelledby="add-business-tab">
+    <!-- <div id="add-business" class="tab-pane" role="tabpanel" aria-labelledby="add-business-tab">
         <div class="grid grid-cols-12 gap-6">
-            <!-- BEGIN: Add Business Form -->
             <div class="col-span-12 mt-6 -mb-6 intro-y">
                 <div class="alert alert-dismissible show box bg-primary text-white flex items-center mb-6" role="alert">
                     <span>Add New Business: Add a new business to your profile. The My Businesses section will display all your businesses. If the status is approved, the edit button and delete button will not be available. When you update a declined business, its status will automatically reset to pending for re-review.</span>
@@ -559,9 +560,7 @@
                     </form>
                 </div>
             </div>
-            <!-- END: Add Business Form -->
 
-            <!-- BEGIN: Business List -->
             <div class="intro-y box col-span-12 lg:col-span-6">
                 <div class="flex items-center px-5 py-5 sm:py-3 border-b border-slate-200/60 dark:border-darkmode-400">
                     <h2 class="font-medium text-base mr-auto">
@@ -644,13 +643,11 @@
                     @endif
                 </div>
             </div>
-            <!-- END: Business List -->
         </div>
-    </div>
-    <!-- END: Add Business Tab -->
+    </div> -->
     
     <!-- BEGIN: Settings Tab -->
-    <div id="settings" class="tab-pane" role="tabpanel" aria-labelledby="settings-tab">
+    <!-- <div id="settings" class="tab-pane" role="tabpanel" aria-labelledby="settings-tab">
         <div class="intro-y box">
             <div class="flex items-center px-5 py-5 sm:py-3 border-b border-slate-200/60 dark:border-darkmode-400">
                 <h2 class="font-medium text-base mr-auto">
@@ -713,10 +710,11 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> -->
     <!-- END: Settings Tab -->
 
     <!-- BEGIN: Add Tenant Tab -->
+    @if($user->hasLandlordTenantAccess())
     <div id="add-tenant" class="tab-pane" role="tabpanel" aria-labelledby="add-tenant-tab">
         <div class="grid grid-cols-12 gap-6">
             <!-- BEGIN: Add Tenant Form -->
@@ -856,7 +854,8 @@
                                             </div>
                                             </div>
                                         </div>
-
+    @endif
+    <!-- END: Add Tenant Tab -->
 
 
 <!-- Delete Tenant Confirmation Modal -->

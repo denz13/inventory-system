@@ -4,13 +4,17 @@ namespace App\Http\Controllers\appointmentmanagement;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\tbl_appointment;
+use App\Models\appointment;
+use App\Models\appointment_category;
 
 class AppointmentManagementController extends Controller
 {
     public function index()
     {
-        $appointments = tbl_appointment::orderBy('created_at', 'desc')->paginate(10);
+        // Get appointments with relationships
+        $appointments = appointment::with(['users', 'appointmentCategory'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
         
         return view('appointment-management.appointment-management', compact('appointments'));
     }
@@ -18,7 +22,9 @@ class AppointmentManagementController extends Controller
     public function show($id)
     {
         try {
-            $appointment = tbl_appointment::findOrFail($id);
+            // Get appointment with relationships
+            $appointment = appointment::with(['users', 'appointmentCategory'])
+                ->findOrFail($id);
             
             return response()->json([
                 'success' => true,
@@ -40,7 +46,7 @@ class AppointmentManagementController extends Controller
         ]);
 
         try {
-            $appointment = tbl_appointment::findOrFail($id);
+            $appointment = appointment::findOrFail($id);
             $oldStatus = $appointment->status;
             $appointment->status = $request->status;
             $appointment->remarks = $request->remarks;
@@ -69,7 +75,7 @@ class AppointmentManagementController extends Controller
     public function destroy($id)
     {
         try {
-            $appointment = tbl_appointment::findOrFail($id);
+            $appointment = appointment::findOrFail($id);
             
             // Log the activity before deletion
             try {

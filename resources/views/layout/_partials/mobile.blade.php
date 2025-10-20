@@ -10,627 +10,276 @@
         <a href="javascript:;" class="mobile-menu-toggler"> <i data-lucide="x-circle" class="w-8 h-8 text-white transform -rotate-90"></i> </a>
         <ul class="scrollable__content py-2">
             <li>
-                <a href="javascript:;" class="menu menu--active">
+                <a href="{{ url('dashboard') }}" class="menu">
                     <div class="menu__icon"> <i data-lucide="home"></i> </div>
-                    <div class="menu__title"> Dashboard <i data-lucide="chevron-down" class="menu__sub-icon transform rotate-180"></i> </div>
-                </a>
-                <ul class="menu__sub-open">
-                    <li>
-                        <a href="{{ route('dashboard') }}" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
                             <div class="menu__title"> Dashboard </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('dashboard') }}" class="menu menu--active">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Overview </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="side-menu-light-dashboard-overview-3.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Overview 3 </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="side-menu-light-dashboard-overview-4.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Overview 4 </div>
-                        </a>
-                    </li>
-                </ul>
-            </li>
-            <li>
-                <a href="javascript:;" class="menu">
-                    <div class="menu__icon"> <i data-lucide="box"></i> </div>
-                    <div class="menu__title"> Menu Layout <i data-lucide="chevron-down" class="menu__sub-icon "></i> </div>
-                </a>
-                <ul class="">
-                    <li>
-                        <a href="side-menu-light-dashboard-overview-1.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Side Menu </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="simple-menu-light-dashboard-overview-1.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Simple Menu </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="top-menu-light-dashboard-overview-1.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Top Menu </div>
-                        </a>
-                    </li>
-                </ul>
-            </li>
-            <li>
-                <a href="javascript:;" class="menu">
-                    <div class="menu__icon"> <i data-lucide="shopping-bag"></i> </div>
-                    <div class="menu__title"> E-Commerce <i data-lucide="chevron-down" class="menu__sub-icon "></i> </div>
-                </a>
-                <ul class="">
-                    <li>
-                        <a href="side-menu-light-categories.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Categories </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="side-menu-light-add-product.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Add Product </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="javascript:;" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Products <i data-lucide="chevron-down" class="menu__sub-icon "></i> </div>
-                        </a>
-                        <ul class="">
-                            <li>
-                                <a href="side-menu-light-product-list.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Product List</div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="side-menu-light-product-grid.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Product Grid</div>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    <li>
-                        <a href="javascript:;" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Transactions <i data-lucide="chevron-down" class="menu__sub-icon "></i> </div>
-                        </a>
-                        <ul class="">
-                            <li>
-                                <a href="side-menu-light-transaction-list.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Transaction List</div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="side-menu-light-transaction-detail.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Transaction Detail</div>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    <li>
-                        <a href="javascript:;" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Sellers <i data-lucide="chevron-down" class="menu__sub-icon "></i> </div>
-                        </a>
-                        <ul class="">
-                            <li>
-                                <a href="side-menu-light-seller-list.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Seller List</div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="side-menu-light-seller-detail.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Seller Detail</div>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    <li>
-                        <a href="side-menu-light-reviews.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Reviews </div>
-                        </a>
-                    </li>
-                </ul>
-            </li>
-            <li>
-                <a href="side-menu-light-inbox.html" class="menu">
-                    <div class="menu__icon"> <i data-lucide="inbox"></i> </div>
-                    <div class="menu__title"> Inbox </div>
                 </a>
             </li>
+            @if(auth()->user()->hasPermission('message'))
             <li>
-                <a href="side-menu-light-file-manager.html" class="menu">
-                    <div class="menu__icon"> <i data-lucide="hard-drive"></i> </div>
-                    <div class="menu__title"> File Manager </div>
+                <a href="{{ route('chat.index') }}" class="menu">
+                    <div class="menu__icon"> <i data-lucide="message-circle"></i> </div>
+                    <div class="menu__title"> Message </div>
                 </a>
             </li>
+            @endif
+            @if(auth()->user()->hasPermission('feedback'))
             <li>
-                <a href="side-menu-light-point-of-sale.html" class="menu">
-                    <div class="menu__icon"> <i data-lucide="credit-card"></i> </div>
-                    <div class="menu__title"> Point of Sale </div>
-                </a>
-            </li>
-            <li>
-                <a href="side-menu-light-chat.html" class="menu">
-                    <div class="menu__icon"> <i data-lucide="message-square"></i> </div>
-                    <div class="menu__title"> Chat </div>
-                </a>
-            </li>
-            <li>
-                <a href="side-menu-light-post.html" class="menu">
+                <a href="{{ route('feedback.index') }}" class="menu">
                     <div class="menu__icon"> <i data-lucide="file-text"></i> </div>
-                    <div class="menu__title"> Post </div>
+                    <div class="menu__title"> Feedback </div>
+                </a>
+            </li>
+            @endif
+            <li>
+                <a href="{{ route('business.index') }}" class="menu">
+                    <div class="menu__icon"> <i data-lucide="file-text"></i> </div>
+                    <div class="menu__title"> Apply Business </div>
                 </a>
             </li>
             <li>
-                <a href="side-menu-light-calendar.html" class="menu">
-                    <div class="menu__icon"> <i data-lucide="calendar"></i> </div>
-                    <div class="menu__title"> Calendar </div>
+                <a href="{{ route('landlord.index') }}" class="menu">
+                    <div class="menu__icon"> <i data-lucide="file-text"></i> </div>
+                    <div class="menu__title"> Apply Landlord </div>
                 </a>
             </li>
+            
             <li class="menu__devider my-6"></li>
-            <li>
-                <a href="javascript:;" class="menu">
-                    <div class="menu__icon"> <i data-lucide="edit"></i> </div>
-                    <div class="menu__title"> Crud <i data-lucide="chevron-down" class="menu__sub-icon "></i> </div>
-                </a>
-                <ul class="">
-                    <li>
-                        <a href="side-menu-light-crud-data-list.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Data List </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="side-menu-light-crud-form.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Form </div>
-                        </a>
-                    </li>
-                </ul>
-            </li>
+            
+            @if(auth()->user()->hasPermission('service request'))
             <li>
                 <a href="javascript:;" class="menu">
                     <div class="menu__icon"> <i data-lucide="users"></i> </div>
-                    <div class="menu__title"> Users <i data-lucide="chevron-down" class="menu__sub-icon "></i> </div>
+                    <div class="menu__title"> Service Request <i data-lucide="chevron-down" class="menu__sub-icon "></i> </div>
                 </a>
                 <ul class="">
                     <li>
-                        <a href="side-menu-light-users-layout-1.html" class="menu">
+                        <a href="{{ route('complaints.index') }}" class="menu">
                             <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Layout 1 </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="side-menu-light-users-layout-2.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Layout 2 </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="side-menu-light-users-layout-3.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Layout 3 </div>
+                            <div class="menu__title"> Request Now </div>
                         </a>
                     </li>
                 </ul>
             </li>
+            @endif
+            @if(auth()->user()->hasPermission('incident report'))
+            <li>
+                <a href="javascript:;" class="menu">
+                    <div class="menu__icon"> <i data-lucide="alert-circle"></i> </div>
+                    <div class="menu__title"> Incident Report <i data-lucide="chevron-down" class="menu__sub-icon "></i> </div>
+                </a>
+                <ul class="">
+                    <li>
+                        <a href="{{ route('incident.index') }}" class="menu">
+                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
+                            <div class="menu__title"> Report Now </div>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            @endif
+            @if(auth()->user()->hasPermission('billing payment'))
+            <li>
+                <a href="javascript:;" class="menu">
+                    <div class="menu__icon"> <i data-lucide="credit-card"></i> </div>
+                    <div class="menu__title"> Billing Payment <i data-lucide="chevron-down" class="menu__sub-icon "></i> </div>
+                </a>
+                <ul class="">
+                    <li>
+                        <a href="{{ route('billing-payment.index') }}" class="menu">
+                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
+                            <div class="menu__title"> Payment Now </div>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            @endif
+            @if(auth()->user()->hasPermission('vehicle'))
+            <li>
+                <a href="{{ route('vehicle.index') }}" class="menu">
+                    <div class="menu__icon"> <i data-lucide="car"></i> </div>
+                    <div class="menu__title"> Vehicle </div>
+                </a>
+            </li>
+            @endif
+            @if(auth()->user()->hasPermission('information') || auth()->user()->hasPermission('user management') || auth()->user()->hasPermission('business management') || auth()->user()->hasPermission('vehicle management') || auth()->user()->hasPermission('service management') || auth()->user()->hasPermission('incident management') || auth()->user()->hasPermission('announcement') || auth()->user()->hasPermission('billing management') || auth()->user()->hasPermission('payment account management') || auth()->user()->hasPermission('feedback management') || auth()->user()->hasPermission('appointment management'))
             <li>
                 <a href="javascript:;" class="menu">
                     <div class="menu__icon"> <i data-lucide="trello"></i> </div>
-                    <div class="menu__title"> Profile <i data-lucide="chevron-down" class="menu__sub-icon "></i> </div>
+                    <div class="menu__title"> Information <i data-lucide="chevron-down" class="menu__sub-icon "></i> </div>
                 </a>
                 <ul class="">
+                    @if(auth()->user()->hasPermission('user management'))
                     <li>
-                        <a href="side-menu-light-profile-overview-1.html" class="menu">
+                        <a href="{{ route('usermanagement.index') }}" class="menu">
                             <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Overview 1 </div>
+                            <div class="menu__title"> User Management </div>
                         </a>
                     </li>
+                    @endif
+                    @if(auth()->user()->hasPermission('business management'))
                     <li>
-                        <a href="side-menu-light-profile-overview-2.html" class="menu">
+                        <a href="{{ route('businessmanagement.index') }}" class="menu">
                             <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Overview 2 </div>
+                            <div class="menu__title"> Establishment Management </div>
                         </a>
                     </li>
+                    @endif
+                    @if(auth()->user()->hasPermission('vehicle management'))
                     <li>
-                        <a href="side-menu-light-profile-overview-3.html" class="menu">
+                        <a href="{{ route('vehiclemanagement.index') }}" class="menu">
                             <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Overview 3 </div>
+                            <div class="menu__title"> Vehicle Management </div>
+                        </a>
+                    </li>
+                    @endif
+                    @if(auth()->user()->hasPermission('service management'))
+                    <li>
+                        <a href="{{ route('service-management.index') }}" class="menu">
+                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
+                            <div class="menu__title"> Service Management </div>
+                        </a>
+                    </li>
+                    @endif
+                    @if(auth()->user()->hasPermission('incident management'))
+                    <li>
+                        <a href="{{ route('incident-report-management.index') }}" class="menu">
+                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
+                            <div class="menu__title"> Incident Management </div>
+                        </a>
+                    </li>
+                    @endif
+                    @if(auth()->user()->hasPermission('announcement'))
+                    <li>
+                        <a href="{{ route('announcement.index') }}" class="menu">
+                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
+                            <div class="menu__title"> Announcement </div>
+                        </a>
+                    </li>
+                    @endif
+                    
+                    @if(auth()->user()->hasPermission('billing management'))
+                    <li>
+                        <a href="javascript:;" class="menu">
+                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
+                            <div class="menu__title"> Billing Management <i data-lucide="chevron-down" class="menu__sub-icon "></i> </div>
+                        </a>
+                        <ul class="">
+                            <li>
+                                <a href="{{ route('billing-management.index') }}" class="menu">
+                                    <div class="menu__icon"> <i data-lucide="activity"></i> </div>
+                                    <div class="menu__title"> Create Billing </div>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('list-payments.index') }}" class="menu">
+                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
+                                    <div class="menu__title"> List of Payments </div>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    @endif
+                    @if(auth()->user()->hasPermission('payment account management'))
+                    <li>
+                        <a href="{{ route('bank-account.index') }}" class="menu">
+                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
+                            <div class="menu__title"> Payment Account Management </div>
+                        </a>
+                    </li>
+                    @endif
+                    @if(auth()->user()->hasPermission('feedback management'))
+                    <li>
+                        <a href="{{ route('feedback-management.index') }}" class="menu">
+                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
+                            <div class="menu__title"> Feedback Management </div>
+                        </a>
+                    </li>
+                    @endif
+                    @if(auth()->user()->hasPermission('appointment management'))
+                    <li>
+                        <a href="{{ route('appointment-management.index') }}" class="menu">
+                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
+                            <div class="menu__title"> Appointment Management </div>
+                        </a>
+                    </li>
+                    @endif
+                    
+                    <li>
+                        <a href="{{ route('chatbot.index') }}" class="menu">
+                            <div class="menu__icon"> <i data-lucide="message-circle"></i> </div>
+                            <div class="menu__title"> Guest Chatbot </div>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{{ route('landlord-management.index') }}" class="menu">
+                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
+                            <div class="menu__title"> Landlord Management </div>
                         </a>
                     </li>
                 </ul>
             </li>
-            <li>
-                <a href="javascript:;" class="menu">
-                    <div class="menu__icon"> <i data-lucide="layout"></i> </div>
-                    <div class="menu__title"> Pages <i data-lucide="chevron-down" class="menu__sub-icon "></i> </div>
-                </a>
-                <ul class="">
-                    <li>
-                        <a href="javascript:;" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Wizards <i data-lucide="chevron-down" class="menu__sub-icon "></i> </div>
-                        </a>
-                        <ul class="">
-                            <li>
-                                <a href="side-menu-light-wizard-layout-1.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Layout 1</div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="side-menu-light-wizard-layout-2.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Layout 2</div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="side-menu-light-wizard-layout-3.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Layout 3</div>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    <li>
-                        <a href="javascript:;" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Blog <i data-lucide="chevron-down" class="menu__sub-icon "></i> </div>
-                        </a>
-                        <ul class="">
-                            <li>
-                                <a href="side-menu-light-blog-layout-1.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Layout 1</div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="side-menu-light-blog-layout-2.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Layout 2</div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="side-menu-light-blog-layout-3.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Layout 3</div>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    <li>
-                        <a href="javascript:;" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Pricing <i data-lucide="chevron-down" class="menu__sub-icon "></i> </div>
-                        </a>
-                        <ul class="">
-                            <li>
-                                <a href="side-menu-light-pricing-layout-1.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Layout 1</div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="side-menu-light-pricing-layout-2.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Layout 2</div>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    <li>
-                        <a href="javascript:;" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Invoice <i data-lucide="chevron-down" class="menu__sub-icon "></i> </div>
-                        </a>
-                        <ul class="">
-                            <li>
-                                <a href="side-menu-light-invoice-layout-1.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Layout 1</div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="side-menu-light-invoice-layout-2.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Layout 2</div>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    <li>
-                        <a href="javascript:;" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> FAQ <i data-lucide="chevron-down" class="menu__sub-icon "></i> </div>
-                        </a>
-                        <ul class="">
-                            <li>
-                                <a href="side-menu-light-faq-layout-1.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Layout 1</div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="side-menu-light-faq-layout-2.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Layout 2</div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="side-menu-light-faq-layout-3.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Layout 3</div>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    <li>
-                        <a href="login-light-login.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Login </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="login-light-register.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Register </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="main-light-error-page.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Error Page </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="side-menu-light-update-profile.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Update profile </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="side-menu-light-change-password.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Change Password </div>
-                        </a>
-                    </li>
-                </ul>
-            </li>
+            @endif
+            
             <li class="menu__devider my-6"></li>
-            <li>
-                <a href="javascript:;" class="menu">
-                    <div class="menu__icon"> <i data-lucide="inbox"></i> </div>
-                    <div class="menu__title"> Components <i data-lucide="chevron-down" class="menu__sub-icon "></i> </div>
-                </a>
-                <ul class="">
-                    <li>
-                        <a href="javascript:;" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Table <i data-lucide="chevron-down" class="menu__sub-icon "></i> </div>
-                        </a>
-                        <ul class="">
-                            <li>
-                                <a href="side-menu-light-regular-table.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Regular Table</div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="side-menu-light-tabulator.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Tabulator</div>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    <li>
-                        <a href="javascript:;" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Overlay <i data-lucide="chevron-down" class="menu__sub-icon "></i> </div>
-                        </a>
-                        <ul class="">
-                            <li>
-                                <a href="side-menu-light-modal.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Modal</div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="side-menu-light-slide-over.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Slide Over</div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="side-menu-light-notification.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Notification</div>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    <li>
-                        <a href="side-menu-light-tab.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Tab </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="side-menu-light-accordion.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Accordion </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="side-menu-light-button.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Button </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="side-menu-light-alert.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Alert </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="side-menu-light-progress-bar.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Progress Bar </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="side-menu-light-tooltip.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Tooltip </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="side-menu-light-dropdown.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Dropdown </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="side-menu-light-typography.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Typography </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="side-menu-light-icon.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Icon </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="side-menu-light-loading-icon.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Loading Icon </div>
-                        </a>
-                    </li>
-                </ul>
-            </li>
-            <li>
-                <a href="javascript:;" class="menu">
-                    <div class="menu__icon"> <i data-lucide="sidebar"></i> </div>
-                    <div class="menu__title"> Forms <i data-lucide="chevron-down" class="menu__sub-icon "></i> </div>
-                </a>
-                <ul class="">
-                    <li>
-                        <a href="side-menu-light-regular-form.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Regular Form </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="side-menu-light-datepicker.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Datepicker </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="side-menu-light-tom-select.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Tom Select </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="side-menu-light-file-upload.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> File Upload </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="javascript:;" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Wysiwyg Editor <i data-lucide="chevron-down" class="menu__sub-icon "></i> </div>
-                        </a>
-                        <ul class="">
-                            <li>
-                                <a href="side-menu-light-wysiwyg-editor-classic.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Classic</div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="side-menu-light-wysiwyg-editor-inline.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Inline</div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="side-menu-light-wysiwyg-editor-balloon.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Balloon</div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="side-menu-light-wysiwyg-editor-balloon-block.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Balloon Block</div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="side-menu-light-wysiwyg-editor-document.html" class="menu">
-                                    <div class="menu__icon"> <i data-lucide="zap"></i> </div>
-                                    <div class="menu__title">Document</div>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    <li>
-                        <a href="side-menu-light-validation.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Validation </div>
-                        </a>
-                    </li>
-                </ul>
-            </li>
+            
+            @if(auth()->user()->hasPermission('notification settings') || auth()->user()->hasPermission('system settings') || auth()->user()->hasPermission('permission settings'))
             <li>
                 <a href="javascript:;" class="menu">
                     <div class="menu__icon"> <i data-lucide="hard-drive"></i> </div>
-                    <div class="menu__title"> Widgets <i data-lucide="chevron-down" class="menu__sub-icon "></i> </div>
+                    <div class="menu__title"> Settings <i data-lucide="chevron-down" class="menu__sub-icon "></i> </div>
+                </a>
+                <ul class="">
+                    @if(auth()->user()->hasPermission('notification settings'))
+                    <li>
+                        <a href="{{ route('notification-settings.index') }}" class="menu">
+                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
+                            <div class="menu__title"> Notification Settings </div>
+                        </a>
+                    </li>
+                    @endif
+                    @if(auth()->user()->hasPermission('system settings'))
+                    <li>
+                        <a href="{{ route('system-settings.index') }}" class="menu">
+                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
+                            <div class="menu__title"> System Settings </div>
+                        </a>
+                    </li>
+                    @endif
+                    @if(auth()->user()->hasPermission('permission settings'))
+                    <li>
+                        <a href="{{ route('permission-settings.index') }}" class="menu">
+                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
+                            <div class="menu__title"> Permission Settings </div>
+                        </a>
+                    </li>
+                    @endif
+                    <li>
+                        <a href="{{ route('landlord-permission.index') }}" class="menu">
+                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
+                            <div class="menu__title"> Landlord Permissions </div>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            @endif
+            <li>
+                <a href="javascript:;" class="menu">
+                    <div class="menu__icon"> <i data-lucide="hard-drive"></i> </div>
+                    <div class="menu__title"> Activity Records <i data-lucide="chevron-down" class="menu__sub-icon "></i> </div>
                 </a>
                 <ul class="">
                     <li>
-                        <a href="side-menu-light-chart.html" class="menu">
+                        <a href="{{ route('activity-logs.index') }}" class="menu">
                             <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Chart </div>
+                            <div class="menu__title"> Activity Logs </div>
                         </a>
                     </li>
                     <li>
-                        <a href="side-menu-light-slider.html" class="menu">
+                        <a href="{{ route('users-login.index') }}" class="menu">
                             <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Slider </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="side-menu-light-image-zoom.html" class="menu">
-                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
-                            <div class="menu__title"> Image Zoom </div>
+                            <div class="menu__title"> Users Login </div>
                         </a>
                     </li>
                 </ul>
@@ -638,4 +287,5 @@
         </ul>
     </div>
 </div>
+<!-- END: Mobile Menu -->
 <!-- END: Mobile Menu -->

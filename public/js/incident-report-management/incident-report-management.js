@@ -1,4 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Filter state
+    let currentStatusFilter = 'all';
+    let currentLocationFilter = 'all';
+    let currentDateFilter = 'all';
+    
     // Initialize search functionality
     initializeSearch();
     
@@ -10,74 +15,232 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize form handlers
     initializeForms();
-});
-
-function initializeSearch() {
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const tableRows = document.querySelectorAll('tbody tr.intro-x');
-            let visibleCount = 0;
-            
-            tableRows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                if (text.includes(searchTerm)) {
-                    row.style.display = '';
-                    visibleCount++;
-                } else {
-                    row.style.display = 'none';
-                }
+    
+    // Search functionality
+    function initializeSearch() {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                applyAllFilters();
             });
-            
-            // Update filtered count
-            const filteredCountElement = document.getElementById('filtered-count');
-            if (filteredCountElement) {
-                filteredCountElement.textContent = visibleCount;
+        }
+    }
+    
+    // Universal filter handler
+    function initializeFilters() {
+        document.addEventListener('click', function(e) {
+            if (e.target.matches('[data-filter-type]')) {
+                const filterType = e.target.getAttribute('data-filter-type');
+                const filterValue = e.target.getAttribute('data-filter-value');
+                
+                const dropdown = e.target.closest('.dropdown');
+                
+                // Update the appropriate filter state and button
+                if (filterType === 'status') {
+                    currentStatusFilter = filterValue;
+                    updateFilterButton('statusFilterBtn', filterValue === 'all' ? 'Status: All' : `Status: ${filterValue}`);
+                } else if (filterType === 'location') {
+                    currentLocationFilter = filterValue;
+                    const btnText = filterValue === 'all' ? 'Filter by Location' : `Location: ${filterValue.substring(0, 20)}${filterValue.length > 20 ? '...' : ''}`;
+                    updateFilterButton('locationFilterBtn', btnText);
+                } else if (filterType === 'date') {
+                    currentDateFilter = filterValue;
+                    const dateTexts = {
+                        'all': 'Filter by Date',
+                        'today': 'Date: Today',
+                        'yesterday': 'Date: Yesterday',
+                        'this-week': 'Date: This Week',
+                        'last-week': 'Date: Last Week',
+                        'this-month': 'Date: This Month',
+                        'last-month': 'Date: Last Month',
+                        'this-year': 'Date: This Year'
+                    };
+                    updateFilterButton('dateFilterBtn', dateTexts[filterValue] || 'Filter by Date');
+                }
+                
+                // Apply all filters
+                applyAllFilters();
+                
+                // Close dropdown
+                if (dropdown) {
+                    const dropdownToggle = dropdown.querySelector('.dropdown-toggle');
+                    if (dropdownToggle) {
+                        dropdownToggle.setAttribute('aria-expanded', 'false');
+                        const dropdownMenu = dropdown.querySelector('.dropdown-menu');
+                        if (dropdownMenu) {
+                            dropdownMenu.classList.remove('show');
+                        }
+                    }
+                }
             }
         });
-    }
-}
-
-function initializeFilters() {
-    const filterItems = document.querySelectorAll('[data-filter]');
-    
-    filterItems.forEach(item => {
-        item.addEventListener('click', function(e) {
-            e.preventDefault();
-            const filter = this.getAttribute('data-filter');
-            filterReportsByStatus(filter);
-        });
-    });
-}
-
-function filterReportsByStatus(status) {
-    const tableRows = document.querySelectorAll('tbody tr.intro-x');
-    let visibleCount = 0;
-    
-    tableRows.forEach(row => {
-        const rowStatus = row.getAttribute('data-status');
         
-        if (status === 'all' || rowStatus === status) {
-            row.style.display = '';
-            visibleCount++;
-        } else {
-            row.style.display = 'none';
+        // Reset filters button
+        const resetBtn = document.getElementById('resetFiltersBtn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', function() {
+                currentStatusFilter = 'all';
+                currentLocationFilter = 'all';
+                currentDateFilter = 'all';
+                
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) {
+                    searchInput.value = '';
+                }
+                
+                // Reset button texts
+                updateFilterButton('statusFilterBtn', 'Status: All');
+                updateFilterButton('locationFilterBtn', 'Filter by Location');
+                updateFilterButton('dateFilterBtn', 'Filter by Date');
+                
+                // Apply filters (which will show all)
+                applyAllFilters();
+                
+                showSuccessToast('All filters have been reset');
+            });
         }
-    });
-    
-    // Update filtered count
-    const filteredCountElement = document.getElementById('filtered-count');
-    if (filteredCountElement) {
-        filteredCountElement.textContent = visibleCount;
     }
     
-    // Clear search input when filtering
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.value = '';
+    // Update filter button text
+    function updateFilterButton(buttonId, text) {
+        const button = document.getElementById(buttonId);
+        if (button) {
+            // Preserve the icon
+            const icon = button.querySelector('svg');
+            button.textContent = text;
+            if (icon) {
+                button.insertBefore(icon, button.firstChild);
+            }
+        }
     }
-}
+    
+    // Apply all filters
+    function applyAllFilters() {
+        const searchTerm = document.getElementById('searchInput')?.value.toLowerCase().trim() || '';
+        const tableRows = Array.from(document.querySelectorAll('tbody tr.intro-x'));
+        
+        if (tableRows.length === 0) return;
+        
+        // Setup date ranges for filtering
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+        
+        const startOfLastWeek = new Date(startOfWeek);
+        startOfLastWeek.setDate(startOfWeek.getDate() - 7);
+        
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        
+        let visibleCount = 0;
+        
+        tableRows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            const rowStatus = row.getAttribute('data-status');
+            const rowLocation = row.getAttribute('data-location');
+            const rowDateStr = row.getAttribute('data-date');
+            
+            // Check search term
+            const matchesSearch = searchTerm === '' || text.includes(searchTerm);
+            
+            // Check status filter
+            const matchesStatus = currentStatusFilter === 'all' || rowStatus === currentStatusFilter;
+            
+            // Check location filter
+            const matchesLocation = currentLocationFilter === 'all' || rowLocation === currentLocationFilter;
+            
+            // Check date filter
+            let matchesDate = true;
+            if (currentDateFilter !== 'all' && rowDateStr) {
+                const rowDate = new Date(rowDateStr);
+                
+                if (!isNaN(rowDate.getTime())) {
+                    switch (currentDateFilter) {
+                        case 'today':
+                            matchesDate = rowDate >= today;
+                            break;
+                        case 'yesterday':
+                            matchesDate = rowDate >= yesterday && rowDate < today;
+                            break;
+                        case 'this-week':
+                            matchesDate = rowDate >= startOfWeek;
+                            break;
+                        case 'last-week':
+                            matchesDate = rowDate >= startOfLastWeek && rowDate < startOfWeek;
+                            break;
+                        case 'this-month':
+                            matchesDate = rowDate >= startOfMonth;
+                            break;
+                        case 'last-month':
+                            matchesDate = rowDate >= startOfLastMonth && rowDate < startOfMonth;
+                            break;
+                        case 'this-year':
+                            matchesDate = rowDate >= startOfYear;
+                            break;
+                    }
+                } else {
+                    matchesDate = false;
+                }
+            }
+            
+            // Show/hide row based on all filters
+            if (matchesSearch && matchesStatus && matchesLocation && matchesDate) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        // Update filtered count
+        const filteredCountElement = document.getElementById('filtered-count');
+        if (filteredCountElement) {
+            filteredCountElement.textContent = visibleCount;
+        }
+        
+        // Show/hide no results message
+        updateNoResultsMessage(visibleCount, tableRows.length);
+    }
+    
+    // Update no results message
+    function updateNoResultsMessage(visibleCount, totalRows) {
+        const tbody = document.querySelector('tbody');
+        let noDataRow = document.querySelector('tbody tr.no-data-found');
+        
+        // Remove existing no data row if it exists
+        if (noDataRow) {
+            noDataRow.remove();
+        }
+        
+        // Check if we should show "no results" message
+        const hasActiveFilters = currentStatusFilter !== 'all' || currentLocationFilter !== 'all' || 
+                                 currentDateFilter !== 'all' || 
+                                 (document.getElementById('searchInput')?.value.trim() !== '');
+        
+        if (visibleCount === 0 && hasActiveFilters && totalRows > 0) {
+            // Create new no data row
+            noDataRow = document.createElement('tr');
+            noDataRow.className = 'no-data-found';
+            noDataRow.innerHTML = `
+                <td colspan="8" class="text-center py-8">
+                    <div class="text-slate-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
+                            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <div class="font-medium">No incident reports found</div>
+                        <div class="text-sm">No reports match your current filters. Try adjusting your filters.</div>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(noDataRow);
+        }
+    }
+});
 
 function initializeModals() {
     // View report modal
