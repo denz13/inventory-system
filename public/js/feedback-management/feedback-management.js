@@ -57,17 +57,66 @@ function initializeFilters() {
             e.preventDefault();
             const rating = this.getAttribute('data-rating-filter');
             filterTableByRating(rating);
+            updateRatingDropdownText(rating);
         });
     });
+
+    // Status filter (new)
+    document.querySelectorAll('[data-status-filter]').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const status = this.getAttribute('data-status-filter');
+            filterTableByStatus(status);
+            updateStatusDropdownText(status);
+        });
+    });
+
+    // User filter
+    document.querySelectorAll('[data-user-filter]').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const user = this.getAttribute('data-user-filter');
+            filterTableByUser(user);
+            updateUserDropdownText(user);
+        });
+    });
+
+    // Date filter
+    document.querySelectorAll('[data-date-filter]').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const dateFilter = this.getAttribute('data-date-filter');
+            filterTableByDate(dateFilter);
+            updateDateDropdownText(dateFilter);
+        });
+    });
+
+    // Clear all filters button
+    const clearAllFiltersBtn = document.getElementById('clearAllFilters');
+    if (clearAllFiltersBtn) {
+        clearAllFiltersBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            clearAllFilters();
+        });
+    }
 }
 
 function initializeSearch() {
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
-        searchInput.addEventListener('input', debounce(function() {
-            const searchTerm = this.value.toLowerCase();
+        let timeout;
+        searchInput.addEventListener('input', function(e) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                try {
+                    const searchTerm = (this.value || '').toLowerCase();
             filterTableRowsBySearch(searchTerm);
-        }, 300));
+                } catch (error) {
+                    console.error('Search error:', error);
+                    filterTableRowsBySearch('');
+                }
+            }, 300);
+        });
     }
 }
 
@@ -88,22 +137,33 @@ function loadFeedbackDetails(feedbackId) {
             if (data.success) {
                 displayFeedbackDetails(data.feedback);
             } else {
-                throw new Error(data.message || 'Failed to load feedback details');
+                showError('Failed to load feedback details');
             }
         })
         .catch(error => {
             console.error('Error loading feedback details:', error);
-            detailsContainer.innerHTML = `
-                <div class="text-center text-red-500 py-12">
-                    <p class="text-lg">Error loading feedback details</p>
-                    <p class="text-sm">${error.message}</p>
-                </div>
-            `;
+            showError('Error loading feedback details');
         });
 }
 
-function displayFeedbackDetails(feedback) {
+function showError(message) {
     const detailsContainer = document.getElementById('feedback-details');
+    if (detailsContainer) {
+        detailsContainer.innerHTML = `
+            <div class="text-center text-slate-500 py-12">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-red-300">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+                <p class="text-lg text-red-600">${message}</p>
+                <button type="button" data-tw-dismiss="modal" class="mt-4 btn btn-outline-secondary">Close</button>
+            </div>
+        `;
+    }
+}
+
+function handleDeleteFeedback() {
     
     const starsHtml = Array.from({length: 5}, (_, i) => {
         const filled = i < feedback.rating;
@@ -124,94 +184,82 @@ function displayFeedbackDetails(feedback) {
             }
         } else {
             fillColor = 'white';
-            strokeColor = '#94a3b8'; // Gray
+            strokeColor = 'black'; // Black border like user feedback
         }
         
         return `
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" 
-                 fill="${fillColor}" stroke="${strokeColor}" stroke-width="1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" 
+                 fill="${fillColor}" stroke="${strokeColor}" stroke-width="2">
                 <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"></polygon>
             </svg>
         `;
     }).join('');
     
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch (error) {
+            return dateString;
+        }
+    };
+    
+    const getStatusColor = (status) => {
+        return status === 'active' ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-800';
+    };
+    
     detailsContainer.innerHTML = `
-        <div class="p-8">
-            <div class="flex justify-between items-start mb-6">
-                <div>
-                    <h2 class="text-2xl font-bold text-slate-800">Feedback Details</h2>
-                    <p class="text-slate-600">Review complete feedback information</p>
-                </div>
-                <button type="button" data-tw-dismiss="modal" class="text-slate-400 hover:text-slate-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
-            
-            <div class="space-y-6">
-                <div class="grid grid-cols-2 gap-6">
-                    <div>
-                        <label class="text-sm font-medium text-slate-600">User</label>
-                        <div class="mt-1 flex items-center">
-                            <img src="${feedback.user && feedback.user.profile_image ? feedback.user.profile_image : '/images/profile.png'}" 
-                                 alt="User" class="w-10 h-10 rounded-full mr-3">
-                            <div>
-                                <div class="font-medium text-slate-800">${feedback.user ? feedback.user.name : 'N/A'}</div>
-                                <div class="text-sm text-slate-500">${feedback.user ? feedback.user.email : 'N/A'}</div>
-                            </div>
+        <div class="px-6 py-8">
+            <!-- User Info -->
+            <div class="mb-6">
+                <label class="form-label text-base font-semibold text-slate-700">User Information</label>
+                <div class="form-control mt-2 p-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700">
+                    <div class="font-medium">${feedback.user ? feedback.user.name : 'N/A'}</div>
+                    <div class="text-sm text-slate-500 mt-1">${feedback.user ? feedback.user.email : 'N/A'}</div>
                         </div>
                     </div>
                     
-                    <div>
-                        <label class="text-sm font-medium text-slate-600">Status</label>
-                        <div class="mt-1">
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
-                                ${feedback.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-800'}">
-                                ${feedback.status.charAt(0).toUpperCase() + feedback.status.slice(1)}
-                            </span>
-                        </div>
+            <!-- Feedback Description -->
+            <div class="mb-6">
+                <label class="form-label text-base font-semibold text-slate-700">Feedback Description</label>
+                <div class="form-control mt-2 p-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 min-h-24">
+                    ${feedback.description || 'No description provided'}
                     </div>
                 </div>
                 
-                <div>
-                    <label class="text-sm font-medium text-slate-600">Rating</label>
-                    <div class="mt-1 flex items-center space-x-1">
+            <!-- Rating -->
+            <div class="mb-6">
+                <label class="form-label text-base font-semibold text-slate-700 text-center block">Rating</label>
+                <div class="flex items-center justify-center mt-4 space-x-3">
                         ${starsHtml}
-                        <span class="ml-2 text-sm font-medium text-slate-600">${feedback.rating}/5</span>
+                </div>
+                <div class="text-center mt-3">
+                    <small class="text-slate-500">${feedback.rating}/5 Stars</small>
                     </div>
                 </div>
                 
-                <div>
-                    <label class="text-sm font-medium text-slate-600">Feedback Description</label>
-                    <div class="mt-1 p-4 bg-slate-50 rounded-lg">
-                        <p class="text-slate-800 leading-relaxed">${feedback.description}</p>
+            <!-- Status -->
+            <div class="mb-6">
+                <label class="form-label text-base font-semibold text-slate-700">Status</label>
+                <div class="form-control mt-2 p-3 border border-slate-300 rounded-lg bg-slate-50">
+                    <span class="px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(feedback.status)}">
+                        ${feedback.status ? feedback.status.charAt(0).toUpperCase() + feedback.status.slice(1) : 'N/A'}
+                    </span>
                     </div>
                 </div>
                 
-                <div class="grid grid-cols-2 gap-6">
-                    <div>
-                        <label class="text-sm font-medium text-slate-600">Date Created</label>
-                        <div class="mt-1 text-slate-800">${new Date(feedback.created_at).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        })}</div>
-                    </div>
-                    
-                    <div>
-                        <label class="text-sm font-medium text-slate-600">Last Updated</label>
-                        <div class="mt-1 text-slate-800">${new Date(feedback.updated_at).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        })}</div>
-                    </div>
+            <!-- Date Created -->
+            <div class="mb-6">
+                <label class="form-label text-base font-semibold text-slate-700">Date Created</label>
+                <div class="form-control mt-2 p-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700">
+                    ${formatDate(feedback.created_at)}
                 </div>
             </div>
         </div>
@@ -361,6 +409,7 @@ function filterTableByStatus(status) {
     });
     
     updateFilteredCount(visibleCount);
+    toggleNoResultsMessage(visibleCount);
 }
 
 function filterTableByRating(rating) {
@@ -378,6 +427,7 @@ function filterTableByRating(rating) {
     });
     
     updateFilteredCount(visibleCount);
+    toggleNoResultsMessage(visibleCount);
 }
 
 function filterTableRowsBySearch(searchTerm) {
@@ -385,8 +435,19 @@ function filterTableRowsBySearch(searchTerm) {
     let visibleCount = 0;
     
     rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        if (!searchTerm || text.includes(searchTerm)) {
+        if (!searchTerm) {
+            // If no search term, show all rows
+            row.style.display = '';
+            visibleCount++;
+            return;
+        }
+        
+        // Get all text content from the row
+        const rowText = row.textContent || '';
+        const lowerRowText = rowText.toLowerCase();
+        
+        // Check if search term is found anywhere in the row
+        if (lowerRowText.includes(searchTerm)) {
             row.style.display = '';
             visibleCount++;
         } else {
@@ -395,12 +456,47 @@ function filterTableRowsBySearch(searchTerm) {
     });
     
     updateFilteredCount(visibleCount);
+    toggleNoResultsMessage(visibleCount);
 }
 
 function updateFilteredCount(count) {
     const filteredCountElement = document.getElementById('filtered-count');
     if (filteredCountElement) {
         filteredCountElement.textContent = count;
+    }
+}
+
+function toggleNoResultsMessage(visibleCount) {
+    const noResultsRow = document.getElementById('no-results-row');
+    const noFeedbackRow = document.getElementById('no-feedback-row');
+    const dataRows = document.querySelectorAll('tbody tr[data-status]');
+    
+    // If there are data rows (feedback exists)
+    if (dataRows.length > 0) {
+        // Hide the "No feedback found" message
+        if (noFeedbackRow) {
+            noFeedbackRow.style.display = 'none';
+        }
+        
+        // Show/hide "No results found" based on visible count
+        if (noResultsRow) {
+            if (visibleCount === 0) {
+                noResultsRow.classList.remove('hidden');
+                noResultsRow.style.display = '';
+            } else {
+                noResultsRow.classList.add('hidden');
+                noResultsRow.style.display = 'none';
+            }
+        }
+    } else {
+        // No data rows exist, show "No feedback found"
+        if (noFeedbackRow) {
+            noFeedbackRow.style.display = '';
+        }
+        if (noResultsRow) {
+            noResultsRow.classList.add('hidden');
+            noResultsRow.style.display = 'none';
+        }
     }
 }
 
@@ -427,14 +523,384 @@ function showToast(message, type = 'success') {
     }
 }
 
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
+// Filter by User
+function filterTableByUser(userFilter) {
+    const rows = document.querySelectorAll('tbody tr[data-status]');
+    let visibleCount = 0;
+    
+    rows.forEach(row => {
+        if (userFilter === 'all') {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            const userNameCell = row.querySelector('td:nth-child(2)');
+            const userName = (userNameCell?.textContent || '').trim();
+            
+            if (userName === userFilter) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        }
+    });
+    
+    updateFilteredCount(visibleCount);
+    toggleNoResultsMessage(visibleCount);
+}
+
+// Filter by Date
+function filterTableByDate(dateFilter) {
+    const rows = document.querySelectorAll('tbody tr[data-status]');
+    let visibleCount = 0;
+    
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+    
+    const startOfLastWeek = new Date(startOfWeek);
+    startOfLastWeek.setDate(startOfWeek.getDate() - 7);
+    
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    
+    rows.forEach(row => {
+        if (dateFilter === 'all') {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            const dateCell = row.querySelector('td:nth-child(6)'); // Date column
+            const dateText = (dateCell?.textContent || '').trim();
+            
+            // Parse the date from the cell text (assuming format like "Oct 11, 2025")
+            const rowDate = parseDateFromText(dateText);
+            
+            let shouldShow = false;
+            
+            switch (dateFilter) {
+                case 'today':
+                    shouldShow = rowDate && rowDate >= today;
+                    break;
+                case 'yesterday':
+                    shouldShow = rowDate && rowDate >= yesterday && rowDate < today;
+                    break;
+                case 'this-week':
+                    shouldShow = rowDate && rowDate >= startOfWeek;
+                    break;
+                case 'last-week':
+                    shouldShow = rowDate && rowDate >= startOfLastWeek && rowDate < startOfWeek;
+                    break;
+                case 'this-month':
+                    shouldShow = rowDate && rowDate >= startOfMonth;
+                    break;
+                case 'last-month':
+                    shouldShow = rowDate && rowDate >= startOfLastMonth && rowDate < startOfMonth;
+                    break;
+                case 'this-year':
+                    shouldShow = rowDate && rowDate >= startOfYear;
+                    break;
+            }
+            
+            if (shouldShow) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        }
+    });
+    
+    updateFilteredCount(visibleCount);
+    toggleNoResultsMessage(visibleCount);
+}
+
+// Helper function to parse date from text
+function parseDateFromText(dateText) {
+    try {
+        // Handle formats like "Oct 11, 2025 6:31 PM"
+        const parts = dateText.split(' ');
+        if (parts.length >= 3) {
+            const month = parts[0];
+            const day = parts[1].replace(',', '');
+            const year = parts[2];
+            return new Date(`${month} ${day}, ${year}`);
+        }
+    } catch (error) {
+        console.error('Error parsing date:', error);
+    }
+    return null;
+}
+
+// Update dropdown button texts
+function updateRatingDropdownText(rating) {
+    const ratingDropdowns = document.querySelectorAll('.dropdown');
+    ratingDropdowns.forEach(dropdown => {
+        const button = dropdown.querySelector('.dropdown-toggle');
+        if (button && button.textContent.includes('Rating')) {
+            if (rating === 'all') {
+                button.textContent = 'Filter by Rating';
+            } else {
+                button.textContent = `${rating} Star${rating !== '1' ? 's' : ''}`;
+            }
+        }
+    });
+}
+
+function updateStatusDropdownText(status) {
+    const statusDropdowns = document.querySelectorAll('.dropdown');
+    statusDropdowns.forEach(dropdown => {
+        const button = dropdown.querySelector('.dropdown-toggle');
+        if (button && button.textContent.includes('Status')) {
+            if (status === 'all') {
+                button.textContent = 'Filter by Status';
+            } else {
+                button.textContent = `Status: ${status.charAt(0).toUpperCase() + status.slice(1)}`;
+            }
+        }
+    });
+}
+
+function updateUserDropdownText(user) {
+    const userDropdowns = document.querySelectorAll('.dropdown');
+    userDropdowns.forEach(dropdown => {
+        const button = dropdown.querySelector('.dropdown-toggle');
+        if (button && button.textContent.includes('User')) {
+            if (user === 'all') {
+                button.textContent = 'Filter by User';
+            } else {
+                button.textContent = `User: ${user}`;
+            }
+        }
+    });
+}
+
+function updateDateDropdownText(dateFilter) {
+    const dateDropdowns = document.querySelectorAll('.dropdown');
+    dateDropdowns.forEach(dropdown => {
+        const button = dropdown.querySelector('.dropdown-toggle');
+        if (button && button.textContent.includes('Date')) {
+            if (dateFilter === 'all') {
+                button.textContent = 'Filter by Date';
+            } else {
+                const dateTexts = {
+                    'today': 'Today',
+                    'yesterday': 'Yesterday',
+                    'this-week': 'This Week',
+                    'last-week': 'Last Week',
+                    'this-month': 'This Month',
+                    'last-month': 'Last Month',
+                    'this-year': 'This Year'
+                };
+                button.textContent = `Date: ${dateTexts[dateFilter] || dateFilter}`;
+            }
+        }
+    });
+}
+
+// Clear all filters
+function clearAllFilters() {
+    // Reset all dropdowns to "All"
+    document.querySelectorAll('[data-rating-filter="all"]').forEach(btn => {
+        btn.click();
+    });
+    document.querySelectorAll('[data-status-filter="all"]').forEach(btn => {
+        btn.click();
+    });
+    document.querySelectorAll('[data-user-filter="all"]').forEach(btn => {
+        btn.click();
+    });
+    document.querySelectorAll('[data-date-filter="all"]').forEach(btn => {
+        btn.click();
+    });
+    
+    // Reset dropdown button texts
+    updateRatingDropdownText('all');
+    updateStatusDropdownText('all');
+    updateUserDropdownText('all');
+    updateDateDropdownText('all');
+    
+    // Clear search
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.value = '';
+        filterTableRowsBySearch('');
+    }
+    
+    // Show all rows
+    const rows = document.querySelectorAll('tbody tr[data-status]');
+    rows.forEach(row => {
+        row.style.display = '';
+    });
+    
+    updateFilteredCount(rows.length);
+    toggleNoResultsMessage(rows.length);
+}
+
+// Load feedback details for viewing
+function loadFeedbackDetails(feedbackId) {
+    const detailsContainer = document.getElementById('feedback-details');
+    
+    // Fetch feedback details directly
+    fetch(`/feedback-management/${feedbackId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayFeedbackDetails(data.feedback);
+            } else {
+                showError('Failed to load feedback details');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showError('Error loading feedback details');
+        });
+}
+
+// Display feedback details in modal
+function displayFeedbackDetails(feedback) {
+    console.log('Feedback data received:', feedback);
+    console.log('User data:', feedback.user);
+    console.log('User photo:', feedback.user?.photo);
+    console.log('User photo_url:', feedback.user?.photo_url);
+    const detailsContainer = document.getElementById('feedback-details');
+    
+    const starsHtml = Array.from({length: 5}, (_, i) => {
+        const filled = i < feedback.rating;
+        let fillColor = '';
+        let strokeColor = '';
+        
+        if (filled) {
+            // Determine color based on rating
+            if (feedback.rating >= 4) {
+                fillColor = '#10b981'; // Green
+                strokeColor = '#10b981';
+            } else if (feedback.rating >= 3) {
+                fillColor = '#f59e0b'; // Yellow
+                strokeColor = '#f59e0b';
+            } else {
+                fillColor = '#f97316'; // Orange
+                strokeColor = '#f97316';
+            }
+        } else {
+            fillColor = 'white';
+            strokeColor = 'black'; // Black border like create modal
+        }
+        
+        return `
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" 
+                 fill="${fillColor}" stroke="${strokeColor}" stroke-width="2">
+                <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"></polygon>
+            </svg>
+        `;
+    }).join('');
+    
+    detailsContainer.innerHTML = `
+        <div class="px-6 py-8">
+            <!-- User Information -->
+            <div class="mb-6">
+                <label class="form-label text-base font-semibold text-slate-700">User Information</label>
+                <div class="form-control mt-2 p-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 flex-none image-fit mr-4">
+                            ${feedback.user?.photo && feedback.user.photo.trim() !== '' ? 
+                                `<img alt="${feedback.user?.name || 'User'}" class="rounded-full w-full h-full object-cover" src="${window.location.origin}/storage/profiles/${feedback.user.photo}">` :
+                                `<div class="w-full h-full bg-primary rounded-full flex items-center justify-center text-white font-bold">
+                                    ${feedback.user?.name ? feedback.user.name.charAt(0).toUpperCase() : 'U'}
+                                </div>`
+                            }
+                        </div>
+                        <div>
+                            <div class="font-semibold">${feedback.user?.name || 'N/A'}</div>
+                            <div class="text-sm text-slate-500">${feedback.user?.email || 'N/A'}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Feedback Description -->
+            <div class="mb-6">
+                <label class="form-label text-base font-semibold text-slate-700">Feedback Description</label>
+                <div class="form-control mt-2 p-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 min-h-24">
+                    ${feedback.description || 'No description provided'}
+                </div>
+            </div>
+            
+            <!-- Rating -->
+            <div class="mb-6">
+                <label class="form-label text-base font-semibold text-slate-700 text-center block">Rating</label>
+                <div class="flex items-center justify-center mt-4 space-x-3">
+                    ${starsHtml}
+                </div>
+                <div class="text-center mt-3">
+                    <small class="text-slate-500">${feedback.rating}/5 Stars</small>
+                </div>
+            </div>
+            
+            <!-- Status -->
+            <div class="mb-6">
+                <label class="form-label text-base font-semibold text-slate-700">Status</label>
+                <div class="form-control mt-2 p-3 border border-slate-300 rounded-lg bg-slate-50">
+                    <span class="px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(feedback.status)}">
+                        ${feedback.status ? feedback.status.charAt(0).toUpperCase() + feedback.status.slice(1) : 'N/A'}
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Date Created -->
+            <div class="mb-6">
+                <label class="form-label text-base font-semibold text-slate-700">Date Created</label>
+                <div class="form-control mt-2 p-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700">
+                    ${formatDate(feedback.created_at)}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Helper function to get status color
+function getStatusColor(status) {
+    switch(status) {
+        case 'active': return 'bg-green-100 text-green-800';
+        case 'inactive': return 'bg-slate-100 text-slate-800';
+        default: return 'bg-slate-100 text-slate-800';
+    }
+}
+
+// Helper function to format date
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    } catch (error) {
+        return dateString;
+    }
+}
+
+// Show error message
+function showError(message) {
+    const detailsContainer = document.getElementById('feedback-details');
+    detailsContainer.innerHTML = `
+        <div class="text-center text-slate-500 py-12">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-red-300">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+            <p class="text-lg text-red-600">${message}</p>
+            <button type="button" data-tw-dismiss="modal" class="mt-4 btn btn-outline-secondary">Close</button>
+        </div>
+    `;
 }

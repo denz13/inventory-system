@@ -41,17 +41,19 @@ class VehicleController extends Controller
                 'vehicle_model' => 'required|string|max:255',
                 'cr_no' => 'required|string|max:50',
                 'color_of_vehicle' => 'required|string|max:100',
-                'supporting_documents_attachments' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240'
+                'supporting_documents_attachments.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240'
             ]);
 
             DB::beginTransaction();
 
-            // Handle file upload
-            $filePath = null;
+            // Handle multiple file uploads
+            $filePaths = [];
             if ($request->hasFile('supporting_documents_attachments')) {
-                $file = $request->file('supporting_documents_attachments');
-                $fileName = time() . '_' . $file->getClientOriginalName();
-                $filePath = $file->storeAs('vehicle_documents', $fileName, 'public');
+                foreach ($request->file('supporting_documents_attachments') as $file) {
+                    $fileName = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
+                    $filePath = $file->storeAs('vehicle_documents', $fileName, 'public');
+                    $filePaths[] = $filePath;
+                }
             }
 
             // Create vehicle homeowner record with automatic 'Pending' status
@@ -61,10 +63,10 @@ class VehicleController extends Controller
                 'status' => 'Pending'
             ]);
 
-            // Create supporting documents record
+            // Create supporting documents record - store as JSON array
             $supportingDocuments = vehicle_homeowners_supporting_documents::create([
                 'vehicle_homeowners_id' => $vehicleHomeowner->id,
-                'supporting_documents_attachments' => $filePath,
+                'supporting_documents_attachments' => !empty($filePaths) ? json_encode($filePaths) : null,
                 'status' => 'Pending'
             ]);
 
@@ -118,7 +120,7 @@ class VehicleController extends Controller
                 'vehicle_model' => 'required|string|max:255',
                 'cr_no' => 'required|string|max:50',
                 'color_of_vehicle' => 'required|string|max:100',
-                'supporting_documents_attachments' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240'
+                'supporting_documents_attachments.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240'
             ]);
 
             DB::beginTransaction();
@@ -129,21 +131,37 @@ class VehicleController extends Controller
             ]);
 
             if ($vehicle->supportingDocuments) {
-                // Handle file upload for update
-                $filePath = $vehicle->supportingDocuments->supporting_documents_attachments;
+                // Get existing files
+                $existingFiles = $vehicle->supportingDocuments->supporting_documents_attachments;
+                $existingFilePaths = $existingFiles ? json_decode($existingFiles, true) : [];
+                
+                // If not an array, convert to array (backward compatibility)
+                if (!is_array($existingFilePaths)) {
+                    $existingFilePaths = $existingFiles ? [$existingFiles] : [];
+                }
+                
+                // Handle multiple file uploads for update
                 if ($request->hasFile('supporting_documents_attachments')) {
-                    // Delete old file if exists
-                    if ($filePath && Storage::disk('public')->exists($filePath)) {
-                        Storage::disk('public')->delete($filePath);
+                    // Delete old files
+                    foreach ($existingFilePaths as $oldFile) {
+                        if ($oldFile && Storage::disk('public')->exists($oldFile)) {
+                            Storage::disk('public')->delete($oldFile);
+                        }
                     }
                     
-                    $file = $request->file('supporting_documents_attachments');
-                    $fileName = time() . '_' . $file->getClientOriginalName();
-                    $filePath = $file->storeAs('vehicle_documents', $fileName, 'public');
+                    // Upload new files
+                    $newFilePaths = [];
+                    foreach ($request->file('supporting_documents_attachments') as $file) {
+                        $fileName = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
+                        $filePath = $file->storeAs('vehicle_documents', $fileName, 'public');
+                        $newFilePaths[] = $filePath;
+                    }
+                    
+                    $existingFilePaths = $newFilePaths;
                 }
 
                 $vehicle->supportingDocuments->update([
-                    'supporting_documents_attachments' => $filePath,
+                    'supporting_documents_attachments' => !empty($existingFilePaths) ? json_encode($existingFilePaths) : null,
                     'status' => 'Pending'
                 ]);
 
@@ -254,9 +272,22 @@ class VehicleController extends Controller
             
             // Delete associated files before force deleting
             if ($vehicle->supportingDocuments && $vehicle->supportingDocuments->supporting_documents_attachments) {
-                $filePath = $vehicle->supportingDocuments->supporting_documents_attachments;
-                if (Storage::disk('public')->exists($filePath)) {
-                    Storage::disk('public')->delete($filePath);
+                $filesData = $vehicle->supportingDocuments->supporting_documents_attachments;
+                
+                // Try to decode as JSON array (multiple files)
+                $files = json_decode($filesData, true);
+                if (is_array($files)) {
+                    // Multiple files
+                    foreach ($files as $filePath) {
+                        if ($filePath && Storage::disk('public')->exists($filePath)) {
+                            Storage::disk('public')->delete($filePath);
+                        }
+                    }
+                } else {
+                    // Single file (backward compatibility)
+                    if ($filesData && Storage::disk('public')->exists($filesData)) {
+                        Storage::disk('public')->delete($filesData);
+                    }
                 }
             }
             

@@ -26,6 +26,10 @@ use App\Http\Controllers\profilemanagement\ProfileManagementController;
 use App\Http\Controllers\appointment\AppointmentController;
 use App\Http\Controllers\viewappointment\ViewAppointmentController;
 use App\Http\Controllers\appointmentmanagement\AppointmentManagementController;
+use App\Http\Controllers\appointment_calendar\AppointmentCalendarController;
+use App\Http\Controllers\appointment_category\AppointmentCategoryController;
+use App\Http\Controllers\apply_appointment\ApplyAppointmentController;
+use App\Http\Controllers\appointment_allowing\AppointmentAllowingController;
 use App\Http\Controllers\forgotpassword\ForgotPasswordController;
 use App\Http\Controllers\otp\OtpController;
 use App\Http\Controllers\newpassword\NewPasswordController;
@@ -34,6 +38,10 @@ use App\Http\Controllers\NotificationSettings\NotificationSettingsController;
 use App\Http\Controllers\PermissionSettings\PermissionSettingsController;
 use App\Http\Controllers\SystemSettings\SystemSettingsController;
 use App\Http\Controllers\DashboardExportController;
+use App\Http\Controllers\chat\ChatController;
+use App\Http\Controllers\business\BusinessController;
+use App\Http\Controllers\landlord\LandlordController;
+use App\Http\Controllers\registration_nonhomeowners\RegistrationnonhomeownersController;
 
 /*
 |--------------------------------------------------------------------------
@@ -57,7 +65,12 @@ Route::get('color-scheme-switcher/{color_scheme}', [ColorSchemeController::class
 Route::controller(AuthController::class)->middleware('loggedin')->group(function() {
     Route::get('login', 'loginView')->name('login.index');
     Route::post('login', 'login')->name('login.check');
+    Route::post('verify-otp', 'verifyOTP')->name('verify-otp');
 });
+
+// Non-Homeowner Registration Routes (Public)
+Route::get('registration-nonhomeowners', [RegistrationnonhomeownersController::class, 'index'])->name('registration-nonhomeowners.index');
+Route::post('registration-nonhomeowners', [RegistrationnonhomeownersController::class, 'store'])->name('registration-nonhomeowners.store');
 
 // Appointment routes
 Route::get('appointment', [AppointmentController::class, 'index'])->name('appointment.index');
@@ -92,9 +105,13 @@ Route::get('/', function () {
     return redirect('/login');
 });
 
+// Public Chatbot routes (accessible without authentication for guests)
+Route::post('chatbot/message', [\App\Http\Controllers\chatbot\ChatbotController::class, 'message'])->name('chatbot.message');
+Route::get('chatbot/guest-conversation', [\App\Http\Controllers\chatbot\ChatbotController::class, 'getGuestConversation'])->name('chatbot.getGuestConversation');
+
 // Protected routes
 Route::middleware('auth')->group(function() {
-    Route::get('logout', [AuthController::class, 'logout'])->name('logout');
+    Route::match(['get', 'post'], 'logout', [AuthController::class, 'logout'])->name('logout');
     
     // Notification routes
     Route::post('notifications/{notification}/mark-read', function($notificationId) {
@@ -134,8 +151,52 @@ Route::middleware('auth')->group(function() {
         return response()->json(['success' => false], 401);
     })->name('notifications.mark-all-read');
     
+    Route::get('notifications/all', function() {
+        try {
+            $user = auth()->user();
+            if (!$user) {
+                return response()->json(['success' => false, 'notifications' => []], 401);
+            }
+            
+            // Get all notifications, paginated or limited (using correct column name: users_id)
+            $notifications = \App\Models\Notification::where('users_id', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->limit(50)
+                ->get()
+                ->map(function($notification) {
+                    return [
+                        'id' => $notification->id,
+                        'title' => $notification->title ?? 'Notification',
+                        'message' => $notification->message ?? '',
+                        'type' => $notification->type ?? 'info',
+                        'is_read' => $notification->isRead() ? 1 : 0, // Use isRead() method
+                        'created_at' => $notification->created_at ? $notification->created_at->format('Y-m-d H:i:s') : now()->format('Y-m-d H:i:s'),
+                        'created_at_human' => $notification->created_at ? $notification->created_at->diffForHumans() : 'Just now'
+                    ];
+                });
+            
+            return response()->json([
+                'success' => true,
+                'notifications' => $notifications
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching all notifications: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json([
+                'success' => false, 
+                'error' => $e->getMessage(),
+                'notifications' => []
+            ], 500);
+        }
+    })->name('notifications.all');
+    
     // Dashboard route (specific route before wildcard)
     Route::get('dashboard', [RouteController::class, 'index'])->name('dashboard');
+    
+    // Admin chatbot management routes (requires authentication)
+    Route::get('chatbot', [\App\Http\Controllers\chatbot\ChatbotController::class, 'index'])->name('chatbot.index');
+    Route::post('chatbot/reply-to-guest', [\App\Http\Controllers\chatbot\ChatbotController::class, 'replyToGuest'])->name('chatbot.replyToGuest');
+    Route::get('chatbot/all-guest-conversations', [\App\Http\Controllers\chatbot\ChatbotController::class, 'getAllGuestConversations'])->name('chatbot.getAllGuestConversations');
     
     // User Management routes
     Route::get('user-management', [UserManagamentController::class, 'index'])->name('usermanagement.index');
@@ -145,6 +206,7 @@ Route::middleware('auth')->group(function() {
     Route::get('user-management/{user}/edit', [UserManagamentController::class, 'edit'])->name('usermanagement.edit');
     Route::put('user-management/{user}', [UserManagamentController::class, 'update'])->name('usermanagement.update');
     Route::delete('user-management/{user}', [UserManagamentController::class, 'destroy'])->name('usermanagement.destroy');
+    Route::post('user-management/{user}/toggle-status', [UserManagamentController::class, 'toggleStatus'])->name('usermanagement.toggleStatus');
 
     // Business Management routes
     Route::get('business-management', [BusinessManagementController::class, 'index'])->name('businessmanagement.index');
@@ -164,6 +226,9 @@ Route::middleware('auth')->group(function() {
     Route::get('vehicle-management/{vehicle}/edit', [VehicleManagementController::class, 'edit'])->name('vehiclemanagement.edit');
     Route::put('vehicle-management/{vehicle}', [VehicleManagementController::class, 'update'])->name('vehiclemanagement.update');
     Route::delete('vehicle-management/{vehicle}', [VehicleManagementController::class, 'destroy'])->name('vehiclemanagement.destroy');
+Route::post('vehicle-management/{id}/approve', [VehicleManagementController::class, 'approve'])->name('vehiclemanagement.approve');
+Route::post('vehicle-management/{id}/decline', [VehicleManagementController::class, 'decline'])->name('vehiclemanagement.decline');
+Route::post('vehicle-management/sticker/{id}/valid-until', [VehicleManagementController::class, 'updateValidUntil'])->name('vehiclemanagement.valid-until');
 
     // Complaints routes
     Route::get('complaints', [ComplaintsController::class, 'index'])->name('complaints.index');
@@ -194,6 +259,7 @@ Route::middleware('auth')->group(function() {
 
     // Billing Management Routes
     Route::get('billing-management', [BillingManagementController::class, 'index'])->name('billing-management.index');
+    Route::get('billing-management/user/{userId}/date-range', [BillingManagementController::class, 'getUserBillingDateRange'])->name('billing-management.user-date-range');
     Route::post('/billing', [BillingManagementController::class, 'store'])->name('billing.store');
     Route::get('/billing/{id}', [BillingManagementController::class, 'show'])->name('billing.show');
     Route::put('/billing/{id}', [BillingManagementController::class, 'update'])->name('billing.update');
@@ -228,6 +294,31 @@ Route::middleware('auth')->group(function() {
     Route::get('appointment-management/{id}', [AppointmentManagementController::class, 'show'])->name('appointment-management.show');
     Route::put('appointment-management/{id}/status', [AppointmentManagementController::class, 'updateStatus'])->name('appointment-management.updateStatus');
     Route::delete('appointment-management/{id}', [AppointmentManagementController::class, 'destroy'])->name('appointment-management.destroy');
+
+    // Appointment Calendar routes
+    Route::get('appointment-calendar', [AppointmentCalendarController::class, 'index'])->name('calendar.index');
+    Route::get('appointment-calendar/appointments', [AppointmentCalendarController::class, 'getAppointments'])->name('calendar.appointments');
+    
+    // Appointment Category Routes
+    Route::get('appointment-category', [AppointmentCategoryController::class, 'index'])->name('appointment-category.index');
+    Route::post('appointment-category', [AppointmentCategoryController::class, 'store'])->name('appointment-category.store');
+    Route::get('appointment-category/{id}', [AppointmentCategoryController::class, 'show'])->name('appointment-category.show');
+    Route::put('appointment-category/{id}', [AppointmentCategoryController::class, 'update'])->name('appointment-category.update');
+    Route::delete('appointment-category/{id}', [AppointmentCategoryController::class, 'destroy'])->name('appointment-category.destroy');
+    
+    // Apply Appointment Routes (User can apply for appointments)
+    Route::get('apply-appointment', [ApplyAppointmentController::class, 'index'])->name('apply-appointment.index');
+    Route::post('apply-appointment', [ApplyAppointmentController::class, 'store'])->name('apply-appointment.store');
+    Route::post('apply-appointment/check-availability', [ApplyAppointmentController::class, 'checkAvailability'])->name('apply-appointment.check-availability');
+    Route::get('apply-appointment/{id}', [ApplyAppointmentController::class, 'show'])->name('apply-appointment.show');
+    Route::delete('apply-appointment/{id}', [ApplyAppointmentController::class, 'destroy'])->name('apply-appointment.destroy');
+    
+    // Appointment Allowing Routes (Daily schedule limit settings)
+    Route::get('appointment-allowing', [AppointmentAllowingController::class, 'index'])->name('appointment-allowing.index');
+    Route::post('appointment-allowing', [AppointmentAllowingController::class, 'store'])->name('appointment-allowing.store');
+    Route::get('appointment-allowing/{id}', [AppointmentAllowingController::class, 'show'])->name('appointment-allowing.show');
+    Route::put('appointment-allowing/{id}', [AppointmentAllowingController::class, 'update'])->name('appointment-allowing.update');
+    Route::delete('appointment-allowing/{id}', [AppointmentAllowingController::class, 'destroy'])->name('appointment-allowing.destroy');
 
     // Temporary debug route
     Route::get('debug/business/{id}', function($id) {
@@ -332,5 +423,109 @@ Route::put('system-settings/{id}', [SystemSettingsController::class, 'update'])-
 Route::get('dashboard/export/users/excel', [DashboardExportController::class, 'exportUsersToExcel'])->name('dashboard.export.users.excel');
 Route::get('dashboard/export/users/pdf', [DashboardExportController::class, 'exportUsersToPDF'])->name('dashboard.export.users.pdf');
 
+// Chat routes
+Route::get('chat', [ChatController::class, 'index'])->name('chat.index');
+Route::get('chat/messages/{userId}', [ChatController::class, 'getMessages'])->name('chat.messages');
+Route::post('chat/send', [ChatController::class, 'sendMessage'])->name('chat.send');
+Route::get('chat/unread-count', [ChatController::class, 'getUnreadCount'])->name('chat.unread-count');
+Route::get('chat/notifications', [ChatController::class, 'getNotifications'])->name('chat.notifications');
+Route::post('chat/notifications/{notificationId}/read', [ChatController::class, 'markNotificationAsRead'])->name('chat.markNotificationRead');
+Route::post('chat/notifications/read-all', [ChatController::class, 'markAllNotificationsAsRead'])->name('chat.markAllNotificationsRead');
+
+// Business routes
+Route::get('business', [BusinessController::class, 'index'])->name('business.index');
+Route::post('business', [BusinessController::class, 'store'])->name('business.store');
+Route::get('business/{id}', [BusinessController::class, 'show'])->name('business.show');
+Route::put('business/{id}', [BusinessController::class, 'update'])->name('business.update');
+Route::delete('business/{id}', [BusinessController::class, 'destroy'])->name('business.destroy');
+
+// Landlord routes
+Route::get('landlord', [LandlordController::class, 'index'])->name('landlord.index');
+Route::post('landlord', [LandlordController::class, 'store'])->name('landlord.store');
+Route::get('landlord/{id}', [LandlordController::class, 'show'])->name('landlord.show');
+Route::put('landlord/{id}', [LandlordController::class, 'update'])->name('landlord.update');
+Route::delete('landlord/{id}', [LandlordController::class, 'destroy'])->name('landlord.destroy');
+Route::put('landlord/{id}/status', [LandlordController::class, 'updateStatus'])->name('landlord.updateStatus');
+
+// Landlord Management routes (Admin view of all applications)
+Route::get('landlord-management', [\App\Http\Controllers\landlordmanagement\LandlordManagementController::class, 'index'])->name('landlord-management.index');
+Route::post('landlord-management', [\App\Http\Controllers\landlordmanagement\LandlordManagementController::class, 'store'])->name('landlord-management.store');
+Route::get('landlord-management/{id}', [\App\Http\Controllers\landlordmanagement\LandlordManagementController::class, 'show'])->name('landlord-management.show');
+Route::put('landlord-management/{id}', [\App\Http\Controllers\landlordmanagement\LandlordManagementController::class, 'update'])->name('landlord-management.update');
+Route::delete('landlord-management/{id}', [\App\Http\Controllers\landlordmanagement\LandlordManagementController::class, 'destroy'])->name('landlord-management.destroy');
+Route::put('landlord-management/{id}/status', [\App\Http\Controllers\landlordmanagement\LandlordManagementController::class, 'updateStatus'])->name('landlord-management.updateStatus');
+Route::post('landlord-management/{id}/approve', [\App\Http\Controllers\landlordmanagement\LandlordManagementController::class, 'approve'])->name('landlord-management.approve');
+Route::post('landlord-management/{id}/decline', [\App\Http\Controllers\landlordmanagement\LandlordManagementController::class, 'decline'])->name('landlord-management.decline');
+
+// Landlord Permission routes (View approved landlords)
+Route::get('landlord-permission', [\App\Http\Controllers\landlord_permission\LandlordPermissionController::class, 'index'])->name('landlord-permission.index');
+Route::get('landlord-permission/{id}', [\App\Http\Controllers\landlord_permission\LandlordPermissionController::class, 'show'])->name('landlord-permission.show');
+Route::post('landlord-permission/{id}/toggle-access', [\App\Http\Controllers\landlord_permission\LandlordPermissionController::class, 'toggleTenantAccess'])->name('landlord-permission.toggleAccess');
+
+// Activity Logs routes
+Route::get('activity-logs', [\App\Http\Controllers\activity_logs\ActivityLogsController::class, 'index'])->name('activity-logs.index');
+Route::get('activity-logs/{id}', [\App\Http\Controllers\activity_logs\ActivityLogsController::class, 'show'])->name('activity-logs.show');
+
+// Users Login routes
+Route::get('users-login', [\App\Http\Controllers\users_login\UsersloginController::class, 'index'])->name('users-login.index');
+Route::get('users-login/{id}', [\App\Http\Controllers\users_login\UsersloginController::class, 'show'])->name('users-login.show');
+
+// Debug route to check modules and notification settings for business
+Route::get('debug/business-notifications', function() {
+    $modules = \App\Models\module::all();
+    $businessModule = \App\Models\module::where('module_name', 'apply business')->first();
+    $notificationSettings = \App\Models\notification_settings::with(['user', 'module'])->get();
+    $businessNotificationSettings = $businessModule ? 
+        \App\Models\notification_settings::where('module_id', $businessModule->id)
+            ->where('status', 'active')
+            ->with('user')
+            ->get() : collect([]);
+    
+    return response()->json([
+        'all_modules' => $modules->pluck('module_name', 'id'),
+        'business_module' => $businessModule,
+        'all_notification_settings_count' => $notificationSettings->count(),
+        'business_notification_settings_count' => $businessNotificationSettings->count(),
+        'users_with_business_notifications' => $businessNotificationSettings->map(function($s) {
+            return [
+                'user_id' => $s->user?->id,
+                'user_name' => $s->user?->name,
+                'user_email' => $s->user?->email,
+                'status' => $s->status,
+            ];
+        }),
+    ]);
+});
+
+// Fix business clearance paths - remove duplicate business-clearances/
+Route::get('debug/fix-business-paths', function() {
+    $businesses = \App\Models\business_management_list::whereNotNull('business_clearance')->get();
+    $fixed = 0;
+    $skipped = 0;
+    
+    foreach ($businesses as $business) {
+        $originalPath = $business->business_clearance;
+        
+        // Check if path has duplicate "business-clearances/"
+        if (strpos($originalPath, 'business-clearances/business-clearances/') !== false) {
+            // Has duplicate, fix it
+            $newPath = str_replace('business-clearances/business-clearances/', 'business-clearances/', $originalPath);
+            
+            $business->business_clearance = $newPath;
+            $business->save();
+            $fixed++;
+        } else {
+            // Already correct format
+            $skipped++;
+        }
+    }
+    
+    return response()->json([
+        'message' => "Fixed {$fixed} duplicate paths",
+        'skipped' => "{$skipped} already correct",
+        'total_businesses' => $businesses->count(),
+        'note' => 'Database should store: business-clearances/filename.jpg'
+    ]);
+});
 });
 

@@ -1,6 +1,47 @@
 <div>
     {{-- Do your work, then step back. --}}
     <div class="grid grid-cols-12 gap-6">
+
+    <!-- Alert Message - Active Announcements -->
+        <div class="intro-y col-span-12 mt-6 -mb-6">
+            @forelse($announcements as $announcement)
+                <div class="alert alert-dismissible show box bg-primary text-white flex items-center mb-6" role="alert">
+                    <div class="flex-1">
+                        <div class="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-3 mt-0.5 flex-shrink-0">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                <line x1="12" y1="9" x2="12" y2="13"></line>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                            <div>
+                                <span class="font-medium">{{ $announcement->type ? ucfirst($announcement->type) . ': ' : '' }}</span>
+                                <span>{{ $announcement->description }}</span>
+                                <div class="text-xs text-white/80 mt-1">
+                                    Posted {{ $announcement->created_at ? $announcement->created_at->diffForHumans() : 'recently' }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close text-white" data-tw-dismiss="alert" aria-label="Close"> 
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x w-4 h-4">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+            @empty
+                {{-- No announcements, show default message --}}
+                <div class="alert alert-dismissible show box bg-primary text-white flex items-center mb-6" role="alert">
+                    <span>Welcome to your Dashboard! Track your billing, service requests, appointments, and more in one place.</span>
+                    <button type="button" class="btn-close text-white" data-tw-dismiss="alert" aria-label="Close"> 
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x w-4 h-4">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+            @endforelse
+        </div>
         <!-- BEGIN: General Report -->
         <div class="col-span-12 mt-8">
             <div class="intro-y flex items-center h-10">

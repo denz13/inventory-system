@@ -1,32 +1,12 @@
 <nav class="side-nav">
     <ul>
         <li>
-            <a href="javascript:;" class="side-menu">
-                <div class="side-menu__icon"> <i data-lucide="box"></i> </div>
-                <div class="side-menu__title">
-                    Dashboard 
-                    <div class="side-menu__sub-icon "> <i data-lucide="chevron-down"></i> </div>
-                </div>
-            </a>
-            <ul class="">
-                <x-menu.sidebar-single-item key="dashboard" href="{{ url('dashboard') }}" icon="home" text="{{ __('Dashboard') }}" />
-                <!-- <li>
-                    <a href="simple-menu-light-dashboard-overview-1.html" class="side-menu">
-                        <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
-                        <div class="side-menu__title"> Simple Menu </div>
-                    </a>
-                </li>
-                <li>
-                    <a href="top-menu-light-dashboard-overview-1.html" class="side-menu">
-                        <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
-                        <div class="side-menu__title"> Top Menu </div>
-                    </a>
-                </li> -->
-            </ul>
+        <x-menu.sidebar-single-item key="dashboard" href="{{ url('dashboard') }}" icon="home" text="{{ __('Dashboard') }}" />
+            
         </li>
         @if(auth()->user()->hasPermission('message'))
         <li>
-            <a href="{{ route('chatify') }}" class="side-menu">
+            <a href="{{ route('chat.index') }}" class="side-menu">
                 <div class="side-menu__icon"> <i data-lucide="message-circle"></i> </div>
                 <div class="side-menu__title"> Message </div>
             </a>
@@ -40,6 +20,90 @@
             </a>
         </li>
         @endif
+        @if(auth()->user()->hasPermission('vehicle'))
+        <li>
+            <a href="{{ route('vehicle.index') }}" class="side-menu">
+                <div class="side-menu__icon"> <i data-lucide="car"></i> </div>
+                <div class="side-menu__title"> Vehicle </div>
+            </a>
+        </li>
+        @endif
+        <li>
+            <a href="{{ route('business.index') }}" class="side-menu">
+                <div class="side-menu__icon"> <i data-lucide="file-text"></i> </div>
+                <div class="side-menu__title"> Apply Business </div>
+            </a>
+        </li>
+        <li>
+            <a href="{{ route('landlord.index') }}" class="side-menu">
+                <div class="side-menu__icon"> <i data-lucide="file-text"></i> </div>
+                <div class="side-menu__title"> Apply Landlord </div>
+            </a>
+        </li>
+        <li>
+            <a href="{{ route('apply-appointment.index') }}" class="side-menu">
+                <div class="side-menu__icon"> <i data-lucide="calendar"></i> </div>
+                <div class="side-menu__title"> Apply Appointment </div>
+            </a>
+        </li>
+        @if(auth()->user()->hasPermission('billing payment'))
+        <li>
+            <a href="javascript:;" class="side-menu">
+                <div class="side-menu__icon"> <i data-lucide="credit-card"></i> </div>
+                <div class="side-menu__title">
+                    Billing Payment
+                    <div class="side-menu__sub-icon "> <i data-lucide="chevron-down"></i> </div>
+                </div>
+            </a>
+            <ul class="">
+                <li>
+                    <a href="{{ route('billing-payment.index') }}" class="side-menu">
+                        <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
+                        <div class="side-menu__title"> Payment Now </div>
+                    </a>
+                </li>
+            </ul>
+        </li>
+        @endif
+        @if(auth()->user()->hasPermission('service request'))
+        <li>
+            <a href="javascript:;" class="side-menu">
+                <div class="side-menu__icon"> <i data-lucide="users"></i> </div>
+                <div class="side-menu__title">
+                    Service Request 
+                    <div class="side-menu__sub-icon "> <i data-lucide="chevron-down"></i> </div>
+                </div>
+            </a>
+            <ul class="">
+                <li>
+                    <a href="{{ route('complaints.index') }}" class="side-menu">
+                        <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
+                        <div class="side-menu__title"> Request Now </div>
+                    </a>
+                </li>
+            </ul>
+        </li>
+        @endif
+        @if(auth()->user()->hasPermission('incident report'))
+        <li>
+            <a href="javascript:;" class="side-menu">
+                <div class="side-menu__icon"> <i data-lucide="alert-circle"></i> </div>
+                <div class="side-menu__title">
+                    Incident Report
+                    <div class="side-menu__sub-icon "> <i data-lucide="chevron-down"></i> </div>
+                </div>
+            </a>
+            <ul class="">
+                <li>
+                    <a href="{{ route('incident.index') }}" class="side-menu">
+                        <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
+                        <div class="side-menu__title"> Report Now </div>
+                    </a>
+                </li>
+            </ul>
+        </li>
+        @endif
+        
         {{-- <li>
             <a href="javascript:;" class="side-menu">
                 <div class="side-menu__icon"> <i data-lucide="shopping-bag"></i> </div>
@@ -163,71 +227,7 @@
                 </li>
             </ul>
         </li> -->
-        @if(auth()->user()->hasPermission('service request'))
-        <li>
-            <a href="javascript:;" class="side-menu">
-                <div class="side-menu__icon"> <i data-lucide="users"></i> </div>
-                <div class="side-menu__title">
-                    Service Request 
-                    <div class="side-menu__sub-icon "> <i data-lucide="chevron-down"></i> </div>
-                </div>
-            </a>
-            <ul class="">
-                <li>
-                    <a href="{{ route('complaints.index') }}" class="side-menu">
-                        <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
-                        <div class="side-menu__title"> Request Now </div>
-                    </a>
-                </li>
-            </ul>
-        </li>
-        @endif
-        @if(auth()->user()->hasPermission('incident report'))
-        <li>
-            <a href="javascript:;" class="side-menu">
-                <div class="side-menu__icon"> <i data-lucide="alert-circle"></i> </div>
-                <div class="side-menu__title">
-                    Incident Report
-                    <div class="side-menu__sub-icon "> <i data-lucide="chevron-down"></i> </div>
-                </div>
-            </a>
-            <ul class="">
-                <li>
-                    <a href="{{ route('incident.index') }}" class="side-menu">
-                        <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
-                        <div class="side-menu__title"> Report Now </div>
-                    </a>
-                </li>
-            </ul>
-        </li>
-        @endif
-        @if(auth()->user()->hasPermission('billing payment'))
-        <li>
-            <a href="javascript:;" class="side-menu">
-                <div class="side-menu__icon"> <i data-lucide="credit-card"></i> </div>
-                <div class="side-menu__title">
-                    Billing Payment
-                    <div class="side-menu__sub-icon "> <i data-lucide="chevron-down"></i> </div>
-                </div>
-            </a>
-            <ul class="">
-                <li>
-                    <a href="{{ route('billing-payment.index') }}" class="side-menu">
-                        <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
-                        <div class="side-menu__title"> Payment Now </div>
-                    </a>
-                </li>
-            </ul>
-        </li>
-        @endif
-        @if(auth()->user()->hasPermission('vehicle'))
-        <li>
-            <a href="{{ route('vehicle.index') }}" class="side-menu">
-                <div class="side-menu__icon"> <i data-lucide="car"></i> </div>
-                <div class="side-menu__title"> Vehicle </div>
-            </a>
-        </li>
-        @endif
+            
         @if(auth()->user()->hasPermission('information') || auth()->user()->hasPermission('user management') || auth()->user()->hasPermission('business management') || auth()->user()->hasPermission('vehicle management') || auth()->user()->hasPermission('service management') || auth()->user()->hasPermission('incident management') || auth()->user()->hasPermission('announcement') || auth()->user()->hasPermission('billing management') || auth()->user()->hasPermission('payment account management') || auth()->user()->hasPermission('feedback management') || auth()->user()->hasPermission('appointment management'))
         <li>
             <a href="javascript:;" class="side-menu">
@@ -250,7 +250,7 @@
                 <li>
                     <a href="{{ route('businessmanagement.index') }}" class="side-menu">
                         <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
-                        <div class="side-menu__title"> Business Management </div>
+                        <div class="side-menu__title"> Establishment  Management </div>
                     </a>
                 </li>
                 @endif
@@ -335,6 +335,27 @@
                     </a>
                 </li>
                 @endif
+                
+                <li>
+                    <a href="{{ route('chatbot.index') }}" class="side-menu">
+                        <div class="side-menu__icon"> <i data-lucide="message-circle"></i> </div>
+                        <div class="side-menu__title"> Guest Chatbot </div>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{{ route('landlord-management.index') }}" class="side-menu">
+                        <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
+                        <div class="side-menu__title"> Landlord Management </div>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('calendar.index') }}" class="side-menu">
+                        <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
+                        <div class="side-menu__title"> Calendar </div>
+                    </a>
+                </li>
+               
             </ul>
         </li>
         @endif
@@ -752,8 +773,49 @@
                     </a>
                 </li>
                 @endif
+                <li>
+                    <a href="{{ route('landlord-permission.index') }}" class="side-menu">
+                        <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
+                        <div class="side-menu__title"> Landlord Permissions </div>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('appointment-category.index') }}" class="side-menu">
+                        <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
+                        <div class="side-menu__title"> Appointment Category </div>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('appointment-allowing.index') }}" class="side-menu">
+                        <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
+                        <div class="side-menu__title"> Appointment Allow Schedule </div>
+                    </a>
+                </li>
             </ul>
         </li>
         @endif
+        <li>
+            <a href="javascript:;" class="side-menu">
+                <div class="side-menu__icon"> <i data-lucide="hard-drive"></i> </div>
+                <div class="side-menu__title">
+                     Activity Records 
+                    <div class="side-menu__sub-icon "> <i data-lucide="chevron-down"></i> </div>
+                </div>
+            </a>
+            <ul class="">
+                <li>
+                    <a href="{{ route('activity-logs.index') }}" class="side-menu">
+                        <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
+                        <div class="side-menu__title"> Activity Logs </div>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('users-login.index') }}" class="side-menu">
+                        <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
+                        <div class="side-menu__title"> Users Login </div>
+                    </a>
+                </li>
+            </ul>
+        </li>
     </ul>
 </nav>

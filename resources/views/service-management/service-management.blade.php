@@ -11,21 +11,79 @@
                     List of Homeowners Service Requests
                 </h2>
                 <div class="grid grid-cols-12 gap-6 mt-5">
-                    <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2">
+                    <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2 gap-2">
+                        <!-- Status Filter -->
                         <div class="dropdown"> 
-                            <button class="dropdown-toggle btn btn-primary" aria-expanded="false" data-tw-toggle="dropdown">Filter</button> 
-                            <div class="dropdown-menu w-40"> 
+                            <button class="dropdown-toggle btn btn-primary" aria-expanded="false" data-tw-toggle="dropdown" id="statusFilterBtn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                                </svg>
+                                Status: All
+                            </button> 
+                            <div class="dropdown-menu w-48"> 
                                 <ul class="dropdown-content"> 
-                                    <li> <a href="javascript:;" class="dropdown-item" data-filter="all">All Requests</a> </li> 
-                                    <li> <a href="javascript:;" class="dropdown-item" data-filter="Pending">Pending</a> </li> 
-                                    <li> <a href="javascript:;" class="dropdown-item" data-filter="Approved">Approved</a> </li> 
-                                    <li> <a href="javascript:;" class="dropdown-item" data-filter="Declined">Declined</a> </li> 
-                                    <!-- <li> <a href="javascript:;" class="dropdown-item" data-filter="In Progress">In Progress</a> </li> 
-                                    <li> <a href="javascript:;" class="dropdown-item" data-filter="Completed">Completed</a> </li> 
-                                    <li> <a href="javascript:;" class="dropdown-item" data-filter="Cancelled">Cancelled</a> </li>  -->
+                                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="status" data-filter-value="all">All Requests</a> </li> 
+                                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="status" data-filter-value="Pending">Pending</a> </li> 
+                                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="status" data-filter-value="Approved">Approved</a> </li> 
+                                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="status" data-filter-value="Declined">Declined</a> </li> 
                                 </ul> 
                             </div> 
                         </div>
+
+                        <!-- Sort by Name -->
+                        <div class="dropdown"> 
+                            <button class="dropdown-toggle btn btn-outline-secondary" aria-expanded="false" data-tw-toggle="dropdown" id="nameSortBtn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                                    <line x1="4" y1="9" x2="20" y2="9"></line>
+                                    <line x1="4" y1="15" x2="20" y2="15"></line>
+                                    <line x1="10" y1="3" x2="8" y2="21"></line>
+                                    <line x1="16" y1="3" x2="14" y2="21"></line>
+                                </svg>
+                                Name
+                            </button> 
+                            <div class="dropdown-menu w-40"> 
+                                <ul class="dropdown-content"> 
+                                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="name-sort" data-filter-value="default">Default</a> </li>
+                                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="name-sort" data-filter-value="a-z">A-Z</a> </li> 
+                                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="name-sort" data-filter-value="z-a">Z-A</a> </li> 
+                                </ul> 
+                            </div> 
+                        </div>
+
+                        <!-- Filter by Date -->
+                        <div class="dropdown"> 
+                            <button class="dropdown-toggle btn btn-outline-secondary" aria-expanded="false" data-tw-toggle="dropdown" id="dateSortBtn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                </svg>
+                                Filter by Date
+                            </button> 
+                            <div class="dropdown-menu w-40"> 
+                                <ul class="dropdown-content"> 
+                                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="date-filter" data-filter-value="all">All Dates</a> </li>
+                                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="date-filter" data-filter-value="today">Today</a> </li> 
+                                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="date-filter" data-filter-value="yesterday">Yesterday</a> </li> 
+                                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="date-filter" data-filter-value="this-week">This Week</a> </li> 
+                                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="date-filter" data-filter-value="last-week">Last Week</a> </li> 
+                                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="date-filter" data-filter-value="this-month">This Month</a> </li> 
+                                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="date-filter" data-filter-value="last-month">Last Month</a> </li> 
+                                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="date-filter" data-filter-value="this-year">This Year</a> </li> 
+                                </ul> 
+                            </div> 
+                        </div>
+
+                        <!-- Reset Filters Button -->
+                        <button type="button" class="btn btn-outline-danger" id="resetFiltersBtn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                                <polyline points="1 4 1 10 7 10"></polyline>
+                                <polyline points="23 20 23 14 17 14"></polyline>
+                                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+                            </svg>
+                            Reset
+                        </button>
                         
                         <div class="hidden md:block mx-auto text-slate-500">
                             Showing <span id="filtered-count">{{ $serviceRequests->count() }}</span> of <span id="total-count">{{ $serviceRequests->total() }}</span> entries
@@ -53,7 +111,7 @@
                             </thead>
                             <tbody>
                                 @forelse($serviceRequests as $request)
-                                <tr class="intro-x">
+                                <tr class="intro-x" data-date="{{ $request->created_at ? $request->created_at->format('Y-m-d H:i:s') : '' }}">
                                     <td class="w-40">
                                         <div class="flex items-center">
                                             <div class="w-10 h-10 image-fit zoom-in">
@@ -111,7 +169,10 @@
                                             {{ $request->status ?? 'Unknown' }}
                                         </div>
                                     </td>
-                                    <td class="text-center">{{ $request->created_at ? $request->created_at->format('M d, Y g:i A') : 'N/A' }}</td>
+                                    <td class="text-center">
+                                        <div class="text-slate-700">{{ $request->created_at ? $request->created_at->diffForHumans() : 'N/A' }}</div>
+                                        <div class="text-slate-500 text-xs">{{ $request->created_at ? $request->created_at->format('M d, Y g:i A') : '' }}</div>
+                                    </td>
                                     <td class="table-report__action w-56">
                                         <div class="flex justify-center items-center">
                                             <a class="flex items-center mr-3" href="javascript:;" data-tw-toggle="modal" data-tw-target="#view-request-modal" data-request-id="{{ $request->id }}">

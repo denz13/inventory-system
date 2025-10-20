@@ -67,6 +67,7 @@
             </div> 
         </div> -->
         
+        <!-- Filter by Rating -->
         <div class="dropdown ml-2"> 
             <button class="dropdown-toggle btn btn-outline-secondary" aria-expanded="false" data-tw-toggle="dropdown">Filter by Rating</button> 
             <div class="dropdown-menu w-40"> 
@@ -80,6 +81,59 @@
                 </ul> 
             </div> 
         </div>
+
+        <!-- Filter by Status -->
+        <div class="dropdown ml-2"> 
+            <button class="dropdown-toggle btn btn-outline-secondary" aria-expanded="false" data-tw-toggle="dropdown">Filter by Status</button> 
+            <div class="dropdown-menu w-40"> 
+                <ul class="dropdown-content"> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-status-filter="all">All Status</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-status-filter="active">Active</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-status-filter="inactive">Inactive</a> </li> 
+                </ul> 
+            </div> 
+        </div>
+
+        <!-- Filter by User -->
+        <div class="dropdown ml-2"> 
+            <button class="dropdown-toggle btn btn-outline-secondary" aria-expanded="false" data-tw-toggle="dropdown">Filter by User</button> 
+            <div class="dropdown-menu w-48 max-h-60 overflow-y-auto"> 
+                <ul class="dropdown-content"> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-user-filter="all">All Users</a> </li> 
+                    @foreach($feedbacks->unique('user_id') as $feedback)
+                        @if($feedback->user)
+                        <li> <a href="javascript:;" class="dropdown-item" data-user-filter="{{ $feedback->user->name }}">{{ $feedback->user->name }}</a> </li> 
+                        @endif
+                    @endforeach
+                </ul> 
+            </div> 
+        </div>
+
+        <!-- Filter by Date -->
+        <div class="dropdown ml-2"> 
+            <button class="dropdown-toggle btn btn-outline-secondary" aria-expanded="false" data-tw-toggle="dropdown">Filter by Date</button> 
+            <div class="dropdown-menu w-48"> 
+                <ul class="dropdown-content"> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-date-filter="all">All Dates</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-date-filter="today">Today</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-date-filter="yesterday">Yesterday</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-date-filter="this-week">This Week</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-date-filter="last-week">Last Week</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-date-filter="this-month">This Month</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-date-filter="last-month">Last Month</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-date-filter="this-year">This Year</a> </li> 
+                </ul> 
+            </div> 
+        </div>
+
+        <!-- Clear All Filters -->
+        <button class="btn btn-outline-danger ml-2" id="clearAllFilters">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x w-4 h-4 mr-1">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            Clear Filters
+        </button>
         
         <div class="hidden md:block mx-auto text-slate-500">
             Showing <span id="filtered-count">{{ $feedbacks->count() }}</span> of <span id="total-count">{{ $feedbacks->total() }}</span> entries
@@ -103,11 +157,10 @@
                     <th class="whitespace-nowrap">IMAGE</th>
                     <th class="whitespace-nowrap">USER</th>
                     <th class="whitespace-nowrap">EMAIL</th>
-                    <th class="whitespace-nowrap">FEEDBACK</th>
                     <th class="text-center whitespace-nowrap">RATING</th>
                     <th class="text-center whitespace-nowrap">STATUS</th>
                     <th class="text-center whitespace-nowrap">DATE CREATED</th>
-                    <!-- <th class="text-center whitespace-nowrap">ACTIONS</th> -->
+                    <th class="text-center whitespace-nowrap">ACTIONS</th>
                 </tr>
             </thead>
             <tbody>
@@ -115,7 +168,15 @@
                 <tr class="intro-x" data-status="{{ $feedback->status }}" data-rating="{{ $feedback->rating }}">
                     <td class="w-40">
                         <div class="flex items-center justify-center">
-                            <img src="{{ asset('images/profile.png') }}" alt="User Image" class="w-10 h-10 object-cover rounded-full">
+                            <div class="w-10 h-10 image-fit zoom-in">
+                                @if($feedback->user && $feedback->user->photo && !empty(trim($feedback->user->photo)))
+                                    <img alt="{{ $feedback->user->name }}" class="tooltip rounded-full" src="{{ asset('storage/profiles/' . $feedback->user->photo) }}" title="{{ $feedback->user->name }}">
+                                @else
+                                    <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-bold">
+                                        {{ $feedback->user ? strtoupper(substr($feedback->user->name, 0, 1)) : 'U' }}
+                                    </div>
+                                @endif
+                            </div>
                         </div>
                     </td>
                     <td class="w-40">
@@ -123,9 +184,6 @@
                     </td>
                     <td class="w-40">
                         <div class="font-full">{{ $feedback->user->email ?? 'N/A' }}</div>
-                    </td>
-                    <td class="max-w-0 w-full">
-                        <div class="font-medium truncate">{{ Str::limit($feedback->description, 100) }}</div>
                     </td>
                     <td class="text-center">
                         <div class="flex justify-center items-center">
@@ -181,7 +239,7 @@
                     <td class="text-center">
                         <div class="text-slate-500 whitespace-nowrap">{{ $feedback->created_at ? $feedback->created_at->format('M d, Y g:i A') : 'N/A' }}</div>
                     </td>
-                    <!-- <td class="table-report__action w-56">
+                    <td class="table-report__action w-56">
                         <div class="flex justify-center items-center">
                             <a class="flex items-center mr-3" href="javascript:;" data-tw-toggle="modal" data-tw-target="#view-feedback-modal" data-feedback-id="{{ $feedback->id }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1">
@@ -190,28 +248,12 @@
                                 </svg>
                                 View
                             </a>
-                            <a class="flex items-center mr-3" href="javascript:;" data-tw-toggle="modal" data-tw-target="#edit-feedback-modal" data-feedback-id="{{ $feedback->id }}">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1">
-                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                    <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                </svg>
-                                Manage
-                            </a>
-                            <a class="flex items-center text-danger" href="javascript:;" data-tw-toggle="modal" data-tw-target="#delete-confirmation-modal" data-feedback-id="{{ $feedback->id }}">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1">
-                                    <polyline points="3 6 5 6 21 6"></polyline>
-                                    <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
-                                    <line x1="10" y1="11" x2="10" y2="17"></line>
-                                    <line x1="14" y1="11" x2="14" y2="17"></line>
-                                </svg>
-                                Delete
-                            </a>
                         </div>
-                    </td> -->
+                    </td>
                 </tr>
                 @empty
-                <tr class="intro-x">
-                    <td colspan="6" class="text-center py-8">
+                <tr class="intro-x" id="no-feedback-row">
+                    <td colspan="7" class="text-center py-8">
                         <div class="text-slate-500">
                             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
                                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -222,6 +264,19 @@
                     </td>
                 </tr>
                 @endforelse
+                <!-- No results message (for filtering/search) -->
+                <tr class="intro-x hidden" id="no-results-row">
+                    <td colspan="7" class="text-center py-8">
+                        <div class="text-slate-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                            <div class="font-medium">No results found</div>
+                            <div class="text-sm">Try adjusting your search or filter criteria</div>
+                        </div>
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>
@@ -244,12 +299,23 @@
 <div id="view-feedback-modal" class="modal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="font-medium text-base mr-auto">Feedback Details</h2>
+                <button type="button" class="btn btn-outline-secondary w-8 h-8 mr-1" data-tw-dismiss="modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x w-4 h-4">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
             <div class="modal-body p-0">
                 <div id="feedback-details">
-                    <div class="text-center text-slate-500 py-12">
-                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                        <p class="text-lg">Loading feedback details...</p>
-                    </div>
+                    <!-- Content will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer px-6 py-4 bg-slate-50">
+                <div class="flex justify-end gap-3">
+                    <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary px-6 py-2 mr-2">Close</button>
                 </div>
             </div>
         </div>

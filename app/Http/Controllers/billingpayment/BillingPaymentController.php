@@ -12,6 +12,8 @@ use App\Models\notification_settings;
 use App\Models\module;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class BillingPaymentController extends Controller
 {
@@ -352,6 +354,21 @@ class BillingPaymentController extends Controller
                 'reason' => $request->reason
             ]);
 
+            // Generate official receipt if payment is approved
+            if ($request->status === 'approved') {
+                try {
+                    $this->generateOfficialReceipt($billing);
+                    \Log::info('Official receipt generated for approved payment', [
+                        'billing_id' => $billing->id
+                    ]);
+                } catch (\Exception $e) {
+                    \Log::error('Failed to generate official receipt', [
+                        'billing_id' => $billing->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
             // Send notification to the user who made the payment
             $user = $billing->user;
             if ($user) {
@@ -402,8 +419,284 @@ class BillingPaymentController extends Controller
     }
 
     /**
-     * Test method to check notification system
+     * Generate official receipt HTML content
      */
+    private function generateReceiptHTML($data)
+    {
+        $html = '<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Official Receipt - ' . $data['receipt_number'] . '</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .receipt-container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .receipt-header {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .receipt-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0 0 5px 0;
+        }
+        .receipt-subtitle {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        .receipt-body {
+            padding: 20px;
+        }
+        .amount-section {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .amount-label {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+        .amount-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #10b981;
+        }
+        .status-badge {
+            display: inline-block;
+            background: #dcfce7;
+            color: #166534;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .details-section {
+            border-top: 1px solid #e5e7eb;
+            padding-top: 15px;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .detail-label {
+            color: #6b7280;
+        }
+        .detail-value {
+            font-weight: 500;
+            color: #374151;
+        }
+        .items-section {
+            margin-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 15px;
+        }
+        .items-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #374151;
+            margin-bottom: 10px;
+        }
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+        .item-name {
+            color: #6b7280;
+        }
+        .item-price {
+            font-weight: 500;
+            color: #374151;
+        }
+        .total-row {
+            border-top: 1px solid #e5e7eb;
+            padding-top: 10px;
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .receipt-footer {
+            background: #f9fafb;
+            padding: 15px 20px;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+        }
+        .footer-text {
+            font-size: 11px;
+            color: #6b7280;
+            margin: 0;
+        }
+        .reference-number {
+            font-family: monospace;
+            font-size: 12px;
+            color: #374151;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt-container">
+        <div class="receipt-header">
+            <div class="receipt-title">OFFICIAL RECEIPT</div>
+            <div class="receipt-subtitle">Payment Confirmation</div>
+        </div>
+        
+        <div class="receipt-body">
+            <div class="amount-section">
+                <div class="amount-label">Amount Paid</div>
+                <div class="amount-value">₱' . number_format($data['amount_paid'], 2) . '</div>
+                <div class="status-badge">' . strtoupper($data['status']) . '</div>
+            </div>
+            
+            <div class="details-section">
+                <div class="detail-row">
+                    <span class="detail-label">Receipt No.</span>
+                    <span class="detail-value">' . $data['receipt_number'] . '</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Payment Date</span>
+                    <span class="detail-value">' . $data['payment_date'] . '</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Bill Number</span>
+                    <span class="detail-value">' . $data['bill_number'] . '</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Customer</span>
+                    <span class="detail-value">' . $data['customer_name'] . '</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Email</span>
+                    <span class="detail-value">' . $data['customer_email'] . '</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Payment Method</span>
+                    <span class="detail-value">' . $data['payment_method'] . '</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Processed By</span>
+                    <span class="detail-value">' . $data['processed_by'] . '</span>
+                </div>
+            </div>
+            
+            <div class="items-section">
+                <div class="items-title">Billing Items</div>';
+        
+        foreach ($data['billing_items'] as $item) {
+            $html .= '
+                <div class="item-row">
+                    <span class="item-name">' . $item['description'] . ' (Qty: ' . $item['qty'] . ')</span>
+                    <span class="item-price">₱' . number_format($item['total'], 2) . '</span>
+                </div>';
+        }
+        
+        $html .= '
+                <div class="item-row total-row">
+                    <span class="item-name">TOTAL AMOUNT</span>
+                    <span class="item-price">₱' . number_format($data['amount_paid'], 2) . '</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="receipt-footer">
+            <p class="footer-text">Thank you for your payment!</p>
+            <p class="footer-text">This is an official receipt generated by the system.</p>
+            <div class="reference-number">Ref: ' . $data['reference_number'] . '</div>
+        </div>
+    </div>
+</body>
+</html>';
+        
+        return $html;
+    }
+
+    /**
+     * Generate official receipt and save to storage
+     */
+    private function generateOfficialReceipt($billing)
+    {
+        try {
+            // Get billing items
+            $billingItems = $billing->billingItems->map(function($item) {
+                return [
+                    'description' => $item->description,
+                    'qty' => $item->qty,
+                    'price' => $item->price,
+                    'total' => $item->qty * $item->price
+                ];
+            });
+
+            // Prepare receipt data
+            $receiptData = [
+                'receipt_number' => 'OR-' . str_pad($billing->id, 6, '0', STR_PAD_LEFT),
+                'payment_date' => Carbon::now()->format('M d, Y - h:i A'),
+                'bill_number' => 'Bill #' . str_pad($billing->id, 6, '0', STR_PAD_LEFT),
+                'customer_name' => $billing->user->name ?? 'N/A',
+                'customer_email' => $billing->user->email ?? 'N/A',
+                'amount_paid' => $billing->amount_due,
+                'payment_method' => 'Online Payment',
+                'status' => 'Approved',
+                'processed_by' => 'System Administrator',
+                'billing_items' => $billingItems,
+                'reference_number' => 'REF-' . time() . '-' . $billing->id
+            ];
+
+            // Generate HTML content
+            $htmlContent = $this->generateReceiptHTML($receiptData);
+
+            // Create directory if it doesn't exist
+            $directory = 'receipts/official';
+            if (!Storage::disk('public')->exists($directory)) {
+                Storage::disk('public')->makeDirectory($directory);
+            }
+
+            // Save HTML file
+            $fileName = 'official_receipt_' . $billing->id . '_' . time() . '.html';
+            $filePath = $directory . '/' . $fileName;
+            
+            Storage::disk('public')->put($filePath, $htmlContent);
+
+            // Update billing record with official receipt path
+            $billing->update([
+                'official_receipt' => $filePath
+            ]);
+
+            \Log::info('Official receipt generated successfully', [
+                'billing_id' => $billing->id,
+                'receipt_path' => $filePath,
+                'receipt_number' => $receiptData['receipt_number']
+            ]);
+
+            return $filePath;
+
+        } catch (\Exception $e) {
+            \Log::error('Error generating official receipt', [
+                'billing_id' => $billing->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
+    }
     public function testNotifications()
     {
         try {

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -36,7 +37,7 @@ class UserManagamentController extends Controller
             'block' => ['nullable', 'string', 'max:255'],
             'membership_fee' => ['nullable', 'string', 'max:255'],
             'is_with_title' => ['nullable', 'in:0,1'],
-            'role' => ['nullable', 'in:admin,home owners,non home owners,security personnel,operational manager,service manager,financial manager,appointment coordinator,occupancy manager'],
+            'role' => ['nullable', 'in:admin,home owners,non home owners,guard,operational manager,service manager,financial manager,appointment coordinator,occupancy manager'],
             'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif', 'max:5120'],
         ]);
 
@@ -97,7 +98,7 @@ class UserManagamentController extends Controller
             'block' => ['nullable', 'string', 'max:255'],
             'membership_fee' => ['nullable', 'string', 'max:255'],
             'is_with_title' => ['nullable', 'in:0,1'],
-            'role' => ['nullable', 'in:admin,home owners,non home owners,security personnel,operational manager,service manager,financial manager,appointment coordinator,occupancy manager'],
+            'role' => ['nullable', 'in:admin,home owners,non home owners,guard,operational manager,service manager,financial manager,appointment coordinator,occupancy manager'],
             'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif', 'max:5120'],
         ]);
 
@@ -127,5 +128,44 @@ class UserManagamentController extends Controller
         $user->save();
 
         return response()->json(['message' => 'User updated successfully']);
+    }
+
+    public function toggleStatus(Request $request, User $user)
+    {
+        try {
+            
+            $validated = $request->validate([
+                'active' => 'required|in:0,1'
+            ]);
+
+            $active = $validated['active'];
+            $user->active = $active;
+            $user->save();
+
+            // Activity logging
+            try {
+                if (auth()->check()) {
+                    $statusText = $active == 1 ? 'activated' : 'deactivated';
+                    auth()->user()->logCustom(
+                        "User {$statusText}: {$user->name} ({$user->email})"
+                    );
+                }
+            } catch (\Exception $e) {
+                Log::error('Error logging user status toggle: ' . $e->getMessage());
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $active == 1 ? 'User activated successfully' : 'User deactivated successfully',
+                'active' => $active
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Toggle user status error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating user status: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

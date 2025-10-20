@@ -66,7 +66,100 @@
     <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2">
         <button class="btn btn-primary shadow-md mr-2" data-tw-toggle="modal" data-tw-target="#request-service-modal">
             
-            Request Service
+            Maintenance
+        </button>
+        <!-- Service Type Filter -->
+        <div class="dropdown">
+            <button class="dropdown-toggle btn btn-outline-secondary" aria-expanded="false" data-tw-toggle="dropdown" id="serviceTypeFilterBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+                Service Type: All
+            </button>
+            <div class="dropdown-menu w-48">
+                <ul class="dropdown-content overflow-y-auto max-h-64">
+                    <li><a href="javascript:;" class="dropdown-item" data-filter-type="service-type" data-filter-value="all">All Types</a></li>
+                    @foreach($serviceTypes as $type)
+                    <li><a href="javascript:;" class="dropdown-item" data-filter-type="service-type" data-filter-value="{{ $type->type }}">{{ $type->type }}</a></li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
+
+        <!-- Category Filter -->
+        <div class="dropdown">
+            <button class="dropdown-toggle btn btn-outline-secondary" aria-expanded="false" data-tw-toggle="dropdown" id="categoryFilterBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                    <line x1="8" y1="6" x2="21" y2="6"></line>
+                    <line x1="8" y1="12" x2="21" y2="12"></line>
+                    <line x1="8" y1="18" x2="21" y2="18"></line>
+                    <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                    <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                    <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                </svg>
+                Category: All
+            </button>
+            <div class="dropdown-menu w-48">
+                <ul class="dropdown-content overflow-y-auto max-h-64">
+                    <li><a href="javascript:;" class="dropdown-item" data-filter-type="category" data-filter-value="all">All Categories</a></li>
+                    @foreach($categories as $category)
+                    <li><a href="javascript:;" class="dropdown-item" data-filter-type="category" data-filter-value="{{ $category->category }}">{{ $category->category }}</a></li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
+
+        <!-- Status Filter -->
+        <div class="dropdown">
+            <button class="dropdown-toggle btn btn-outline-secondary" aria-expanded="false" data-tw-toggle="dropdown" id="statusFilterBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 6v6l4 2"></path>
+                </svg>
+                Status: All
+            </button>
+            <div class="dropdown-menu w-40">
+                <ul class="dropdown-content">
+                    <li><a href="javascript:;" class="dropdown-item" data-filter-type="status" data-filter-value="all">All Status</a></li>
+                    @foreach($statuses as $status)
+                    <li><a href="javascript:;" class="dropdown-item" data-filter-type="status" data-filter-value="{{ $status }}">{{ ucfirst($status) }}</a></li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
+
+        <!-- Filter by Date -->
+        <div class="dropdown">
+            <button class="dropdown-toggle btn btn-outline-secondary" aria-expanded="false" data-tw-toggle="dropdown" id="dateFilterBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                Filter by Date
+            </button>
+            <div class="dropdown-menu w-40">
+                <ul class="dropdown-content">
+                    <li><a href="javascript:;" class="dropdown-item" data-filter-type="date-filter" data-filter-value="all">All Dates</a></li>
+                    <li><a href="javascript:;" class="dropdown-item" data-filter-type="date-filter" data-filter-value="today">Today</a></li>
+                    <li><a href="javascript:;" class="dropdown-item" data-filter-type="date-filter" data-filter-value="yesterday">Yesterday</a></li>
+                    <li><a href="javascript:;" class="dropdown-item" data-filter-type="date-filter" data-filter-value="this-week">This Week</a></li>
+                    <li><a href="javascript:;" class="dropdown-item" data-filter-type="date-filter" data-filter-value="last-week">Last Week</a></li>
+                    <li><a href="javascript:;" class="dropdown-item" data-filter-type="date-filter" data-filter-value="this-month">This Month</a></li>
+                    <li><a href="javascript:;" class="dropdown-item" data-filter-type="date-filter" data-filter-value="last-month">Last Month</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Reset Filters Button -->
+        <button type="button" class="btn btn-outline-danger" id="resetFiltersBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <polyline points="23 20 23 14 17 14"></polyline>
+                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+            </svg>
+            Reset
         </button>
         
         <div class="hidden md:block mx-auto text-slate-500">Showing {{ $userComplaints->firstItem() ?? 0 }} to {{ $userComplaints->lastItem() ?? 0 }} of {{ $userComplaints->total() ?? 0 }} entries</div>
@@ -105,10 +198,14 @@
             </thead>
             <tbody>
                 @forelse($userComplaints as $complaint)
-                <tr class="intro-x">
+                <tr class="intro-x" 
+                    data-service-type="{{ $complaint->serviceCategory->serviceType->type ?? '' }}"
+                    data-category="{{ $complaint->serviceCategory->category ?? '' }}"
+                    data-status="{{ $complaint->status ?? '' }}"
+                    data-date="{{ $complaint->created_at ? $complaint->created_at->format('Y-m-d H:i:s') : '' }}">
                     <td>
-                        <a href="javascript:;" class="font-medium whitespace-nowrap">{{ $complaint->serviceType->type ?? 'N/A' }}</a> 
-                        <div class="text-slate-500 text-xs whitespace-nowrap mt-0.5">{{ $complaint->serviceType->status ?? 'N/A' }}</div>
+                        <a href="javascript:;" class="font-medium whitespace-nowrap">{{ $complaint->serviceCategory->serviceType->type ?? 'N/A' }}</a> 
+                        <div class="text-slate-500 text-xs whitespace-nowrap mt-0.5">{{ $complaint->serviceCategory->serviceType->status ?? 'N/A' }}</div>
                     </td>
                     <td class="whitespace-nowrap">{{ $complaint->serviceCategory->category ?? 'N/A' }}</td>
                     <td class="whitespace-nowrap">{{ Str::limit($complaint->complaint_description, 50) }}</td>
@@ -213,7 +310,15 @@
 <div id="request-service-modal" class="modal" data-tw-backdrop="static" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-           
+            <div class="modal-header">
+                <h2 class="font-medium text-base mr-auto">Request Service</h2>
+                <button type="button" class="btn-close" data-tw-dismiss="modal" aria-label="Close">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
             <div class="modal-body px-5 py-10">
                 <!-- Step Indicator -->
                 <div class="step-indicator">
@@ -291,8 +396,8 @@
                         
                         <div class="mb-6">
                             <label class="form-label">Description</label>
-                            <textarea name="complaint_description" class="form-control" rows="4" placeholder="Please describe your service request in detail..." required></textarea>
-                            <div class="text-slate-500 text-xs mt-1">Be as specific as possible to help us serve you better.</div>
+                            <textarea name="complaint_description" class="form-control" rows="8" placeholder="Please describe your service request in detail..." required></textarea>
+                            <div class="text-slate-500 text-xs mt-1">Be as specific as possible to help us serve you better. No character limit.</div>
                         </div>
                         
                         <div class="flex justify-end gap-2">
@@ -317,7 +422,15 @@
  <div id="view-complaint-modal" class="modal" tabindex="-1" aria-hidden="true">
      <div class="modal-dialog">
          <div class="modal-content">
-            
+             <div class="modal-header">
+                 <h2 class="font-medium text-base mr-auto">Service Request Details</h2>
+                 <button type="button" class="btn-close" data-tw-dismiss="modal" aria-label="Close">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+                         <line x1="18" y1="6" x2="6" y2="18"></line>
+                         <line x1="6" y1="6" x2="18" y2="18"></line>
+                     </svg>
+                 </button>
+             </div>
              <div class="modal-body px-5 py-10">
                  <div id="complaint-details">
                      <!-- Complaint details will be loaded here -->
@@ -337,7 +450,15 @@
 <div id="edit-complaint-modal" class="modal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-           
+            <div class="modal-header">
+                <h2 class="font-medium text-base mr-auto">Edit Service Request</h2>
+                <button type="button" class="btn-close" data-tw-dismiss="modal" aria-label="Close">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
             <div class="modal-body px-5 py-10">
                 <form id="editComplaintForm" method="POST">
                     <input type="hidden" name="_token" value="{{ csrf_token() }}">
@@ -355,8 +476,8 @@
                         </div>
                         <div class="col-span-12">
                             <label class="form-label">Description</label>
-                            <textarea name="complaint_description" id="editComplaintDescription" class="form-control" rows="4" placeholder="Please describe your service request in detail..." required></textarea>
-                            <div class="text-slate-500 text-xs mt-1">Be as specific as possible to help us serve you better.</div>
+                            <textarea name="complaint_description" id="editComplaintDescription" class="form-control" rows="8" placeholder="Please describe your service request in detail..." required></textarea>
+                            <div class="text-slate-500 text-xs mt-1">Be as specific as possible to help us serve you better. No character limit.</div>
                         </div>
                     </div>
                     
@@ -381,6 +502,15 @@
 <div id="delete-confirmation-modal" class="modal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="font-medium text-base mr-auto">Confirm Delete</h2>
+                <button type="button" class="btn-close" data-tw-dismiss="modal" aria-label="Close">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
             <div class="modal-body px-5 py-10">
                 <div class="text-center">
                     <div class="mb-5">Are you sure you want to delete this service request?</div>

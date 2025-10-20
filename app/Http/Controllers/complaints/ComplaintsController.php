@@ -14,13 +14,27 @@ class ComplaintsController extends Controller
     {
         $serviceTypes = tbl_service_management_type::where('status', 'Active')->get();
         
+        // Get all categories for filter
+        $categories = tbl_service_management_category::where('status', 'Active')
+            ->distinct()
+            ->orderBy('category')
+            ->get();
+        
+        // Get distinct statuses for filter
+        $statuses = tbl_service_management_complaints::where('user_id', auth()->id())
+            ->distinct()
+            ->pluck('status')
+            ->filter()
+            ->sort()
+            ->values();
+        
         // Get the authenticated user's complaints with relationships
         $userComplaints = tbl_service_management_complaints::with(['serviceCategory.serviceType'])
             ->where('user_id', auth()->id())
             ->orderBy('created_at', 'desc')
             ->paginate(10);
         
-        return view('complaints.index-complaints', compact('serviceTypes', 'userComplaints'));
+        return view('complaints.index-complaints', compact('serviceTypes', 'categories', 'statuses', 'userComplaints'));
     }
 
     public function getCategories($typeId)
@@ -52,7 +66,7 @@ class ComplaintsController extends Controller
     {
         $validated = $request->validate([
             'service_management_category_id' => 'required|exists:tbl_service_management_category,id',
-            'complaint_description' => 'required|string|max:1000',
+            'complaint_description' => 'required|string',
         ]);
 
         $complaint = new tbl_service_management_complaints();
@@ -76,7 +90,7 @@ class ComplaintsController extends Controller
                 ->firstOrFail();
             
             $validated = $request->validate([
-                'complaint_description' => 'required|string|max:1000',
+                'complaint_description' => 'required|string',
             ]);
             
             $complaint->complaint_description = $validated['complaint_description'];

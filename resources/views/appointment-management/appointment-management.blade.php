@@ -47,10 +47,12 @@
         </div>
 
         <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2">
-            <div class="hidden md:block mx-auto text-slate-500">Showing {{ $appointments->firstItem() }} to {{ $appointments->lastItem() }} of {{ $appointments->total() }} entries</div>
+            <div class="hidden md:block mx-auto text-slate-500">
+                Showing <span id="filtered-count">{{ $appointments->count() }}</span> of <span id="total-count">{{ $appointments->total() }}</span> entries
+            </div>
             <div class="w-full sm:w-auto mt-3 sm:mt-0 sm:ml-auto md:ml-0">
                 <div class="w-56 relative text-slate-500">
-                    <input type="text" class="form-control w-56 box pr-10" placeholder="Search appointments...">
+                    <input type="text" class="form-control w-56 box pr-10" placeholder="Search appointments..." id="searchInput">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round" icon-name="search"
@@ -76,7 +78,7 @@
                 </thead>
                 <tbody>
                     @foreach ($appointments as $appointment)
-                        <tr class="intro-x">
+                        <tr class="intro-x" data-tracking="{{ $appointment->tracking_number }}" data-description="{{ $appointment->description }}" data-status="{{ $appointment->status }}">
                             <td><a href="javascript:;" class="font-medium whitespace-nowrap">{{ $appointment->tracking_number }}</a></td>
                             <td class="whitespace-nowrap">{{ Str::limit($appointment->description, 50) }}</td>
                             <td class="whitespace-nowrap">{{ $appointment->appointment_date ? \Carbon\Carbon::parse($appointment->appointment_date)->format('M d, Y h:i A') : 'N/A' }}</td>
@@ -190,6 +192,19 @@
                             </td>
                         </tr>
                     @endforeach
+                    <!-- No results message (for search) -->
+                    <tr class="intro-x hidden" id="no-results-row">
+                        <td colspan="7" class="text-center py-8">
+                            <div class="text-slate-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                                <div class="font-medium">No appointments found</div>
+                                <div class="text-sm">Try adjusting your search criteria</div>
+                            </div>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -292,12 +307,25 @@
                                 <polyline points="9 11 12 14 22 4"></polyline>
                                 <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
                             </svg>
-                            <h3 class="text-lg font-medium mb-2">Approve Appointment?</h3>
-                            <p class="text-slate-500">Are you sure you want to approve this appointment?</p>
+                            <h3 class="text-lg font-medium mb-2">Approve Appointment</h3>
+                            <p class="text-slate-500">Please provide remarks for approving this appointment</p>
                         </div>
-                        <input type="hidden" id="approveAppointmentId">
-                        <button type="button" onclick="confirmApproveAppointment()" class="btn btn-success w-24 mr-2">Approve</button>
-                        <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-24">Cancel</button>
+                        <form id="approveReasonForm" class="text-left">
+                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="_method" value="PUT">
+                            <input type="hidden" id="approveAppointmentId" name="appointment_id">
+                            
+                            <div class="mb-6">
+                                <label class="form-label">Remarks *</label>
+                                <textarea name="remarks" id="approveRemarks" class="form-control" rows="4" placeholder="Enter remarks for approval..." required>Your appointment is approved and you may now go to office at that time and date that in your appointment</textarea>
+                                <div class="text-slate-500 text-xs mt-1">This remark will be recorded and visible to the user.</div>
+                            </div>
+                            
+                            <div class="text-center">
+                                <button type="button" onclick="confirmApproveAppointment()" class="btn btn-success w-24 mr-2">Approve</button>
+                                <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-24">Cancel</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -316,12 +344,25 @@
                                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                                 <polyline points="22 4 12 14.01 9 11.01"></polyline>
                             </svg>
-                            <h3 class="text-lg font-medium mb-2">Complete Appointment?</h3>
-                            <p class="text-slate-500">Are you sure you want to mark this appointment as completed?</p>
+                            <h3 class="text-lg font-medium mb-2">Complete Appointment</h3>
+                            <p class="text-slate-500">Please provide remarks for completing this appointment</p>
                         </div>
-                        <input type="hidden" id="completeAppointmentId">
-                        <button type="button" onclick="confirmCompleteAppointment()" class="btn btn-info w-24 mr-2">Complete</button>
-                        <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-24">Cancel</button>
+                        <form id="completeReasonForm" class="text-left">
+                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="_method" value="PUT">
+                            <input type="hidden" id="completeAppointmentId" name="appointment_id">
+                            
+                            <div class="mb-6">
+                                <label class="form-label">Remarks *</label>
+                                <textarea name="remarks" id="completeRemarks" class="form-control" rows="4" placeholder="Enter remarks for completion..." required>Your appointment has been completed successfully</textarea>
+                                <div class="text-slate-500 text-xs mt-1">This remark will be recorded and visible to the user.</div>
+                            </div>
+                            
+                            <div class="text-center">
+                                <button type="button" onclick="confirmCompleteAppointment()" class="btn btn-info w-24 mr-2">Complete</button>
+                                <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-24">Cancel</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>

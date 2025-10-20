@@ -143,4 +143,28 @@ class User extends Authenticatable
             ->get()
             ->pluck('module.module_name');
     }
+
+    /**
+     * Check if user has landlord tenant access permission
+     * This checks if they are linked to an approved landlord with active tenant access
+     */
+    public function hasLandlordTenantAccess()
+    {
+        // Find approved landlord submitted by this user
+        $approvedLandlord = \App\Models\applied_landlord::where('submitted_by', $this->id)
+            ->where('status', 'approved')
+            ->first();
+
+        if (!$approvedLandlord) {
+            return false;
+        }
+
+        // Check if landlord has active tenant access permission
+        $permission = \App\Models\landlord_permission::where('applied_landlord_id', $approvedLandlord->id)
+            ->where('has_have_permission', 1)
+            ->where('status', 'active')
+            ->exists();
+
+        return $permission;
+    }
 }

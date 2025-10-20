@@ -1578,6 +1578,9 @@ A VERTICAL event
                                 <div class="flex-1">
                                     <div class="font-semibold mb-1">{{ $announcement->type }}</div>
                                     <div class="text-sm opacity-90">{{ $announcement->description }}</div>
+                                    <div class="text-xs text-white/80 mt-1">
+                                        Posted {{ $announcement->created_at ? $announcement->created_at->diffForHumans() : 'recently' }}
+                                    </div>
                                 </div>
                                 <button type="button" class="btn-close text-white ml-3 announcement-close-btn" 
                                         data-announcement-id="{{ $announcement->id }}" aria-label="Close"> 
@@ -1616,7 +1619,8 @@ A VERTICAL event
                         </div>
                         <div class="intro-x mt-5 xl:mt-8 text-center xl:text-left">
                             <button id="login-submit" class="btn btn-primary py-3 px-4 w-full xl:w-32 xl:mr-3 align-top">Login</button>
-                            <a href="{{ route('appointment.index') }}" class="btn btn-outline-secondary py-3 px-4 w-full xl:w-32 mt-3 xl:mt-0 align-top">Appointment</a>
+                            <!-- <a href="{{ route('appointment.index') }}" class="btn btn-outline-secondary py-3 px-4 w-full xl:w-32 mt-3 xl:mt-0 align-top">Appointment</a> -->
+                            <a href="{{ route('registration-nonhomeowners.index') }}" class="btn btn-outline-secondary py-3 px-4 w-full xl:w-32 mt-3 xl:mt-0 align-top">Register</a>
                         </div>
                     </div>
                 </div>
@@ -1630,6 +1634,42 @@ A VERTICAL event
             <div id="login-error-message-slot" class="text-slate-500 mt-1"></div>
         </x-notification-toast>
         <x-notification-toast id="login_toast_warning" type="warning" title="Missing fields" message="Please enter email and password" :show-button="false" position="center" gravity="center" />
+        
+        <!-- BEGIN: OTP Verification Modal -->
+        <div id="otpVerificationModal" class="modal" tabindex="-1" aria-hidden="true" style="display: none !important; position: fixed !important; z-index: 99999 !important; left: 0 !important; top: 0 !important; width: 100% !important; height: 100% !important; background-color: rgba(0, 0, 0, 0.5) !important;">
+            <div class="modal-dialog" style="position: relative !important; width: auto !important; margin: 5% auto !important; max-width: 500px !important;">
+                <div class="modal-content" style="position: relative !important; background-color: #fff !important; border-radius: 0.5rem !important; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important; border: 1px solid #e9ecef !important;">
+                    <div class="modal-body px-5 py-10" style="padding: 1.5rem !important;">
+                        <div class="text-center">
+                            <div class="mb-5">
+                                <h3 class="text-lg font-medium mb-3" style="font-size: 1.5rem !important; font-weight: 600 !important; margin-bottom: 1rem !important; color: #1C3FAA !important;">🔐 Device Verification Required</h3>
+                                <div class="text-left bg-yellow-50 p-4 rounded-lg mb-4 border-l-4 border-yellow-400" style="text-align: left !important; background-color: #FFF3CD !important; padding: 1rem !important; border-radius: 0.5rem !important; margin-bottom: 1rem !important; border-left: 4px solid #FFC107 !important;">
+                                    <p style="margin-bottom: 0.5rem !important; color: #856404 !important;"><strong>⚠️ New Device Detected!</strong></p>
+                                    <p id="otpModalMessage" style="margin: 0 !important; font-size: 14px !important; color: #856404 !important;">A verification code has been sent to your email.</p>
+                                </div>
+                                <p class="text-gray-600 mb-4" style="color: #6b7280 !important; margin-bottom: 1rem !important;">Please check your email <strong id="otpUserEmail" style="color: #1C3FAA !important;"></strong> and enter the 6-digit code below:</p>
+                                
+                                <div class="mb-4" style="margin-bottom: 1rem !important;">
+                                    <input type="text" 
+                                           id="otpCodeInput" 
+                                           maxlength="6" 
+                                           placeholder="Enter 6-digit code" 
+                                           class="form-control text-center"
+                                           style="width: 100% !important; padding: 1rem !important; text-align: center !important; font-size: 2rem !important; letter-spacing: 0.5rem !important; font-weight: bold !important; border: 2px solid #1C3FAA !important; border-radius: 0.5rem !important; background-color: #E3F2FD !important; color: #1C3FAA !important;"
+                                           autocomplete="off">
+                                    <p class="text-xs text-gray-500 mt-2" style="font-size: 0.75rem !important; color: #9CA3AF !important; margin-top: 0.5rem !important;">Code expires in 10 minutes</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-2 justify-center" style="display: flex !important; gap: 0.5rem !important; justify-content: center !important;">
+                                <button type="button" id="verifyOtpBtn" class="btn btn-primary" style="background-color: #1C3FAA !important; color: white !important; padding: 0.75rem 2rem !important; border-radius: 0.5rem !important; font-weight: 600 !important; border: none !important; cursor: pointer !important;">Verify & Login</button>
+                                <button type="button" id="cancelOtpBtn" class="btn btn-outline-secondary" style="background-color: transparent !important; color: #6b7280 !important; padding: 0.75rem 2rem !important; border-radius: 0.5rem !important; font-weight: 600 !important; border: 2px solid #6b7280 !important; cursor: pointer !important;">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END: OTP Verification Modal -->
         
         <!-- BEGIN: JS Assets-->
         <!-- END: JS Assets-->
@@ -1700,6 +1740,523 @@ A VERTICAL event
         #login-password {
             background-color: white !important;
         }
+        
+        /* Chatbot Widget Styles */
+        #chatbot-widget {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        #chatbot-icon {
+            width: 56px;
+            height: 56px;
+            background-color: #1C3FAA;
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            position: relative;
+            animation: chatbot-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        #chatbot-icon:hover {
+            animation: none;
+            background-color: #1e40af;
+            transform: scale(1.05);
+        }
+        
+        @keyframes chatbot-pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: .85;
+            }
+        }
+        
+        @keyframes chatbot-bounce {
+            0%, 100% {
+                transform: translateY(-25%);
+                animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+            }
+            50% {
+                transform: translateY(0);
+                animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+            }
+        }
+        
+        #chatbot-icon svg {
+            animation: chatbot-bounce 1s infinite;
+        }
+        
+        #chatbot-notification {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background-color: #DC2626;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: bold;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            animation: chatbot-ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        
+        @keyframes chatbot-ping {
+            75%, 100% {
+                transform: scale(1.5);
+                opacity: 0;
+            }
+        }
+        
+        #chatbot-tooltip {
+            position: absolute;
+            bottom: 100%;
+            right: 0;
+            margin-bottom: 0.75rem;
+            background-color: #1e293b;
+            color: white;
+            font-size: 0.875rem;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            opacity: 0;
+            transition: all 0.3s;
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 50;
+            transform: translateY(-5px);
+        }
+        
+        #chatbot-modal {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 380px;
+            max-width: calc(100vw - 40px);
+            height: 500px;
+            max-height: calc(100vh - 120px);
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            border: 1px solid #e2e8f0;
+            display: none !important;
+            visibility: hidden;
+            flex-direction: column;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        #chatbot-modal.show {
+            display: flex !important;
+        }
+        
+        /* Mobile responsiveness for chatbot */
+        @media (max-width: 640px) {
+            #chatbot-widget {
+                bottom: 15px;
+                right: 15px;
+            }
+            
+            #chatbot-icon {
+                width: 50px;
+                height: 50px;
+            }
+            
+            #chatbot-modal {
+                bottom: 80px;
+                right: 15px;
+                left: 15px;
+                width: auto;
+                max-width: none;
+            }
+        }
+        
+        #chatbot-messages {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        #chatbot-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        #chatbot-messages::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        #chatbot-messages::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        
+        #chatbot-messages::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        .bg-primary {
+            background-color: #1C3FAA !important;
+        }
+        
+        .bg-primary\/10 {
+            background-color: rgba(28, 63, 170, 0.1) !important;
+        }
+        
+        .bg-primary\/5 {
+            background-color: rgba(28, 63, 170, 0.05) !important;
+        }
+        
+        .border-primary\/30 {
+            border-color: rgba(28, 63, 170, 0.3) !important;
+        }
+        
+        .text-primary {
+            color: #1C3FAA !important;
+        }
+        
+        .bg-slate-100 {
+            background-color: #f1f5f9 !important;
+        }
+        
+        .text-slate-700 {
+            color: #334155 !important;
+        }
+        
+        .text-slate-500 {
+            color: #64748b !important;
+        }
+        
+        .border-slate-200 {
+            border-color: #e2e8f0 !important;
+        }
+        
+        .border-slate-300 {
+            border-color: #cbd5e1 !important;
+        }
+        
+        .bg-slate-400 {
+            background-color: #94a3b8 !important;
+        }
+        
+        .text-white\/80 {
+            color: rgba(255, 255, 255, 0.8) !important;
+        }
+        
+        .bg-white\/20 {
+            background-color: rgba(255, 255, 255, 0.2) !important;
+        }
+        
+        .bg-green-50 {
+            background-color: #f0fdf4 !important;
+        }
+        
+        .bg-green-100 {
+            background-color: #dcfce7 !important;
+        }
+        
+        .text-green-600 {
+            color: #16a34a !important;
+        }
+        
+        .text-green-700 {
+            color: #15803d !important;
+        }
+        
+        .border-green-200 {
+            border-color: #bbf7d0 !important;
+        }
+        
+        /* Scoped utility classes for chatbot widget only */
+        #chatbot-widget .hidden,
+        #chatbot-modal .hidden {
+            display: none !important;
+        }
+        
+        #chatbot-widget .flex,
+        #chatbot-modal .flex {
+            display: flex !important;
+        }
+        
+        #chatbot-widget .flex-col,
+        #chatbot-modal .flex-col {
+            flex-direction: column !important;
+        }
+        
+        #chatbot-widget .flex-1,
+        #chatbot-modal .flex-1 {
+            flex: 1 1 0% !important;
+        }
+        
+        #chatbot-widget .flex-shrink-0,
+        #chatbot-modal .flex-shrink-0 {
+            flex-shrink: 0 !important;
+        }
+        
+        #chatbot-widget .items-center,
+        #chatbot-modal .items-center {
+            align-items: center !important;
+        }
+        
+        #chatbot-widget .items-start,
+        #chatbot-modal .items-start {
+            align-items: flex-start !important;
+        }
+        
+        #chatbot-widget .justify-between,
+        #chatbot-modal .justify-between {
+            justify-content: space-between !important;
+        }
+        
+        #chatbot-widget .justify-end,
+        #chatbot-modal .justify-end {
+            justify-content: flex-end !important;
+        }
+        
+        #chatbot-widget .space-x-2 > * + *,
+        #chatbot-modal .space-x-2 > * + * {
+            margin-left: 0.5rem !important;
+        }
+        
+        #chatbot-widget .space-y-2 > * + *,
+        #chatbot-modal .space-y-2 > * + * {
+            margin-top: 0.5rem !important;
+        }
+        
+        #chatbot-widget .space-y-3 > * + *,
+        #chatbot-modal .space-y-3 > * + * {
+            margin-top: 0.75rem !important;
+        }
+        
+        #chatbot-widget .rounded-full,
+        #chatbot-modal .rounded-full {
+            border-radius: 50% !important;
+        }
+        
+        #chatbot-widget .rounded-lg,
+        #chatbot-modal .rounded-lg {
+            border-radius: 0.5rem !important;
+        }
+        
+        #chatbot-widget .max-w-sm,
+        #chatbot-modal .max-w-sm {
+            max-width: 24rem !important;
+        }
+        
+        #chatbot-widget .w-full,
+        #chatbot-modal .w-full {
+            width: 100% !important;
+        }
+        
+        #chatbot-widget .text-left,
+        #chatbot-modal .text-left {
+            text-align: left !important;
+        }
+        
+        #chatbot-widget .text-center, #chatbot-modal .text-center {
+            text-align: center !important;
+        }
+        
+        #chatbot-widget .inline-block, #chatbot-modal .inline-block {
+            display: inline-block !important;
+        }
+        
+        #chatbot-widget .py-1, #chatbot-modal .py-1 {
+            padding-top: 0.25rem !important;
+            padding-bottom: 0.25rem !important;
+        }
+        
+        #chatbot-widget .font-semibold,
+        #chatbot-modal .font-semibold {
+            font-weight: 600 !important;
+        }
+        
+        #chatbot-widget .font-medium,
+        #chatbot-modal .font-medium {
+            font-weight: 500 !important;
+        }
+        
+        #chatbot-widget .whitespace-pre-line,
+        #chatbot-modal .whitespace-pre-line {
+            white-space: pre-line !important;
+        }
+        
+        #chatbot-widget .whitespace-nowrap,
+        #chatbot-modal .whitespace-nowrap {
+            white-space: nowrap !important;
+        }
+        
+        #chatbot-widget .animate-bounce,
+        #chatbot-modal .animate-bounce {
+            animation: chatbot-bounce 1s infinite;
+        }
+        
+        #chatbot-widget .transition-all,
+        #chatbot-modal .transition-all {
+            transition-property: all;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 150ms;
+        }
+        
+        #chatbot-widget .transition-colors,
+        #chatbot-modal .transition-colors {
+            transition-property: color, background-color, border-color;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 150ms;
+        }
+        
+        /* Additional utility classes scoped to chatbot */
+        #chatbot-widget .p-1, #chatbot-modal .p-1 { padding: 0.25rem !important; }
+        #chatbot-widget .p-2, #chatbot-modal .p-2 { padding: 0.5rem !important; }
+        #chatbot-widget .p-3, #chatbot-modal .p-3 { padding: 0.75rem !important; }
+        #chatbot-widget .p-4, #chatbot-modal .p-4 { padding: 1rem !important; }
+        #chatbot-widget .px-1, #chatbot-modal .px-1 { padding-left: 0.25rem !important; padding-right: 0.25rem !important; }
+        #chatbot-widget .px-2, #chatbot-modal .px-2 { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
+        #chatbot-widget .px-3, #chatbot-modal .px-3 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+        #chatbot-widget .px-4, #chatbot-modal .px-4 { padding-left: 1rem !important; padding-right: 1rem !important; }
+        #chatbot-widget .py-2, #chatbot-modal .py-2 { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
+        #chatbot-widget .py-3, #chatbot-modal .py-3 { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
+        #chatbot-widget .mr-2, #chatbot-modal .mr-2 { margin-right: 0.5rem !important; }
+        #chatbot-widget .mb-1, #chatbot-modal .mb-1 { margin-bottom: 0.25rem !important; }
+        #chatbot-widget .mb-3, #chatbot-modal .mb-3 { margin-bottom: 0.75rem !important; }
+        #chatbot-widget .mt-1, #chatbot-modal .mt-1 { margin-top: 0.25rem !important; }
+        #chatbot-widget .mt-2, #chatbot-modal .mt-2 { margin-top: 0.5rem !important; }
+        #chatbot-widget .mt-3, #chatbot-modal .mt-3 { margin-top: 0.75rem !important; }
+        #chatbot-widget .ml-2, #chatbot-modal .ml-2 { margin-left: 0.5rem !important; }
+        #chatbot-widget .ml-3, #chatbot-modal .ml-3 { margin-left: 0.75rem !important; }
+        
+        #chatbot-widget .w-2, #chatbot-modal .w-2 { width: 0.5rem !important; }
+        #chatbot-widget .h-2, #chatbot-modal .h-2 { height: 0.5rem !important; }
+        #chatbot-widget .w-6, #chatbot-modal .w-6 { width: 1.5rem !important; }
+        #chatbot-widget .h-6, #chatbot-modal .h-6 { height: 1.5rem !important; }
+        #chatbot-widget .w-8, #chatbot-modal .w-8 { width: 2rem !important; }
+        #chatbot-widget .h-8, #chatbot-modal .h-8 { height: 2rem !important; }
+        #chatbot-widget .w-14, #chatbot-modal .w-14 { width: 3.5rem !important; }
+        #chatbot-widget .h-14, #chatbot-modal .h-14 { height: 3.5rem !important; }
+        #chatbot-widget .w-16, #chatbot-modal .w-16 { width: 4rem !important; }
+        #chatbot-widget .h-16, #chatbot-modal .h-16 { height: 4rem !important; }
+        
+        #chatbot-widget .text-xs, #chatbot-modal .text-xs { font-size: 0.75rem !important; line-height: 1rem !important; }
+        #chatbot-widget .text-sm, #chatbot-modal .text-sm { font-size: 0.875rem !important; line-height: 1.25rem !important; }
+        
+        #chatbot-widget .border, #chatbot-modal .border { border-width: 1px !important; border-style: solid !important; }
+        #chatbot-widget .border-t, #chatbot-modal .border-t { border-top-width: 1px !important; border-top-style: solid !important; }
+        #chatbot-widget .border-b, #chatbot-modal .border-b { border-bottom-width: 1px !important; border-bottom-style: solid !important; }
+        
+        #chatbot-widget .shadow-sm, #chatbot-modal .shadow-sm {
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+        }
+        
+        #chatbot-widget .shadow-lg, #chatbot-modal .shadow-lg {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+        }
+        
+        #chatbot-widget .shadow-xl, #chatbot-modal .shadow-xl {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+        }
+        
+        #chatbot-widget .shadow-2xl, #chatbot-modal .shadow-2xl {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+        }
+        
+        #chatbot-widget .shadow, #chatbot-modal .shadow {
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
+        }
+        
+        #chatbot-widget .cursor-pointer, #chatbot-modal .cursor-pointer {
+            cursor: pointer !important;
+        }
+        
+        #chatbot-widget .relative, #chatbot-modal .relative {
+            position: relative !important;
+        }
+        
+        #chatbot-widget .absolute, #chatbot-modal .absolute {
+            position: absolute !important;
+        }
+        
+        #chatbot-widget .overflow-hidden, #chatbot-modal .overflow-hidden {
+            overflow: hidden !important;
+        }
+        
+        #chatbot-widget .overflow-y-auto, #chatbot-modal .overflow-y-auto {
+            overflow-y: auto !important;
+        }
+        
+        #chatbot-widget .gap-0\.75rem, #chatbot-modal .gap-0\.75rem {
+            gap: 0.75rem !important;
+        }
+        
+        /* Chatbot specific button and input styles */
+        #chatbot-input {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            outline: none;
+            width: 100%;
+        }
+        
+        #chatbot-input:focus {
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+            box-shadow: 0 0 0 2px #1C3FAA;
+            border-color: transparent;
+        }
+        
+        #chatbot-modal button {
+            padding: 0.5rem 0.75rem;
+            background-color: #1C3FAA;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.15s;
+        }
+        
+        #chatbot-modal button:hover {
+            background-color: #1e40af;
+        }
+        
+        #quick-questions button {
+            width: 100%;
+            text-align: left;
+            padding: 0.5rem 0.75rem;
+            background-color: white;
+            border: 1px solid rgba(28, 63, 170, 0.3);
+            color: #1C3FAA;
+            border-radius: 0.5rem;
+            transition: all 0.15s;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        #quick-questions button:hover {
+            background-color: rgba(28, 63, 170, 0.05);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+        
+        .rounded-t-lg {
+            border-top-left-radius: 0.5rem !important;
+            border-top-right-radius: 0.5rem !important;
+        }
         </style>
         <script src="{{ asset('assets/toastify/toastify.js') }}"></script>
         <script src="{{ asset('js/login/login.js') }}"></script>
@@ -1726,6 +2283,618 @@ A VERTICAL event
         </script>
         
         @stack('scripts')
+        
+        <!-- BEGIN: Chatbot Widget -->
+        <div id="chatbot-widget" class="fixed bottom-6 right-12 z-50">
+            <!-- Chatbot Icon -->
+            <div id="chatbot-icon" class="w-14 h-14 bg-primary rounded-full shadow-lg cursor-pointer flex items-center justify-center hover:bg-primary-dark transition-all duration-300 animate-pulse hover:animate-none relative" onclick="toggleChatbot()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-bounce">
+                    <!-- Robot Head -->
+                    <rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect>
+                    <!-- Robot Eyes -->
+                    <circle cx="8" cy="16" r="1"></circle>
+                    <circle cx="16" cy="16" r="1"></circle>
+                    <!-- Robot Antenna -->
+                    <path d="M12 2v2"></path>
+                    <path d="M12 4l-2 2"></path>
+                    <path d="M12 4l2 2"></path>
+                    <!-- Robot Mouth -->
+                    <path d="M8 19h8"></path>
+                </svg>
+                
+                <!-- Notification Bubble -->
+                <div id="chatbot-notification" class="absolute -top-2 -right-2 bg-danger text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg animate-ping">
+                    <span class="text-xs">!</span>
+                </div>
+                
+                <!-- Tooltip -->
+                <div id="chatbot-tooltip" class="absolute bottom-full right-0 mb-3 bg-slate-900 text-white text-sm px-4 py-3 rounded-lg shadow-xl opacity-0 transition-all duration-300 pointer-events-none whitespace-nowrap z-50" style="transform: translateY(-5px);">
+                    <div class="flex items-center font-medium">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 text-yellow-400">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                        <span class="text-white">Ask me anything!</span>
+                    </div>
+                    <!-- Arrow -->
+                    <div class="absolute top-full right-6 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-slate-900"></div>
+                </div>
+            </div>
+            
+            <!-- Chatbot Modal -->
+            <div id="chatbot-modal" class="fixed bottom-20 right-6 w-96 h-[500px] bg-white rounded-lg shadow-2xl border border-slate-200 hidden flex flex-col">
+                <!-- Header -->
+                <div class="flex items-center justify-between p-4 border-b border-slate-200 bg-primary text-white rounded-t-lg">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center mr-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <!-- Robot Head -->
+                                <rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect>
+                                <!-- Robot Eyes -->
+                                <circle cx="8" cy="16" r="1"></circle>
+                                <circle cx="16" cy="16" r="1"></circle>
+                                <!-- Robot Antenna -->
+                                <path d="M12 2v2"></path>
+                                <path d="M12 4l-2 2"></path>
+                                <path d="M12 4l2 2"></path>
+                                <!-- Robot Mouth -->
+                                <path d="M8 19h8"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-sm">AI Assistant</h3>
+                            <p class="text-xs text-white/80">Online</p>
+                        </div>
+                    </div>
+                    <button onclick="toggleChatbot()" class="text-white/80 hover:text-white transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Messages Area -->
+                <div id="chatbot-messages" class="flex-1 p-4 overflow-y-auto space-y-3">
+                    <!-- Welcome Message -->
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mr-2 flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <!-- Robot Head -->
+                                <rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect>
+                                <!-- Robot Eyes -->
+                                <circle cx="8" cy="16" r="1"></circle>
+                                <circle cx="16" cy="16" r="1"></circle>
+                                <!-- Robot Antenna -->
+                                <path d="M12 2v2"></path>
+                                <path d="M12 4l-2 2"></path>
+                                <path d="M12 4l2 2"></path>
+                                <!-- Robot Mouth -->
+                                <path d="M8 19h8"></path>
+                            </svg>
+                        </div>
+                        <div class="bg-slate-100 rounded-lg p-3 max-w-sm">
+                            <p class="text-sm text-slate-700">Hello! I'm your AI assistant. How can I help you today?</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Questions -->
+                    <div id="quick-questions" class="space-y-2 mt-3">
+                        <p class="text-xs text-slate-500 font-medium px-1">Quick Questions:</p>
+                        <button onclick="askQuickQuestion('How to apply for vehicle sticker?')" class="w-full text-left px-3 py-2 bg-white border border-primary/30 text-primary rounded-lg hover:bg-primary/5 transition-all text-xs font-medium flex items-center shadow-sm hover:shadow">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 flex-shrink-0">
+                                <path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3"></path>
+                            </svg>
+                            <span>How to apply for vehicle sticker?</span>
+                        </button>
+                        <button onclick="askQuickQuestion('How to register my business?')" class="w-full text-left px-3 py-2 bg-white border border-primary/30 text-primary rounded-lg hover:bg-primary/5 transition-all text-xs font-medium flex items-center shadow-sm hover:shadow">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 flex-shrink-0">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                            </svg>
+                            <span>How to register my business?</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Input Area -->
+                <div class="p-4 border-t border-slate-200">
+                    <div class="flex items-center space-x-2">
+                        <input type="text" id="chatbot-input" placeholder="Type your message..." class="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" onkeypress="handleChatbotKeyPress(event)">
+                        <button onclick="sendChatbotMessage()" class="px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22,2 15,22 11,13 2,9 22,2"></polygon>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END: Chatbot Widget -->
+        
+        <!-- BEGIN: Chatbot JavaScript -->
+        <script>
+        // Chatbot functionality
+        let chatbotOpen = false;
+        
+        // Generate unique guest identifier (new on every page load)
+        let currentGuestId = null;
+        
+        function getGuestId() {
+            if (!currentGuestId) {
+                // Generate unique guest ID: GUEST-{timestamp}-{random}
+                const timestamp = Date.now();
+                const random = Math.random().toString(36).substring(2, 15);
+                currentGuestId = `GUEST-${timestamp}-${random}`;
+                console.log('New guest ID generated for this session:', currentGuestId);
+            }
+            return currentGuestId;
+        }
+        
+        function toggleChatbot() {
+            const modal = document.getElementById('chatbot-modal');
+            const icon = document.getElementById('chatbot-icon');
+            const notification = document.getElementById('chatbot-notification');
+            const tooltip = document.getElementById('chatbot-tooltip');
+            
+            console.log('Toggle chatbot called, current state:', chatbotOpen);
+            console.log('Modal current display:', modal ? modal.style.display : 'null');
+            
+            if (chatbotOpen) {
+                // Close chatbot
+                if (modal) {
+                    modal.style.opacity = '0';
+                    setTimeout(() => {
+                        modal.style.display = 'none';
+                        modal.style.visibility = 'hidden';
+                    }, 300);
+                }
+                if (icon) {
+                    icon.style.transform = 'rotate(0deg)';
+                }
+                chatbotOpen = false;
+                // Hide tooltip when closing
+                if (tooltip) {
+                    tooltip.style.opacity = '0';
+                }
+            } else {
+                // Open chatbot
+                if (modal) {
+                    modal.style.display = 'flex';
+                    modal.style.visibility = 'visible';
+                    // Trigger reflow for transition
+                    modal.offsetHeight;
+                    modal.style.opacity = '1';
+                }
+                if (icon) {
+                    icon.style.transform = 'rotate(180deg)';
+                }
+                chatbotOpen = true;
+                // Hide notification bubble when opened
+                if (notification) {
+                    notification.style.display = 'none';
+                }
+                // Hide tooltip when opened
+                if (tooltip) {
+                    tooltip.style.opacity = '0';
+                }
+                
+                // Load conversation history when opening
+                loadConversationHistory();
+                
+                // Focus on input when opened
+                setTimeout(() => {
+                    const input = document.getElementById('chatbot-input');
+                    if (input) input.focus();
+                }, 100);
+            }
+            
+            console.log('Chatbot toggled, new state:', chatbotOpen);
+            console.log('Modal new display:', modal ? modal.style.display : 'null');
+        }
+        
+        function handleChatbotKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendChatbotMessage();
+            }
+        }
+        
+        function sendChatbotMessage() {
+            const input = document.getElementById('chatbot-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Get guest ID
+            const guestId = getGuestId();
+            
+            // Add user message to chat
+            addMessageToChat(message, 'user');
+            
+            // Clear input
+            input.value = '';
+            
+            // Hide quick questions if they exist
+            hideQuickQuestions();
+            
+            // Show typing indicator
+            showTypingIndicator();
+            
+            // Send message to backend with guest_id
+            fetch('/chatbot/message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({ 
+                    message: message,
+                    guest_id: guestId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideTypingIndicator();
+                if (data.success) {
+                    addMessageToChat(data.response, 'bot');
+                } else {
+                    addMessageToChat('Sorry, I encountered an error. Please try again.', 'bot');
+                }
+            })
+            .catch(error => {
+                hideTypingIndicator();
+                console.error('Chatbot error:', error);
+                addMessageToChat('Sorry, I\'m having trouble connecting. Please try again later.', 'bot');
+            });
+        }
+        
+        function askQuickQuestion(question) {
+            // Debug: Log the question being sent
+            console.log('Sending quick question:', question);
+            
+            // Get guest ID
+            const guestId = getGuestId();
+            
+            // Add question as user message
+            addMessageToChat(question, 'user');
+            
+            // Hide quick questions
+            hideQuickQuestions();
+            
+            // Show typing indicator
+            showTypingIndicator();
+            
+            // Send question to backend with guest_id
+            fetch('/chatbot/message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({ 
+                    message: question,
+                    guest_id: guestId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideTypingIndicator();
+                console.log('Chatbot response:', data);
+                if (data.success) {
+                    addMessageToChat(data.response, 'bot');
+                } else {
+                    addMessageToChat('Sorry, I encountered an error. Please try again.', 'bot');
+                }
+            })
+            .catch(error => {
+                hideTypingIndicator();
+                console.error('Chatbot error:', error);
+                addMessageToChat('Sorry, I\'m having trouble connecting. Please try again later.', 'bot');
+            });
+        }
+        
+        function hideQuickQuestions() {
+            const quickQuestions = document.getElementById('quick-questions');
+            if (quickQuestions) {
+                quickQuestions.style.display = 'none';
+            }
+        }
+        
+        function addMessageToChat(message, sender, adminName = null) {
+            const messagesContainer = document.getElementById('chatbot-messages');
+            const messageDiv = document.createElement('div');
+            
+            if (sender === 'user') {
+                messageDiv.className = 'flex items-start justify-end';
+                messageDiv.innerHTML = `
+                    <div class="bg-primary text-white rounded-lg p-3 max-w-sm">
+                        <p class="text-sm">${escapeHtml(message)}</p>
+                    </div>
+                `;
+            } else if (sender === 'admin') {
+                // Admin reply message
+                messageDiv.className = 'flex items-start';
+                messageDiv.innerHTML = `
+                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-2 flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-600">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="8.5" cy="7" r="4"></circle>
+                            <line x1="20" y1="8" x2="20" y2="14"></line>
+                            <line x1="23" y1="11" x2="17" y2="11"></line>
+                        </svg>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-3 max-w-sm border border-green-200">
+                        <div class="text-xs font-semibold text-green-700 mb-1">${adminName || 'Admin'}</div>
+                        <div class="text-sm text-slate-700 whitespace-pre-line">${escapeHtml(message)}</div>
+                    </div>
+                `;
+            } else {
+                // Bot message
+                const formattedMessage = formatBotMessage(message);
+                
+                messageDiv.className = 'flex items-start';
+                messageDiv.innerHTML = `
+                    <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mr-2 flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <!-- Robot Head -->
+                            <rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect>
+                            <!-- Robot Eyes -->
+                            <circle cx="8" cy="16" r="1"></circle>
+                            <circle cx="16" cy="16" r="1"></circle>
+                            <!-- Robot Antenna -->
+                            <path d="M12 2v2"></path>
+                            <path d="M12 4l-2 2"></path>
+                            <path d="M12 4l2 2"></path>
+                            <!-- Robot Mouth -->
+                            <path d="M8 19h8"></path>
+                        </svg>
+                    </div>
+                    <div class="bg-slate-100 rounded-lg p-3 max-w-sm">
+                        <div class="text-sm text-slate-700 whitespace-pre-line">${formattedMessage}</div>
+                    </div>
+                `;
+            }
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        function formatBotMessage(message) {
+            // Escape HTML first
+            let formatted = escapeHtml(message);
+            
+            // Convert **text** to bold
+            formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            
+            // Convert bullet points (• or -) to proper list items
+            formatted = formatted.replace(/^[•\-]\s+(.+)$/gm, '<span class="block ml-2">• $1</span>');
+            
+            // Convert numbered items (1️⃣, 2️⃣, etc.)
+            formatted = formatted.replace(/^(\d+[️⃣]*\.?\s+\*\*[^*]+\*\*)/gm, '<div class="font-semibold mt-2">$1</div>');
+            
+            return formatted;
+        }
+        
+        function showTypingIndicator() {
+            const messagesContainer = document.getElementById('chatbot-messages');
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.className = 'flex items-start';
+            typingDiv.innerHTML = `
+                <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mr-2 flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <!-- Robot Head -->
+                        <rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect>
+                        <!-- Robot Eyes -->
+                        <circle cx="8" cy="16" r="1"></circle>
+                        <circle cx="16" cy="16" r="1"></circle>
+                        <!-- Robot Antenna -->
+                        <path d="M12 2v2"></path>
+                        <path d="M12 4l-2 2"></path>
+                        <path d="M12 4l2 2"></path>
+                        <!-- Robot Mouth -->
+                        <path d="M8 19h8"></path>
+                    </svg>
+                </div>
+                <div class="bg-slate-100 rounded-lg p-3 max-w-sm">
+                    <div class="flex space-x-1">
+                        <div class="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
+                        <div class="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                        <div class="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                    </div>
+                </div>
+            `;
+            
+            messagesContainer.appendChild(typingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Close chatbot when clicking outside
+        document.addEventListener('click', function(event) {
+            const chatbotWidget = document.getElementById('chatbot-widget');
+            const chatbotModal = document.getElementById('chatbot-modal');
+            
+            if (chatbotOpen && !chatbotWidget.contains(event.target)) {
+                toggleChatbot();
+            }
+        });
+        
+        // Real-time polling for admin replies
+        // Note: Every page reload = NEW guest_id & FRESH chat UI
+        // Messages are saved to DB for admin tracking only
+        // Only NEW admin replies during current session will appear in real-time
+        let lastCheckedMessageId = 0;
+        let pollingInterval = null;
+        
+        function startPollingForReplies() {
+            const guestId = getGuestId();
+            
+            // Poll every 3 seconds for NEW admin replies only
+            pollingInterval = setInterval(() => {
+                if (!chatbotOpen) return; // Only poll when chatbot is open
+                
+                fetch(`/chatbot/guest-conversation?guest_id=${guestId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Check for NEW admin messages only (after current session started)
+                            const newMessages = data.data.filter(msg => {
+                                return msg.id > lastCheckedMessageId && msg.from_admin;
+                            });
+                            
+                            if (newMessages.length > 0) {
+                                console.log(`Found ${newMessages.length} new admin reply/replies`);
+                            }
+                            
+                            // Display new admin replies in real-time
+                            newMessages.forEach(msg => {
+                                addMessageToChat(msg.message, 'admin', msg.admin_name);
+                                lastCheckedMessageId = msg.id;
+                                
+                                // Show notification if new admin reply arrived
+                                showNewMessageNotification(msg.admin_name || 'Admin');
+                                
+                                // Show notification bubble if chatbot is closed
+                                if (!chatbotOpen) {
+                                    const notificationBubble = document.getElementById('chatbot-notification');
+                                    if (notificationBubble) {
+                                        notificationBubble.style.display = 'flex';
+                                    }
+                                }
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        // Silently handle errors to avoid console spam
+                        // console.error('Polling error:', error);
+                    });
+            }, 3000); // Check every 3 seconds
+        }
+        
+        function stopPollingForReplies() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+        }
+        
+        // Show notification when new admin message arrives
+        function showNewMessageNotification(adminName) {
+            // Visual notification in chat
+            const messagesContainer = document.getElementById('chatbot-messages');
+            const notifDiv = document.createElement('div');
+            notifDiv.className = 'text-center py-2';
+            notifDiv.innerHTML = `
+                <div class="inline-block bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">
+                    ✉️ ${adminName} replied to your message
+                </div>
+            `;
+            messagesContainer.appendChild(notifDiv);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notifDiv.remove();
+            }, 3000);
+            
+            // Scroll to show new message
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            console.log(`New admin reply from ${adminName}`);
+        }
+        
+        // Initialize chatbot on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Chatbot initializing...');
+            
+            // Ensure modal is hidden on page load
+            const modal = document.getElementById('chatbot-modal');
+            if (modal) {
+                modal.style.display = 'none';
+                modal.style.visibility = 'hidden';
+                modal.style.opacity = '0';
+                console.log('Modal hidden on load');
+            }
+            
+            // Reset chatbot state
+            chatbotOpen = false;
+            
+            // Also ensure icon is in default state
+            const icon = document.getElementById('chatbot-icon');
+            if (icon) {
+                icon.style.transform = 'rotate(0deg)';
+            }
+            
+            // Start polling for new messages (no initialization needed - fresh guest_id every reload)
+            startPollingForReplies();
+            console.log('Started polling for admin replies');
+            
+            // Tooltip hover functionality
+            const chatbotIcon = document.getElementById('chatbot-icon');
+            const tooltip = document.getElementById('chatbot-tooltip');
+            const notification = document.getElementById('chatbot-notification');
+            
+            if (chatbotIcon && tooltip) {
+                // Show tooltip on hover
+                chatbotIcon.addEventListener('mouseenter', function() {
+                    if (!chatbotOpen) {
+                        tooltip.style.opacity = '1';
+                        tooltip.style.transform = 'translateY(0px)';
+                        tooltip.style.pointerEvents = 'auto';
+                    }
+                });
+                
+                // Hide tooltip on mouse leave
+                chatbotIcon.addEventListener('mouseleave', function() {
+                    tooltip.style.opacity = '0';
+                    tooltip.style.transform = 'translateY(-5px)';
+                    tooltip.style.pointerEvents = 'none';
+                });
+                
+                // Auto-hide notification after 10 seconds
+                if (notification) {
+                    setTimeout(() => {
+                        notification.style.display = 'none';
+                    }, 10000);
+                }
+                
+                // Show tooltip automatically after 3 seconds if not opened
+                setTimeout(() => {
+                    if (!chatbotOpen) {
+                        tooltip.style.opacity = '1';
+                        tooltip.style.transform = 'translateY(0px)';
+                        tooltip.style.pointerEvents = 'auto';
+                        
+                        // Auto-hide tooltip after 5 seconds
+                        setTimeout(() => {
+                            if (!chatbotOpen) {
+                                tooltip.style.opacity = '0';
+                                tooltip.style.transform = 'translateY(-5px)';
+                                tooltip.style.pointerEvents = 'none';
+                            }
+                        }, 5000);
+                    }
+                }, 3000);
+            }
+            
+            console.log('Chatbot initialized successfully');
+        });
+        </script>
+        <!-- END: Chatbot JavaScript -->
         
         <!-- Announcement Dismissal Script -->
         <script>

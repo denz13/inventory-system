@@ -10,13 +10,19 @@ use Illuminate\Support\Facades\DB;
 
 class FeedbackController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        // Get per_page from request, default to 10
+        $perPage = $request->get('per_page', 10);
+        
+        // Ensure per_page is a valid value
+        $perPage = in_array($perPage, [10, 25, 35, 50]) ? $perPage : 10;
+        
         // Get current user's feedback only
         $feedbacks = tbl_feedback::with(['user'])
             ->where('user_id', auth()->id())
             ->orderBy('created_at', 'desc')
-            ->paginate(10);
+            ->paginate($perPage);
 
         // Get current user info
         $currentUser = auth()->user();
@@ -27,13 +33,23 @@ class FeedbackController extends Controller
     public function store(Request $request)
     {
         try {
-            $request->validate([
-                'description' => 'required|string|max:1000',
+            $validator = \Validator::make($request->all(), [
+                'description' => 'required|string',
                 'rating' => 'required|integer|min:1|max:5',
             ], [
-                'rating.min' => 'Please select a rating between 1 and 5 stars',
+                'description.required' => 'Feedback description is required',
                 'rating.required' => 'Please select a rating',
+                'rating.min' => 'Please select a rating between 1 and 5 stars',
+                'rating.max' => 'Please select a rating between 1 and 5 stars',
             ]);
+            
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $validator->errors(),
+                    'message' => 'Validation failed'
+                ], 422);
+            }
 
             tbl_feedback::create([
                 'user_id' => auth()->id(), // Use current logged-in user
@@ -74,16 +90,31 @@ class FeedbackController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            $request->validate([
-                'description' => 'required|string|max:1000',
+            $validator = \Validator::make($request->all(), [
+                'description' => 'required|string',
                 'rating' => 'required|integer|min:1|max:5',
                 'status' => 'required|in:active,inactive',
+            ], [
+                'description.required' => 'Feedback description is required',
+                'rating.required' => 'Please select a rating',
+                'rating.min' => 'Please select a rating between 1 and 5 stars',
+                'rating.max' => 'Please select a rating between 1 and 5 stars',
+                'status.required' => 'Status is required',
+                'status.in' => 'Status must be either active or inactive',
             ]);
+            
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $validator->errors(),
+                    'message' => 'Validation failed'
+                ], 422);
+            }
 
             $feedback = tbl_feedback::findOrFail($id);
             
             // Check if the current user owns this feedback (optional security check)
-            if ($feedback->user_id !== auth()->id()) {
+            if ($feedback->user_id != auth()->id()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'You can only edit your own feedback'
@@ -114,7 +145,7 @@ class FeedbackController extends Controller
             $feedback = tbl_feedback::findOrFail($id);
             
             // Check if the current user owns this feedback (optional security check)
-            if ($feedback->user_id !== auth()->id()) {
+            if ($feedback->user_id != auth()->id()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'You can only delete your own feedback'

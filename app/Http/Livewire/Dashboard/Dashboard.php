@@ -12,10 +12,18 @@ use App\Models\tbl_incident_report;
 use App\Models\tbl_service_management_type;
 use App\Models\tbl_service_management_category;
 use App\Models\tbl_service_management_complaints;
+use App\Models\tbl_announcement;
+
 class Dashboard extends Component
 {
     public function render()
     {
+        // Get active announcements
+        $announcements = tbl_announcement::where('status', 'active')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+        
         // Get billing statistics - get actual values from database
         $totalBillings = tbl_billing_management::count();
         
@@ -121,6 +129,7 @@ class Dashboard extends Component
         $unpaidItemRate = $totalBillingItems > 0 ? round(($unpaidBillingItems / $totalBillingItems) * 100, 1) : 0;
         
         return view('livewire.dashboard.dashboard', compact(
+            'announcements',
             'totalBillings',
             'paidBillings', 
             'pendingBillings',

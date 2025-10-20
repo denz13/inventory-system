@@ -4,183 +4,350 @@ namespace App\Http\Controllers\vehiclemanagement;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\vehicle_management_list as VehicleManagement;
-use App\Models\vehicle_details as VehicleDetail;
+use App\Models\vehicle_homeowners;
+use App\Models\vehicle_homeowners_supporting_documents;
+use App\Models\vehicle_list_details_homeowners;
 use App\Models\User;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class VehicleManagementController extends Controller
 {
     public function index()
     {
-        $vehicles = VehicleManagement::with(['user'])->latest()->paginate(12);
+        $vehicles = vehicle_homeowners::with(['user', 'supportingDocuments.vehicleDetails.stickerControl'])
+            ->latest()
+            ->paginate(12);
         $owners = User::select('id','name')->orderBy('name')->get();
-        return view('vehiclemanagement.vehiclemanagement', compact('vehicles','owners'));
+        
+        // Get unique statuses for filter
+        $statuses = vehicle_homeowners::distinct()
+            ->pluck('status')
+            ->filter()
+            ->sort()
+            ->values();
+            
+        return view('vehiclemanagement.vehiclemanagement', compact('vehicles', 'owners', 'statuses'));
     }
 
-    public function show(VehicleManagement $vehicle)
+    public function show($id)
     {
-        $vehicle->load(['user']);
-        $details = VehicleDetail::where('vehicle_management_id', $vehicle->id)->get();
+        $vehicle = vehicle_homeowners::with(['user', 'supportingDocuments.vehicleDetails.stickerControl'])->findOrFail($id);
+        
         return response()->json([
             'vehicle' => $vehicle,
-            'details' => $details,
+            'supporting_documents' => $vehicle->supportingDocuments,
+            'vehicle_details' => $vehicle->supportingDocuments?->vehicleDetails
         ]);
+    }
+
+    public function approve($id)
+    {
+        try {
+            DB::beginTransaction();
+            
+            $vehicle = vehicle_homeowners::findOrFail($id);
+            $vehicle->status = 'Approved';
+            $vehicle->save();
+            
+            // Update status in vehicle_homeowners_supporting_documents table
+            if ($vehicle->supportingDocuments) {
+                $vehicle->supportingDocuments->status = 'Approved';
+                $vehicle->supportingDocuments->save();
+            }
+            
+            // Update status in vehicle_list_details_homeowners table
+            if ($vehicle->supportingDocuments && $vehicle->supportingDocuments->vehicleDetails) {
+                // Generate control number
+                $controlNumber = $this->generateControlNumber();
+                
+                // Create sticker control number record first
+                $stickerControl = \App\Models\sticker_control_number::create([
+                    'vehicle_list_details_homeowners_id' => $vehicle->supportingDocuments->vehicleDetails->id,
+                    'control_number' => $controlNumber,
+                    'status' => 'Active'
+                ]);
+                
+                // Update vehicle details with status and sticker control ID
+                $vehicle->supportingDocuments->vehicleDetails->status = 'Approved';
+                $vehicle->supportingDocuments->vehicleDetails->vehicle_sticker_control_no = $stickerControl->id;
+                $vehicle->supportingDocuments->vehicleDetails->save();
+            }
+            
+            DB::commit();
+            
+            return response()->json([
+                'message' => 'Vehicle approved successfully. Please set the validity date.',
+                'vehicle' => $vehicle->fresh(),
+                'control_number' => $controlNumber ?? null,
+                'sticker_id' => $stickerControl->id ?? null
+            ]);
+        } catch (\Exception $e) {
+            DB::rollback();
+            \Log::error('Error approving vehicle: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Error approving vehicle: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function generateControlNumber()
+    {
+        // Generate a unique control number (you can customize this format)
+        $prefix = 'SCN';
+        $year = date('Y');
+        $random = str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
+        
+        return $prefix . $year . $random;
+    }
+
+    public function updateValidUntil(Request $request, $id)
+    {
+        try {
+            $validated = $request->validate([
+                'valid_until' => 'required|date|after:today',
+            ]);
+            
+            $stickerControl = \App\Models\sticker_control_number::findOrFail($id);
+            $stickerControl->valid_until = $validated['valid_until'];
+            $stickerControl->save();
+            
+            return response()->json([
+                'message' => 'Validity date set successfully',
+                'sticker_control' => $stickerControl
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error setting validity date: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Error setting validity date: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function decline(Request $request, $id)
+    {
+        try {
+            $validated = $request->validate([
+                'reason' => 'required|string|max:1000',
+            ]);
+            
+            $vehicle = vehicle_homeowners::findOrFail($id);
+            $vehicle->status = 'Declined';
+            $vehicle->save();
+            
+            // Update status in vehicle_homeowners_supporting_documents table
+            if ($vehicle->supportingDocuments) {
+                $vehicle->supportingDocuments->status = 'Declined';
+                $vehicle->supportingDocuments->save();
+            }
+            
+            // Update status and store reason in vehicle_list_details_homeowners table
+            if ($vehicle->supportingDocuments && $vehicle->supportingDocuments->vehicleDetails) {
+                $vehicle->supportingDocuments->vehicleDetails->status = 'Declined';
+                $vehicle->supportingDocuments->vehicleDetails->reason = $validated['reason'];
+                $vehicle->supportingDocuments->vehicleDetails->save();
+            }
+            
+            return response()->json([
+                'message' => 'Vehicle declined successfully',
+                'vehicle' => $vehicle->fresh()
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error declining vehicle: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Error declining vehicle: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'user_id' => ['nullable', 'exists:users,id'],
-            'non_homeowners' => ['nullable','string','max:255'],
-            'type_of_vehicle' => ['required', 'string', 'max:255'],
-            'incase_of_emergency_name' => ['nullable', 'string', 'max:255'],
-            'incase_of_emergency_number' => ['nullable', 'string', 'max:255'],
-            'status' => ['required', Rule::in(['active','inactive'])],
+        try {
+            $validated = $request->validate([
+                'user_id' => ['required', 'exists:users,id'],
+                'type_of_vehicle' => ['required', 'string', 'max:255'],
+                'status' => ['required', Rule::in(['Pending', 'Active', 'Inactive'])],
+                'plate_number' => ['required', 'string', 'max:20'],
+                'or_no' => ['required', 'string', 'max:50'],
+                'vehicle_model' => ['required', 'string', 'max:255'],
+                'cr_no' => ['required', 'string', 'max:50'],
+                'color_of_vehicle' => ['required', 'string', 'max:100'],
+                'supporting_documents_attachments.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240'
+            ]);
 
-            // details (arrays from repeater)
-            'plate_number' => ['nullable','array'],
-            'plate_number.*' => ['nullable','string','max:255'],
-            'or_number' => ['nullable','array'],
-            'or_number.*' => ['nullable','string','max:255'],
-            'cr_number' => ['nullable','array'],
-            'cr_number.*' => ['nullable','string','max:255'],
-            'vehicle_model' => ['nullable','array'],
-            'vehicle_model.*' => ['nullable','string','max:255'],
-            'color' => ['nullable','array'],
-            'color.*' => ['nullable','string','max:255'],
-            'sticker_control_number' => ['nullable','array'],
-            'sticker_control_number.*' => ['nullable','string','max:255'],
-        ]);
+            DB::beginTransaction();
 
-        // Ensure one of user_id or non_homeowners is present
-        if (empty($validated['user_id']) && empty($validated['non_homeowners'])) {
-            return response()->json(['message' => 'Please select an owner or provide non-homeowner name.'], 422);
-        }
-
-        $vm = VehicleManagement::create([
-            'user_id' => $validated['user_id'] ?? null,
-            'non_homeowners' => $validated['non_homeowners'] ?? null,
-            'type_of_vehicle' => $validated['type_of_vehicle'],
-            'incase_of_emergency_name' => $request->input('incase_of_emergency_name'),
-            'incase_of_emergency_number' => $request->input('incase_of_emergency_number'),
-            'status' => $validated['status'],
-        ]);
-
-        $plates = $request->input('plate_number', []);
-        $ors = $request->input('or_number', []);
-        $crs = $request->input('cr_number', []);
-        $models = $request->input('vehicle_model', []);
-        $colors = $request->input('color', []);
-        $stickers = $request->input('sticker_control_number', []);
-
-        $max = max(
-            count((array)$plates),
-            count((array)$ors),
-            count((array)$crs),
-            count((array)$models),
-            count((array)$colors),
-            count((array)$stickers)
-        );
-
-        for ($i = 0; $i < $max; $i++) {
-            $row = [
-                'plate_number' => $plates[$i] ?? null,
-                'or_number' => $ors[$i] ?? null,
-                'cr_number' => $crs[$i] ?? null,
-                'vehicle_model' => $models[$i] ?? null,
-                'color' => $colors[$i] ?? null,
-                'sticker_control_number' => $stickers[$i] ?? null,
-            ];
-            // skip completely empty rows
-            if (!array_filter($row)) {
-                continue;
+            // Handle multiple file uploads
+            $filePaths = [];
+            if ($request->hasFile('supporting_documents_attachments')) {
+                foreach ($request->file('supporting_documents_attachments') as $file) {
+                    $fileName = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
+                    $filePath = $file->storeAs('vehicle_documents', $fileName, 'public');
+                    $filePaths[] = $filePath;
+                }
             }
-            VehicleDetail::create(array_merge($row, [
-                'vehicle_management_id' => $vm->id,
-                'status' => 'active',
-            ]));
-        }
 
-        return response()->json(['message' => 'Vehicle saved', 'id' => $vm->id], 201);
+            // Create vehicle homeowner record
+            $vehicleHomeowner = vehicle_homeowners::create([
+                'user_id' => $validated['user_id'],
+                'type_of_vehicle' => $validated['type_of_vehicle'],
+                'status' => $validated['status']
+            ]);
+
+            // Create supporting documents record - store as JSON array
+            $supportingDocuments = vehicle_homeowners_supporting_documents::create([
+                'vehicle_homeowners_id' => $vehicleHomeowner->id,
+                'supporting_documents_attachments' => !empty($filePaths) ? json_encode($filePaths) : null,
+                'status' => $validated['status']
+            ]);
+
+            // Create vehicle details record
+            vehicle_list_details_homeowners::create([
+                'vehicle_homeowners_supporting_documents_id' => $supportingDocuments->id,
+                'plate_number' => $validated['plate_number'],
+                'or_no' => $validated['or_no'],
+                'vehicle_model' => $validated['vehicle_model'],
+                'cr_no' => $validated['cr_no'],
+                'color_of_vehicle' => $validated['color_of_vehicle'],
+                'vehicle_sticker_control_no' => null,
+                'status' => $validated['status']
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Vehicle saved successfully',
+                'id' => $vehicleHomeowner->id
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json([
+                'message' => 'Error saving vehicle: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
-    public function update(Request $request, VehicleManagement $vehicle)
+    public function update(Request $request, $id)
     {
-        $validated = $request->validate([
-            'user_id' => ['nullable', 'exists:users,id'],
-            'non_homeowners' => ['nullable','string','max:255'],
-            'type_of_vehicle' => ['required', 'string', 'max:255'],
-            'incase_of_emergency_name' => ['nullable', 'string', 'max:255'],
-            'incase_of_emergency_number' => ['nullable', 'string', 'max:255'],
-            'status' => ['required', Rule::in(['active','inactive'])],
+        try {
+            $vehicle = vehicle_homeowners::findOrFail($id);
+            
+            $validated = $request->validate([
+                'user_id' => ['required', 'exists:users,id'],
+                'type_of_vehicle' => ['required', 'string', 'max:255'],
+                'status' => ['required', Rule::in(['Pending', 'Active', 'Inactive'])],
+                'plate_number' => ['required', 'string', 'max:20'],
+                'or_no' => ['required', 'string', 'max:50'],
+                'vehicle_model' => ['required', 'string', 'max:255'],
+                'cr_no' => ['required', 'string', 'max:50'],
+                'color_of_vehicle' => ['required', 'string', 'max:100'],
+                'supporting_documents_attachments.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240'
+            ]);
 
-            'plate_number' => ['nullable','array'],
-            'plate_number.*' => ['nullable','string','max:255'],
-            'or_number' => ['nullable','array'],
-            'or_number.*' => ['nullable','string','max:255'],
-            'cr_number' => ['nullable','array'],
-            'cr_number.*' => ['nullable','string','max:255'],
-            'vehicle_model' => ['nullable','array'],
-            'vehicle_model.*' => ['nullable','string','max:255'],
-            'color' => ['nullable','array'],
-            'color.*' => ['nullable','string','max:255'],
-            'sticker_control_number' => ['nullable','array'],
-            'sticker_control_number.*' => ['nullable','string','max:255'],
-        ]);
+            DB::beginTransaction();
 
-        if (empty($validated['user_id']) && empty($validated['non_homeowners'])) {
-            return response()->json(['message' => 'Please select an owner or provide non-homeowner name.'], 422);
+            $vehicle->update([
+                'user_id' => $validated['user_id'],
+                'type_of_vehicle' => $validated['type_of_vehicle'],
+                'status' => $validated['status']
+            ]);
+
+            if ($vehicle->supportingDocuments) {
+                // Get existing files
+                $existingFiles = $vehicle->supportingDocuments->supporting_documents_attachments;
+                $existingFilePaths = $existingFiles ? json_decode($existingFiles, true) : [];
+                
+                // If not an array, convert to array (backward compatibility)
+                if (!is_array($existingFilePaths)) {
+                    $existingFilePaths = $existingFiles ? [$existingFiles] : [];
+                }
+                
+                // Handle multiple file uploads for update
+                if ($request->hasFile('supporting_documents_attachments')) {
+                    // Delete old files
+                    foreach ($existingFilePaths as $oldFile) {
+                        if ($oldFile && Storage::disk('public')->exists($oldFile)) {
+                            Storage::disk('public')->delete($oldFile);
+                        }
+                    }
+                    
+                    // Upload new files
+                    $newFilePaths = [];
+                    foreach ($request->file('supporting_documents_attachments') as $file) {
+                        $fileName = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
+                        $filePath = $file->storeAs('vehicle_documents', $fileName, 'public');
+                        $newFilePaths[] = $filePath;
+                    }
+                    
+                    $existingFilePaths = $newFilePaths;
+                }
+
+                $vehicle->supportingDocuments->update([
+                    'supporting_documents_attachments' => !empty($existingFilePaths) ? json_encode($existingFilePaths) : null,
+                    'status' => $validated['status']
+                ]);
+
+                if ($vehicle->supportingDocuments->vehicleDetails) {
+                    $vehicle->supportingDocuments->vehicleDetails->update([
+                        'plate_number' => $validated['plate_number'],
+                        'or_no' => $validated['or_no'],
+                        'vehicle_model' => $validated['vehicle_model'],
+                        'cr_no' => $validated['cr_no'],
+                        'color_of_vehicle' => $validated['color_of_vehicle'],
+                        'vehicle_sticker_control_no' => null,
+                        'status' => $validated['status']
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Vehicle updated successfully'
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json([
+                'message' => 'Error updating vehicle: ' . $e->getMessage()
+            ], 500);
         }
-
-        $vehicle->update([
-            'user_id' => $validated['user_id'] ?? null,
-            'non_homeowners' => $validated['non_homeowners'] ?? null,
-            'type_of_vehicle' => $validated['type_of_vehicle'],
-            'incase_of_emergency_name' => $request->input('incase_of_emergency_name'),
-            'incase_of_emergency_number' => $request->input('incase_of_emergency_number'),
-            'status' => $validated['status'],
-        ]);
-
-        // Replace details with submitted rows
-        VehicleDetail::where('vehicle_management_id', $vehicle->id)->delete();
-        $plates = $request->input('plate_number', []);
-        $ors = $request->input('or_number', []);
-        $crs = $request->input('cr_number', []);
-        $models = $request->input('vehicle_model', []);
-        $colors = $request->input('color', []);
-        $stickers = $request->input('sticker_control_number', []);
-        $max = max(
-            count((array)$plates),
-            count((array)$ors),
-            count((array)$crs),
-            count((array)$models),
-            count((array)$colors),
-            count((array)$stickers)
-        );
-        for ($i = 0; $i < $max; $i++) {
-            $row = [
-                'plate_number' => $plates[$i] ?? null,
-                'or_number' => $ors[$i] ?? null,
-                'cr_number' => $crs[$i] ?? null,
-                'vehicle_model' => $models[$i] ?? null,
-                'color' => $colors[$i] ?? null,
-                'sticker_control_number' => $stickers[$i] ?? null,
-            ];
-            if (!array_filter($row)) { continue; }
-            VehicleDetail::create(array_merge($row, [
-                'vehicle_management_id' => $vehicle->id,
-                'status' => 'active',
-            ]));
-        }
-
-        return response()->json(['message' => 'Vehicle updated']);
     }
 
-    public function destroy(VehicleManagement $vehicle)
+    public function destroy($id)
     {
-        VehicleDetail::where('vehicle_management_id', $vehicle->id)->delete();
-        $vehicle->delete();
-        return response()->json(['message' => 'Vehicle deleted']);
+        try {
+            DB::beginTransaction();
+            
+            $vehicle = vehicle_homeowners::findOrFail($id);
+            
+            // Soft delete the vehicle and all related records
+            if ($vehicle->supportingDocuments) {
+                // Soft delete vehicle details first
+                if ($vehicle->supportingDocuments->vehicleDetails) {
+                    $vehicle->supportingDocuments->vehicleDetails->delete();
+                }
+                
+                // Soft delete supporting documents
+                $vehicle->supportingDocuments->delete();
+            }
+            
+            // Finally, soft delete the main vehicle record
+            $vehicle->delete();
+            
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Vehicle deleted successfully'
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json([
+                'message' => 'Error deleting vehicle: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

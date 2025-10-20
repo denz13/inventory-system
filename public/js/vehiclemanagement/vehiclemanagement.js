@@ -34,6 +34,81 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+    // Search functionality
+    const searchInput = document.getElementById('searchInput');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            applySearch();
+        });
+    }
+
+    // Apply search filter
+    function applySearch() {
+        const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        const tbody = document.querySelector('#vehicleTable tbody');
+        const vehicleRows = Array.from(document.querySelectorAll('#vehicleTable tbody tr.intro-x'));
+        
+        if (vehicleRows.length === 0) return;
+        
+        let visibleCount = 0;
+        
+        vehicleRows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            
+            // Check search match
+            const matchesSearch = searchTerm === '' || text.includes(searchTerm);
+            
+            // Show/hide row based on search
+            if (matchesSearch) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        // Update filtered count
+        const filteredCountElement = document.querySelector('.hidden.md\\:block .text-slate-500');
+        if (filteredCountElement && searchTerm !== '') {
+            filteredCountElement.textContent = `Showing ${visibleCount} of ${vehicleRows.length} entries`;
+        }
+        
+        // Show/hide no results message
+        updateNoResultsMessage(searchTerm, visibleCount, vehicleRows.length, tbody);
+    }
+
+    // Update no results message
+    function updateNoResultsMessage(searchTerm, visibleCount, totalRows, tbody) {
+        let noDataRow = tbody?.querySelector('tr.no-data-found');
+        
+        // Remove existing no data row if it exists
+        if (noDataRow) {
+            noDataRow.remove();
+        }
+        
+        // Check if we should show "no results" message
+        const hasActiveSearch = searchTerm !== '';
+        
+        if (visibleCount === 0 && hasActiveSearch && totalRows > 0 && tbody) {
+            // Create new no data row
+            noDataRow = document.createElement('tr');
+            noDataRow.className = 'no-data-found';
+            noDataRow.innerHTML = `
+                <td colspan="11" class="text-center py-8">
+                    <div class="text-slate-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
+                            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <div class="font-medium">No vehicles found</div>
+                        <div class="text-sm">No vehicles match your search. Try adjusting your search terms.</div>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(noDataRow);
+        }
+    }
+
   // Bind type-of-vehicle radio to hidden inputs (Add)
   function bindTypeRadios(groupName, hiddenId, otherWrapId, otherInputId) {
     var radios = document.querySelectorAll('input[name="'+groupName+'"]');
@@ -57,80 +132,47 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   bindTypeRadios('add_type_of_vehicle_opt','add_type_of_vehicle','add_other_type_wrap','add_other_type');
+  bindTypeRadios('edit_type_of_vehicle_opt','edit_type_of_vehicle','edit_other_type_wrap','edit_other_type');
 
-  // Owner type toggle (Add modal)
-  (function(){
-    var radios = document.querySelectorAll('input[name="add_owner_type"]');
-    var homeownerWrap = document.getElementById('add_homeowner_wrap');
-    var nonHomeWrap = document.getElementById('add_non_homeowner_wrap');
-    var nhSurname = document.getElementById('add_nh_surname');
-    var nhFirstname = document.getElementById('add_nh_firstname');
-    var nhMiddlename = document.getElementById('add_nh_middlename');
-    var nhHidden = document.getElementById('add_non_homeowners');
-    var userSelect = document.getElementById('add_user_id');
-    if (!radios.length) return;
-
-    function applyState(val){
-      var isNH = (val === 'non_homeowner');
-      if (homeownerWrap) homeownerWrap.classList.toggle('hidden', isNH);
-      if (nonHomeWrap) nonHomeWrap.classList.toggle('hidden', !isNH);
-      if (userSelect) userSelect.required = !isNH;
-      if (nhSurname) nhSurname.required = isNH;
-      if (nhFirstname) nhFirstname.required = isNH;
-      // build hidden combined value
-      function updateHidden(){
-        if (!nhHidden) return;
-        var parts = [];
-        if (nhSurname && nhSurname.value) parts.push(nhSurname.value);
-        if (nhFirstname && nhFirstname.value) parts.push(nhFirstname.value);
-        if (nhMiddlename && nhMiddlename.value) parts.push(nhMiddlename.value);
-        nhHidden.value = parts.join(', ');
+  // File input handlers
+  const addFileInput = document.getElementById('addSupportingDocuments');
+  if (addFileInput) {
+    addFileInput.addEventListener('change', function() {
+      const files = this.files;
+      const fileInfo = document.getElementById('addFileInfo');
+      if (files && files.length > 0 && fileInfo) {
+        let fileList = '';
+        let totalSize = 0;
+        for (let i = 0; i < files.length; i++) {
+          totalSize += files[i].size;
+          fileList += `<div>${i + 1}. ${files[i].name} (${(files[i].size / 1024 / 1024).toFixed(2)} MB)</div>`;
+        }
+        fileInfo.innerHTML = `<div class="font-medium mb-1">Selected ${files.length} file(s):</div>${fileList}<div class="mt-1 font-medium">Total size: ${(totalSize / 1024 / 1024).toFixed(2)} MB</div>`;
+        fileInfo.style.display = 'block';
+      } else if (fileInfo) {
+        fileInfo.style.display = 'none';
       }
-      if (isNH) {
-        [nhSurname, nhFirstname, nhMiddlename].forEach(function(el){ if (el) el.addEventListener('input', updateHidden); });
-        updateHidden();
-      } else {
-        if (nhHidden) nhHidden.value = '';
-        [nhSurname, nhFirstname, nhMiddlename].forEach(function(el){ if (el) el && (el.value = ''); });
-      }
-    }
-
-    radios.forEach(function(r){
-      r.addEventListener('change', function(){ applyState(this.value); });
-      if (r.checked) applyState(r.value);
-    });
-  })();
-
-  // Repeater for details
-  var addDetailBtn = document.getElementById('addDetailRow');
-  if (addDetailBtn) {
-    addDetailBtn.addEventListener('click', function () {
-      var container = document.getElementById('vehicleDetailsRepeater');
-      if (!container) return;
-      var groups = container.getElementsByClassName('vehicle-detail-group');
-      var last = groups[groups.length - 1];
-      var clone = last.cloneNode(true);
-      // clear inputs
-      Array.from(clone.querySelectorAll('input')).forEach(function (inp) { inp.value = ''; });
-      // show remove button
-      var rm = clone.querySelector('.remove-detail');
-      if (rm) rm.classList.remove('hidden');
-      container.appendChild(clone);
     });
   }
 
-  document.addEventListener('click', function (e) {
-    var rmBtn = e.target.closest('.remove-detail');
-    if (!rmBtn) return;
-    var group = rmBtn.closest('.vehicle-detail-group');
-    if (!group) return;
-    var container = document.getElementById('vehicleDetailsRepeater');
-    if (!container) return;
-    // keep at least one group
-    if (container.getElementsByClassName('vehicle-detail-group').length > 1) {
-      container.removeChild(group);
-    }
-  });
+  const editFileInput = document.getElementById('editSupportingDocuments');
+  if (editFileInput) {
+    editFileInput.addEventListener('change', function() {
+      const files = this.files;
+      const fileInfo = document.getElementById('editFileInfo');
+      if (files && files.length > 0 && fileInfo) {
+        let fileList = '';
+        let totalSize = 0;
+        for (let i = 0; i < files.length; i++) {
+          totalSize += files[i].size;
+          fileList += `<div>${i + 1}. ${files[i].name} (${(files[i].size / 1024 / 1024).toFixed(2)} MB)</div>`;
+        }
+        fileInfo.innerHTML = `<div class="font-medium mb-1">New ${files.length} file(s) selected:</div>${fileList}<div class="mt-1 font-medium">Total size: ${(totalSize / 1024 / 1024).toFixed(2)} MB</div>`;
+        fileInfo.style.display = 'block';
+      }
+    });
+  }
+
 
   if (table) {
     table.addEventListener('click', async function (e) {
@@ -152,32 +194,64 @@ document.addEventListener('DOMContentLoaded', function () {
           const resp = await fetch('/vehicle-management/' + id);
           if (!resp.ok) throw new Error(await resp.text());
           const data = await resp.json();
+          
+          console.log('View data received:', data);
+          
           const v = data.vehicle || {};
-          const details = Array.isArray(data.details) ? data.details : [];
-          var ownerName = (v.user && v.user.name) ? v.user.name : '';
-          var setText = function (id, value) { var el = document.getElementById(id); if (el) el.textContent = value || ''; };
-          setText('view_type_of_vehicle_text', v.type_of_vehicle);
-          setText('view_owner_name_text', ownerName);
-          setText('view_emergency_name_text', v.incase_of_emergency_name);
-          setText('view_emergency_number_text', v.incase_of_emergency_number);
-          setText('view_status_text', v.status);
-          var tbody = document.getElementById('viewDetailsTableBody');
-          if (tbody) {
-            tbody.innerHTML = '';
-            details.forEach(function (d) {
-              var tr = document.createElement('tr');
-              tr.innerHTML = '<td>'+(d.plate_number||'')+'</td>'+
-                             '<td>'+(d.or_number||'')+'</td>'+
-                             '<td>'+(d.cr_number||'')+'</td>'+
-                             '<td>'+(d.vehicle_model||'')+'</td>'+
-                             '<td>'+(d.color||'')+'</td>'+
-                             '<td>'+(d.sticker_control_number||'')+'</td>';
-              tbody.appendChild(tr);
-            });
+          const supportingDocs = data.supporting_documents || {};
+          const details = data.vehicle_details || {};
+          
+          var setValue = function (id, value) { 
+            var el = document.getElementById(id); 
+            if (el) {
+              el.value = value || 'N/A';
+            }
+          };
+          
+          setValue('view_type_of_vehicle_text', v.type_of_vehicle);
+          setValue('view_owner_name_text', v.user?.name || 'N/A');
+          setValue('view_plate_number', details.plate_number);
+          setValue('view_vehicle_model', details.vehicle_model);
+          setValue('view_or_no', details.or_no);
+          setValue('view_cr_no', details.cr_no);
+          setValue('view_color_of_vehicle', details.color_of_vehicle);
+          setValue('view_vehicle_sticker_control_no', details.sticker_control?.control_number || '-');
+          setValue('view_status_text', v.status);
+          
+          // Handle multiple files
+          const docsDiv = document.getElementById('view_supporting_documents');
+          if (docsDiv) {
+            let supportingDoc = 'No files uploaded';
+            if (supportingDocs.supporting_documents_attachments) {
+              try {
+                const files = JSON.parse(supportingDocs.supporting_documents_attachments);
+                if (Array.isArray(files) && files.length > 0) {
+                  supportingDoc = files.map((file, index) => {
+                    const fileName = file.split('/').pop();
+                    return `<div class="mb-1"><a href="/storage/${file}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">${index + 1}. ${fileName}</a></div>`;
+                  }).join('');
+                } else {
+                  supportingDoc = `<a href="/storage/${supportingDocs.supporting_documents_attachments}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">View Document</a>`;
+                }
+              } catch (e) {
+                supportingDoc = `<a href="/storage/${supportingDocs.supporting_documents_attachments}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">View Document</a>`;
+              }
+            }
+            docsDiv.innerHTML = supportingDoc;
           }
-          // ensure modal is shown in case the theme expects manual trigger
-          var viewModal = document.getElementById('view-vehicle-modal');
-          if (viewModal) viewModal.dispatchEvent(new CustomEvent('modal-show'));
+          
+          // Show the modal using the proper method
+          if (typeof modal_show === 'function') {
+            modal_show('#view-vehicle-modal');
+          } else {
+            // Fallback: try to trigger the modal manually
+            const viewModal = document.getElementById('view-vehicle-modal');
+            if (viewModal) {
+              viewModal.style.display = 'block';
+              viewModal.classList.add('show');
+              document.body.classList.add('modal-open');
+            }
+          }
         } catch (err) {
           console.error(err);
           var slot = document.getElementById('users-error-message-slot');
@@ -193,101 +267,73 @@ document.addEventListener('DOMContentLoaded', function () {
           if (!resp.ok) throw new Error(await resp.text());
           const data = await resp.json();
           const v = data.vehicle || {};
-          const details = Array.isArray(data.details) ? data.details : [];
+          const details = data.vehicle_details || {};
+          const supportingDocs = data.supporting_documents || {};
+          
           var setVal = function (id, value) { var el = document.getElementById(id); if (el) el.value = value || ''; };
           setVal('editVehicleId', v.id);
-          setVal('edit_type_of_vehicle', v.type_of_vehicle);
-          // set radio group for edit by value
+          setVal('edit_user_id', v.user_id);
+          setVal('edit_status', v.status || 'Pending');
+          
+          // Set vehicle type radio buttons
+          var vehicleType = v.type_of_vehicle || '';
           var editRadios = document.querySelectorAll('input[name="edit_type_of_vehicle_opt"]');
-          editRadios.forEach(function(r){ r.checked = (r.value === v.type_of_vehicle); });
-          // handle others
-          if ([].every ? [].every.call(editRadios, function(r){ return r.value !== v.type_of_vehicle; }) : true) {
-            // if value not in preset, select others and show input
+          var foundMatch = false;
+          editRadios.forEach(function(r){ 
+            r.checked = false;
+            if (r.value === vehicleType) {
+              r.checked = true;
+              foundMatch = true;
+            }
+          });
+          
+          // If type doesn't match preset options, select "others" and show input
+          if (!foundMatch && vehicleType) {
             editRadios.forEach(function(r){ if (r.value === 'others') r.checked = true; });
             var wrap = document.getElementById('edit_other_type_wrap');
             if (wrap) wrap.classList.remove('hidden');
             var other = document.getElementById('edit_other_type');
-            if (other) other.value = v.type_of_vehicle || '';
-          }
-          setVal('edit_user_id', v.user_id);
-          setVal('edit_incase_of_emergency_name', v.incase_of_emergency_name);
-          setVal('edit_incase_of_emergency_number', v.incase_of_emergency_number);
-          setVal('edit_status', v.status || 'active');
-
-          // Owner type (edit)
-          var editOwnerRadios = document.querySelectorAll('input[name="edit_owner_type"]');
-          var editHomeWrap = document.getElementById('edit_homeowner_wrap');
-          var editNonWrap = document.getElementById('edit_non_homeowner_wrap');
-          var nhSurname = document.getElementById('edit_nh_surname');
-          var nhFirstname = document.getElementById('edit_nh_firstname');
-          var nhMiddlename = document.getElementById('edit_nh_middlename');
-          var nhHidden = document.getElementById('edit_non_homeowners');
-          function setNHHidden(){
-            if (!nhHidden) return;
-            var parts = [];
-            if (nhSurname && nhSurname.value) parts.push(nhSurname.value);
-            if (nhFirstname && nhFirstname.value) parts.push(nhFirstname.value);
-            if (nhMiddlename && nhMiddlename.value) parts.push(nhMiddlename.value);
-            nhHidden.value = parts.join(', ');
-          }
-          var useNonHomeowner = !!v.non_homeowners && !v.user_id;
-          editOwnerRadios.forEach(function(r){ r.checked = (r.value === (useNonHomeowner ? 'non_homeowner' : 'homeowner')); });
-          if (editHomeWrap) editHomeWrap.classList.toggle('hidden', useNonHomeowner);
-          if (editNonWrap) editNonWrap.classList.toggle('hidden', !useNonHomeowner);
-          if (useNonHomeowner) {
-            var parts = (v.non_homeowners || '').split(',').map(function(s){return s.trim();});
-            if (nhSurname) nhSurname.value = parts[0] || '';
-            if (nhFirstname) nhFirstname.value = parts[1] || '';
-            if (nhMiddlename) nhMiddlename.value = parts[2] || '';
-            setNHHidden();
+            if (other) other.value = vehicleType;
+            document.getElementById('edit_type_of_vehicle').value = vehicleType;
           } else {
-            if (nhSurname) nhSurname.value = '';
-            if (nhFirstname) nhFirstname.value = '';
-            if (nhMiddlename) nhMiddlename.value = '';
-            if (nhHidden) nhHidden.value = '';
+            var wrap = document.getElementById('edit_other_type_wrap');
+            if (wrap) wrap.classList.add('hidden');
+            document.getElementById('edit_type_of_vehicle').value = vehicleType;
           }
-
-          // populate details repeater
-          var container = document.getElementById('editVehicleDetailsRepeater');
-          if (container) {
-            // remove all groups except the first template
-            var groups = container.getElementsByClassName('vehicle-detail-group');
-            // reset to a single template group
-            while (groups.length > 1) {
-              container.removeChild(groups[groups.length - 1]);
-            }
-            var template = groups[0];
-            // clear template inputs
-            Array.from(template.querySelectorAll('input')).forEach(function (inp) { inp.value = ''; });
-            template.querySelector('.remove-detail')?.classList.add('hidden');
-
-            if (details.length === 0) {
-              return;
-            }
-            // fill first using template
-            var first = details[0] || {};
-            var tinputs = template.querySelectorAll('input');
-            template.querySelector('input[name="plate_number[]"]').value = first.plate_number || '';
-            template.querySelector('input[name="or_number[]"]').value = first.or_number || '';
-            template.querySelector('input[name="cr_number[]"]').value = first.cr_number || '';
-            template.querySelector('input[name="vehicle_model[]"]').value = first.vehicle_model || '';
-            template.querySelector('input[name="color[]"]').value = first.color || '';
-            template.querySelector('input[name="sticker_control_number[]"]').value = first.sticker_control_number || '';
-
-            for (var i = 1; i < details.length; i++) {
-              var row = details[i] || {};
-              var clone = template.cloneNode(true);
-              clone.querySelector('input[name="plate_number[]"]').value = row.plate_number || '';
-              clone.querySelector('input[name="or_number[]"]').value = row.or_number || '';
-              clone.querySelector('input[name="cr_number[]"]').value = row.cr_number || '';
-              clone.querySelector('input[name="vehicle_model[]"]').value = row.vehicle_model || '';
-              clone.querySelector('input[name="color[]"]').value = row.color || '';
-              clone.querySelector('input[name="sticker_control_number[]"]').value = row.sticker_control_number || '';
-              var rm = clone.querySelector('.remove-detail');
-              if (rm) rm.classList.remove('hidden');
-              container.appendChild(clone);
+          
+          // Populate vehicle details
+          setVal('edit_plate_number', details.plate_number);
+          setVal('edit_or_no', details.or_no);
+          setVal('edit_cr_no', details.cr_no);
+          setVal('edit_vehicle_model', details.vehicle_model);
+          setVal('edit_color_of_vehicle', details.color_of_vehicle);
+          setVal('edit_vehicle_sticker_control_no', details.vehicle_sticker_control_no);
+          
+          // Show current files
+          const fileInfoDiv = document.getElementById('editFileInfo');
+          if (fileInfoDiv && supportingDocs.supporting_documents_attachments) {
+            try {
+              const files = JSON.parse(supportingDocs.supporting_documents_attachments);
+              if (Array.isArray(files) && files.length > 0) {
+                let fileList = '';
+                files.forEach((file, index) => {
+                  const fileName = file.split('/').pop();
+                  fileList += `<div class="mb-1"><a href="/storage/${file}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">${index + 1}. ${fileName}</a></div>`;
+                });
+                fileInfoDiv.innerHTML = `<div class="font-medium mb-1">Current files (${files.length}):</div>${fileList}`;
+                fileInfoDiv.style.display = 'block';
+              } else {
+                const fileName = supportingDocs.supporting_documents_attachments.split('/').pop();
+                fileInfoDiv.innerHTML = `Current file: <a href="/storage/${supportingDocs.supporting_documents_attachments}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">${fileName}</a>`;
+                fileInfoDiv.style.display = 'block';
+              }
+            } catch (e) {
+              const fileName = supportingDocs.supporting_documents_attachments.split('/').pop();
+              fileInfoDiv.innerHTML = `Current file: <a href="/storage/${supportingDocs.supporting_documents_attachments}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">${fileName}</a>`;
+              fileInfoDiv.style.display = 'block';
             }
           }
+          
         } catch (err) {
           console.error(err);
           var slot = document.getElementById('users-error-message-slot');
@@ -338,61 +384,342 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // Edit repeater add/remove
-  var editAddDetailBtn = document.getElementById('editAddDetailRow');
-  if (editAddDetailBtn) {
-    editAddDetailBtn.addEventListener('click', function () {
-      var container = document.getElementById('editVehicleDetailsRepeater');
-      if (!container) return;
-      var groups = container.getElementsByClassName('vehicle-detail-group');
-      var last = groups[groups.length - 1];
-      var clone = last.cloneNode(true);
-      Array.from(clone.querySelectorAll('input')).forEach(function (inp) { inp.value = ''; });
-      clone.querySelector('.remove-detail')?.classList.remove('hidden');
-      container.appendChild(clone);
-    });
-  }
-
-  document.addEventListener('click', function (e) {
-    var rmBtn = e.target.closest('#editVehicleDetailsRepeater .remove-detail');
-    if (!rmBtn) return;
-    var group = rmBtn.closest('.vehicle-detail-group');
-    var container = document.getElementById('editVehicleDetailsRepeater');
-    if (container && container.getElementsByClassName('vehicle-detail-group').length > 1) {
-      container.removeChild(group);
+  // Event listeners for approve/decline actions
+  document.addEventListener('click', function(e) {
+    if (e.target.matches('[data-action="approve"]')) {
+      const vehicleId = e.target.getAttribute('data-vehicle-id');
+      console.log('Approve clicked for vehicle ID:', vehicleId);
+      approveVehicle(vehicleId);
+    }
+    
+    if (e.target.matches('[data-action="decline"]')) {
+      const vehicleId = e.target.getAttribute('data-vehicle-id');
+      console.log('Decline clicked for vehicle ID:', vehicleId);
+      declineVehicle(vehicleId);
     }
   });
 
-  // Owner type toggle in Edit modal (user switch manual when editing)
-  (function(){
-    var radios = document.querySelectorAll('input[name="edit_owner_type"]');
-    var homeWrap = document.getElementById('edit_homeowner_wrap');
-    var nhWrap = document.getElementById('edit_non_homeowner_wrap');
-    var nhSurname = document.getElementById('edit_nh_surname');
-    var nhFirstname = document.getElementById('edit_nh_firstname');
-    var nhMiddlename = document.getElementById('edit_nh_middlename');
-    var nhHidden = document.getElementById('edit_non_homeowners');
-    var userSelect = document.getElementById('edit_user_id');
-    if (!radios.length) return;
-    function updateHidden(){
-      if (!nhHidden) return;
-      var parts = [];
-      if (nhSurname && nhSurname.value) parts.push(nhSurname.value);
-      if (nhFirstname && nhFirstname.value) parts.push(nhFirstname.value);
-      if (nhMiddlename && nhMiddlename.value) parts.push(nhMiddlename.value);
-      nhHidden.value = parts.join(', ');
+  // Approve vehicle function
+  function approveVehicle(vehicleId) {
+    console.log('approveVehicle called with ID:', vehicleId);
+    
+    // Set the vehicle ID first
+    const approveIdInput = document.getElementById('approveVehicleId');
+    if (approveIdInput) {
+      approveIdInput.value = vehicleId;
+      console.log('Approve Vehicle ID set to:', approveIdInput.value);
+    } else {
+      console.error('approveVehicleId input not found!');
+      return;
     }
-    function apply(val){
-      var isNH = (val === 'non_homeowner');
-      if (homeWrap) homeWrap.classList.toggle('hidden', isNH);
-      if (nhWrap) nhWrap.classList.toggle('hidden', !isNH);
-      if (userSelect) userSelect.required = !isNH;
-      if (nhSurname) nhSurname.required = isNH;
-      if (nhFirstname) nhFirstname.required = isNH;
-      updateHidden();
+    
+    // Check if modal exists
+    const modal = document.getElementById('approve-confirmation-modal');
+    if (!modal) {
+      console.error('approve-confirmation-modal not found!');
+      return;
     }
-    radios.forEach(function(r){ r.addEventListener('change', function(){ apply(this.value); }); });
-  })();
+    console.log('Approve modal found:', modal);
+    
+    // Use Tailwind's modal system properly
+    // Create a temporary button with data-tw-toggle and data-tw-target
+    const tempButton = document.createElement('button');
+    tempButton.setAttribute('data-tw-toggle', 'modal');
+    tempButton.setAttribute('data-tw-target', '#approve-confirmation-modal');
+    tempButton.style.display = 'none';
+    
+    // Add to DOM, click it, then remove it
+    document.body.appendChild(tempButton);
+    tempButton.click();
+    document.body.removeChild(tempButton);
+    
+    console.log('Modal should now be visible using Tailwind system');
+  }
+
+  // Decline vehicle function
+  function declineVehicle(vehicleId) {
+    console.log('declineVehicle called with ID:', vehicleId);
+    
+    // Set the vehicle ID first
+    const declineIdInput = document.getElementById('declineVehicleId');
+    if (declineIdInput) {
+      declineIdInput.value = vehicleId;
+      console.log('Decline Vehicle ID set to:', declineIdInput.value);
+    } else {
+      console.error('declineVehicleId input not found!');
+      return;
+    }
+    
+    // Check if modal exists
+    const modal = document.getElementById('decline-reason-modal');
+    if (!modal) {
+      console.error('decline-reason-modal not found!');
+      return;
+    }
+    console.log('Decline modal found:', modal);
+    
+    // Use Tailwind's modal system properly
+    // Create a temporary button with data-tw-toggle and data-tw-target
+    const tempButton = document.createElement('button');
+    tempButton.setAttribute('data-tw-toggle', 'modal');
+    tempButton.setAttribute('data-tw-target', '#decline-reason-modal');
+    tempButton.style.display = 'none';
+    
+    // Add to DOM, click it, then remove it
+    document.body.appendChild(tempButton);
+    tempButton.click();
+    document.body.removeChild(tempButton);
+    
+    console.log('Modal should now be visible using Tailwind system');
+  }
+
+  // Confirm approve function
+  window.confirmApprove = function() {
+    const vehicleId = document.getElementById('approveVehicleId').value;
+    
+    // Show loading state
+    const approveBtn = document.querySelector('#approve-confirmation-modal .btn-success');
+    const originalText = approveBtn.innerHTML;
+    approveBtn.innerHTML = `
+      <svg class="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      Approving...
+    `;
+    approveBtn.disabled = true;
+    
+    fetch(`/vehicle-management/${vehicleId}/approve`, {
+      method: 'POST',
+      headers: {
+        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.message) {
+        // Close approve confirmation modal
+        const modal = document.getElementById('approve-confirmation-modal');
+        if (modal) {
+          const dismissBtn = modal.querySelector('[data-tw-dismiss="modal"]');
+          if (dismissBtn) dismissBtn.click();
+        }
+        
+        // Show valid until modal with control number
+        if (data.control_number && data.sticker_id) {
+          document.getElementById('displayControlNumber').textContent = data.control_number;
+          document.getElementById('validUntilStickerId').value = data.sticker_id;
+          
+          // Set minimum date to tomorrow
+          const tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          document.getElementById('validUntilDate').min = tomorrow.toISOString().split('T')[0];
+          
+          // Show valid until modal
+          const validUntilModal = document.getElementById('valid-until-modal');
+          if (validUntilModal) {
+            const tempButton = document.createElement('button');
+            tempButton.setAttribute('data-tw-toggle', 'modal');
+            tempButton.setAttribute('data-tw-target', '#valid-until-modal');
+            tempButton.style.display = 'none';
+            
+            document.body.appendChild(tempButton);
+            tempButton.click();
+            document.body.removeChild(tempButton);
+          }
+        } else {
+          // Fallback if no control number generated
+          showToast(data.message, 'success');
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
+        }
+      } else if (data.error) {
+        // Show error notification
+        showToast(data.error, 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Error approving vehicle:', error);
+      // Show error notification
+      showToast('Error approving vehicle. Please try again.', 'error');
+    })
+    .finally(() => {
+      // Reset button state
+      approveBtn.innerHTML = originalText;
+      approveBtn.disabled = false;
+    });
+  };
+
+  // Confirm valid until function
+  window.confirmValidUntil = function() {
+    const stickerId = document.getElementById('validUntilStickerId').value;
+    const validUntil = document.getElementById('validUntilDate').value;
+    
+    if (!validUntil) {
+      showToast('Please select a validity date', 'error');
+      return;
+    }
+    
+    // Show loading state
+    const setDateBtn = document.querySelector('#valid-until-modal .btn-success');
+    const originalText = setDateBtn.innerHTML;
+    setDateBtn.innerHTML = `
+      <svg class="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      Setting...
+    `;
+    setDateBtn.disabled = true;
+    
+    fetch(`/vehicle-management/sticker/${stickerId}/valid-until`, {
+      method: 'POST',
+      headers: {
+        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        valid_until: validUntil
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.message) {
+        // Show success notification
+        showToast(data.message, 'success');
+        // Close modal and reload page after delay
+        const modal = document.getElementById('valid-until-modal');
+        if (modal) {
+          const dismissBtn = modal.querySelector('[data-tw-dismiss="modal"]');
+          if (dismissBtn) dismissBtn.click();
+        }
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else if (data.error) {
+        // Show error notification
+        showToast(data.error, 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Error setting validity date:', error);
+      // Show error notification
+      showToast('Error setting validity date. Please try again.', 'error');
+    })
+    .finally(() => {
+      // Reset button state
+      setDateBtn.innerHTML = originalText;
+      setDateBtn.disabled = false;
+    });
+  };
+
+  // Confirm decline function
+  window.confirmDecline = function() {
+    const vehicleId = document.getElementById('declineVehicleId').value;
+    const reason = document.getElementById('declineReason').value;
+    
+    if (!reason.trim()) {
+      // Show error notification for missing reason
+      showToast('Please provide a reason for declining.', 'error');
+      return;
+    }
+    
+    // Show loading state
+    const declineBtn = document.querySelector('#decline-reason-modal .btn-danger');
+    const originalText = declineBtn.innerHTML;
+    declineBtn.innerHTML = `
+      <svg class="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      Declining...
+    `;
+    declineBtn.disabled = true;
+    
+    const formData = new FormData();
+    formData.append('reason', reason);
+    formData.append('_token', document.querySelector('input[name="_token"]').value);
+    
+    fetch(`/vehicle-management/${vehicleId}/decline`, {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.message) {
+        // Show success notification
+        showToast(data.message, 'success');
+        // Close modal and reload page after delay
+        const modal = document.getElementById('decline-reason-modal');
+        if (modal) {
+          const dismissBtn = modal.querySelector('[data-tw-dismiss="modal"]');
+          if (dismissBtn) dismissBtn.click();
+        }
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else if (data.error) {
+        // Show error notification
+        showToast(data.error, 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Error declining vehicle:', error);
+      // Show error notification
+      showToast('Error declining vehicle. Please try again.', 'error');
+    })
+    .finally(() => {
+      // Reset button state
+      declineBtn.innerHTML = originalText;
+      declineBtn.disabled = false;
+    });
+  };
+
+  // Toast notification function
+  function showToast(message, type = 'success') {
+    const toastId = type === 'success' ? 'vehicle_management_toast_success' : 'vehicle_management_toast_error';
+    
+    if (type === 'success') {
+      // Update success message slot with the actual success message
+      const successMessageSlot = document.getElementById('vehicle-management-success-message-slot');
+      if (successMessageSlot) {
+        successMessageSlot.textContent = message;
+      }
+    } else if (type === 'error') {
+      // Update error message slot with the actual error message
+      const errorMessageSlot = document.getElementById('vehicle-management-error-message-slot');
+      if (errorMessageSlot) {
+        errorMessageSlot.textContent = message;
+      }
+    }
+    
+    // Use your notification-toast component's show function
+    try {
+      if (window[`showNotification_${toastId}`]) {
+        window[`showNotification_${toastId}`]();
+      } else {
+        // Fallback: use Toastify if available
+        if (typeof Toastify !== 'undefined') {
+          Toastify({
+            text: message,
+            duration: 2000,
+            gravity: "top",
+            position: "right",
+            backgroundColor: type === 'success' ? "#10b981" : "#ef4444",
+            stopOnFocus: true,
+          }).showToast();
+        } else {
+          // Ultimate fallback
+          console.log(`${type.toUpperCase()}:`, message);
+        }
+      }
+    } catch (error) {
+      console.error('Error showing toast:', error);
+      console.log(`${type.toUpperCase()}:`, message);
+    }
+  }
+
 });
 
 

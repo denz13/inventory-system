@@ -11,6 +11,7 @@ use App\Models\Notification;
 use App\Models\notification_settings;
 use App\Models\module;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class BillingManagementController extends Controller
 {
@@ -19,7 +20,81 @@ class BillingManagementController extends Controller
         $billings = tbl_billing_management::with(['user', 'billingItems'])->paginate(10);
         $users = User::all();
         
-        return view('billing-management.billing-management', compact('billings', 'users'));
+        // Get distinct roles from users table
+        $roles = User::select('role')
+            ->distinct()
+            ->whereNotNull('role')
+            ->where('role', '!=', '')
+            ->orderBy('role')
+            ->pluck('role');
+        
+        return view('billing-management.billing-management', compact('billings', 'users', 'roles'));
+    }
+
+    /**
+     * Get user's billing date range based on registration or reactivation
+     */
+    public function getUserBillingDateRange($userId)
+    {
+        try {
+            $user = User::findOrFail($userId);
+            
+            // Determine if user was reactivated by checking if updated_at is significantly after created_at
+            $createdAt = Carbon::parse($user->created_at);
+            $updatedAt = Carbon::parse($user->updated_at);
+            
+            // If updated_at is more than 1 day after created_at, consider it a reactivation
+            $isReactivated = $updatedAt->diffInDays($createdAt) > 1;
+            
+            // Use updated_at for reactivated users, created_at for new registrations
+            $startDate = $isReactivated ? $updatedAt : $createdAt;
+            
+            // Calculate billing date range (1 month span from the exact start date)
+            $billingStartDate = $startDate->copy(); // Start from the exact date
+            $billingEndDate = $startDate->copy()->addMonth()->subDay(); // End one month later minus 1 day
+            
+            // Format dates for display
+            $formattedStartDate = $billingStartDate->format('d M, Y');
+            $formattedEndDate = $billingEndDate->format('d M, Y');
+            
+            \Log::info('User billing date range calculated', [
+                'user_id' => $userId,
+                'user_name' => $user->name,
+                'created_at' => $createdAt->format('Y-m-d H:i:s'),
+                'updated_at' => $updatedAt->format('Y-m-d H:i:s'),
+                'is_reactivated' => $isReactivated,
+                'base_date' => $startDate->format('Y-m-d H:i:s'),
+                'billing_start' => $formattedStartDate,
+                'billing_end' => $formattedEndDate,
+                'billing_days' => $billingStartDate->diffInDays($billingEndDate) + 1
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'user_id' => $userId,
+                    'user_name' => $user->name,
+                    'start_date' => $formattedStartDate,
+                    'end_date' => $formattedEndDate,
+                    'date_range' => $formattedStartDate . ' - ' . $formattedEndDate,
+                    'is_reactivated' => $isReactivated,
+                    'base_date' => $startDate->format('Y-m-d H:i:s'),
+                    'registration_date' => $createdAt->format('M d, Y'),
+                    'last_update_date' => $updatedAt->format('M d, Y')
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error getting user billing date range', [
+                'user_id' => $userId,
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error calculating billing date range: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

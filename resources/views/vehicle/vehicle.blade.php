@@ -77,8 +77,8 @@
 </div>
 
 <div class="grid grid-cols-12 gap-6 mt-5">
-    <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2">
-        <button class="btn btn-primary shadow-md mr-2" data-tw-toggle="modal" data-tw-target="#create-vehicle-modal">
+    <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2 gap-2">
+        <button class="btn btn-primary shadow-md" data-tw-toggle="modal" data-tw-target="#create-vehicle-modal">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="12" y1="8" x2="12" y2="16"></line>
@@ -87,33 +87,40 @@
             Add Vehicle
         </button>
         
-        <!-- <a href="{{ route('vehicle.trash') }}" class="btn btn-outline-warning shadow-md mr-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
-                <path d="M3 6h18"></path>
-                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-            </svg>
-            View Trash
-        </a> -->
-        
-        <div class="dropdown ml-2"> 
-            <button class="dropdown-toggle btn btn-outline-secondary" aria-expanded="false" data-tw-toggle="dropdown">Filter by Status</button> 
+        <!-- Status Filter -->
+        <div class="dropdown"> 
+            <button class="dropdown-toggle btn btn-outline-secondary" aria-expanded="false" data-tw-toggle="dropdown" id="statusFilterBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+                Status: All
+            </button> 
             <div class="dropdown-menu w-40"> 
                 <ul class="dropdown-content"> 
-                    <li> <a href="javascript:;" class="dropdown-item" data-filter="all">All Vehicles</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="status" data-filter-value="all">All Vehicles</a> </li> 
                     @foreach($statuses as $status)
-                        <li> <a href="javascript:;" class="dropdown-item" data-filter="{{ $status }}">{{ $status }}</a> </li> 
+                        <li> <a href="javascript:;" class="dropdown-item" data-filter-type="status" data-filter-value="{{ $status }}">{{ $status }}</a> </li> 
                     @endforeach
                 </ul> 
             </div> 
         </div>
+
+        <!-- Reset Filters Button -->
+        <button type="button" class="btn btn-outline-danger" id="resetFiltersBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <polyline points="23 20 23 14 17 14"></polyline>
+                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+            </svg>
+            Reset
+        </button>
         
         <div class="hidden md:block mx-auto text-slate-500">
             Showing <span id="filtered-count">{{ $vehicles->count() }}</span> of <span id="total-count">{{ $vehicles->total() }}</span> entries
         </div>
         <div class="w-full sm:w-auto mt-3 sm:mt-0 sm:ml-auto md:ml-0">
             <div class="w-56 relative text-slate-500">
-                <input type="text" class="form-control w-56 box pr-10" placeholder="Search vehicles..." id="searchInput">
+                <input type="text" class="form-control w-56 box pr-10" placeholder="Search vehicles..." id="searchInput" autocomplete="off">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="search" class="lucide lucide-search w-4 h-4 absolute my-auto inset-y-0 mr-3 right-0" data-lucide="search">
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -156,13 +163,14 @@
                         @endif
                     </td>
                     <td class="whitespace-nowrap">
-                        @if($vehicle->supportingDocuments && $vehicle->supportingDocuments->vehicleDetails)
-                            <div class="text-xs">
-                                <div>OR: {{ $vehicle->supportingDocuments->vehicleDetails->or_no }}</div>
-                                <div>CR: {{ $vehicle->supportingDocuments->vehicleDetails->cr_no }}</div>
-                            </div>
+                        @if($vehicle->supportingDocuments && $vehicle->supportingDocuments->supporting_documents_attachments)
+                            @php
+                                $files = json_decode($vehicle->supportingDocuments->supporting_documents_attachments, true);
+                                $fileCount = is_array($files) ? count($files) : 1;
+                            @endphp
+                            <span class="text-xs text-blue-600 font-medium">{{ $fileCount }} file(s)</span>
                         @else
-                            <span class="text-slate-400">No documents</span>
+                            <span class="text-slate-400 text-xs">No files</span>
                         @endif
                     </td>
                     <td class="w-40">
@@ -262,8 +270,18 @@
                     <input type="hidden" name="_token" value="{{ csrf_token() }}">
                     
                     <div class="mb-6">
-                        <label class="form-label text-base font-semibold text-slate-700">Vehicle Type</label>
-                        <input type="text" name="type_of_vehicle" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" placeholder="e.g., Sedan, SUV, Motorcycle" required>
+                        <label class="form-label text-base font-semibold text-slate-700">Type of Vehicle</label>
+                        <div class="flex flex-wrap gap-6 mt-2">
+                            <label class="flex items-center gap-2"><input type="radio" name="add_type_of_vehicle_opt" value="car" class="form-check-input" checked> <span>Car</span></label>
+                            <label class="flex items-center gap-2"><input type="radio" name="add_type_of_vehicle_opt" value="motorcycle" class="form-check-input"> <span>Motorcycle</span></label>
+                            <label class="flex items-center gap-2"><input type="radio" name="add_type_of_vehicle_opt" value="tricycle" class="form-check-input"> <span>Tricycle</span></label>
+                            <label class="flex items-center gap-2"><input type="radio" name="add_type_of_vehicle_opt" value="truck" class="form-check-input"> <span>Truck</span></label>
+                            <label class="flex items-center gap-2"><input type="radio" name="add_type_of_vehicle_opt" value="others" class="form-check-input"> <span>Others</span></label>
+                        </div>
+                        <input type="hidden" id="add_type_of_vehicle" name="type_of_vehicle" value="car">
+                        <div id="add_other_type_wrap" class="mt-2 hidden">
+                            <input type="text" id="add_other_type" class="form-control" placeholder="Specify other type">
+                        </div>
                     </div>
                     
                     <div class="grid grid-cols-12 gap-4 mb-6">
@@ -295,8 +313,8 @@
                     
                     <div class="mb-6">
                         <label class="form-label text-base font-semibold text-slate-700">Supporting Documents</label>
-                        <input type="file" name="supporting_documents_attachments" id="createSupportingDocuments" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
-                        <div class="text-xs text-slate-500 mt-1">Accepted formats: PDF, DOC, DOCX, JPG, JPEG, PNG (Max: 10MB)</div>
+                        <input type="file" name="supporting_documents_attachments[]" id="createSupportingDocuments" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" multiple>
+                        <div class="text-xs text-slate-500 mt-1">You can select multiple files. Accepted formats: PDF, DOC, DOCX, JPG, JPEG, PNG (Max: 10MB per file)</div>
                         <div id="fileInfo" class="text-xs text-blue-600 mt-1" style="display: none;"></div>
                     </div>
                 </form>
@@ -356,8 +374,18 @@
                     <input type="hidden" id="editVehicleId">
                     
                     <div class="mb-6">
-                        <label class="form-label text-base font-semibold text-slate-700">Vehicle Type</label>
-                        <input type="text" name="type_of_vehicle" id="editTypeOfVehicle" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" required>
+                        <label class="form-label text-base font-semibold text-slate-700">Type of Vehicle</label>
+                        <div class="flex flex-wrap gap-6 mt-2">
+                            <label class="flex items-center gap-2"><input type="radio" name="edit_type_of_vehicle_opt" value="car" class="form-check-input"> <span>Car</span></label>
+                            <label class="flex items-center gap-2"><input type="radio" name="edit_type_of_vehicle_opt" value="motorcycle" class="form-check-input"> <span>Motorcycle</span></label>
+                            <label class="flex items-center gap-2"><input type="radio" name="edit_type_of_vehicle_opt" value="tricycle" class="form-check-input"> <span>Tricycle</span></label>
+                            <label class="flex items-center gap-2"><input type="radio" name="edit_type_of_vehicle_opt" value="truck" class="form-check-input"> <span>Truck</span></label>
+                            <label class="flex items-center gap-2"><input type="radio" name="edit_type_of_vehicle_opt" value="others" class="form-check-input"> <span>Others</span></label>
+                        </div>
+                        <input type="hidden" id="edit_type_of_vehicle" name="type_of_vehicle">
+                        <div id="edit_other_type_wrap" class="mt-2 hidden">
+                            <input type="text" id="edit_other_type" class="form-control" placeholder="Specify other type">
+                        </div>
                     </div>
                     
                     <div class="grid grid-cols-12 gap-4 mb-6">
@@ -389,8 +417,8 @@
                     
                     <div class="mb-6">
                         <label class="form-label text-base font-semibold text-slate-700">Supporting Documents</label>
-                        <input type="file" name="supporting_documents_attachments" id="editSupportingDocumentsAttachments" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
-                        <div class="text-xs text-slate-500 mt-1">Accepted formats: PDF, DOC, DOCX, JPG, JPEG, PNG (Max: 10MB)</div>
+                        <input type="file" name="supporting_documents_attachments[]" id="editSupportingDocumentsAttachments" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" multiple>
+                        <div class="text-xs text-slate-500 mt-1">You can select multiple files. Accepted formats: PDF, DOC, DOCX, JPG, JPEG, PNG (Max: 10MB per file)</div>
                         <div id="currentFileInfo" class="text-xs text-blue-600 mt-1" style="display: none;"></div>
                     </div>
                 </form>

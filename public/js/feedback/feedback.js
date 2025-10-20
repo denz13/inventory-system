@@ -76,14 +76,17 @@ function initializeStarRating() {
     }, true);
     
     document.addEventListener('mouseleave', function(e) {
-        if (e.target.closest('#rating-stars')) {
-            const currentRating = document.getElementById('rating-input').value;
-            setStarRating('rating-stars', 'rating-input', parseInt(currentRating));
-        }
-        
-        if (e.target.closest('#edit-rating-stars')) {
-            const currentRating = document.getElementById('edit-rating-input').value;
-            setStarRating('edit-rating-stars', 'edit-rating-input', parseInt(currentRating));
+        // Check if e.target is an Element before calling closest
+        if (e.target && e.target.closest) {
+            if (e.target.closest('#rating-stars')) {
+                const currentRating = document.getElementById('rating-input').value;
+                setStarRating('rating-stars', 'rating-input', parseInt(currentRating));
+            }
+            
+            if (e.target.closest('#edit-rating-stars')) {
+                const currentRating = document.getElementById('edit-rating-input').value;
+                setStarRating('edit-rating-stars', 'edit-rating-input', parseInt(currentRating));
+            }
         }
     }, true);
 }
@@ -95,6 +98,15 @@ function setStarRating(containerId, inputId, rating) {
     if (container && input) {
         // Update hidden input
         input.value = rating;
+        
+        // Clear rating error when user selects a star
+        if (inputId === 'rating-input') {
+            const ratingError = document.getElementById('ratingError');
+            if (ratingError) ratingError.classList.add('hidden');
+        } else if (inputId === 'edit-rating-input') {
+            const editRatingError = document.getElementById('editRatingError');
+            if (editRatingError) editRatingError.classList.add('hidden');
+        }
         
         // Update star display
         const stars = container.querySelectorAll('.star');
@@ -228,6 +240,7 @@ function filterTableRowsByStatus(status) {
     });
     
     updateFilteredCount(visibleCount);
+    toggleNoResultsMessage(visibleCount);
 }
 
 function filterTableRowsByRating(rating) {
@@ -246,6 +259,7 @@ function filterTableRowsByRating(rating) {
     });
     
     updateFilteredCount(visibleCount);
+    toggleNoResultsMessage(visibleCount);
 }
 
 function filterTableRowsBySearch(searchTerm) {
@@ -253,11 +267,10 @@ function filterTableRowsBySearch(searchTerm) {
     let visibleCount = 0;
     
     rows.forEach(row => {
-        const userName = row.querySelector('td:nth-child(1) .font-medium')?.textContent.toLowerCase() || '';
-        const userEmail = row.querySelector('td:nth-child(1) .text-slate-500')?.textContent.toLowerCase() || '';
-        const description = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
+        const userName = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
+        const userEmail = row.querySelector('td:nth-child(3)')?.textContent.toLowerCase() || '';
         
-        if (userName.includes(searchTerm) || userEmail.includes(searchTerm) || description.includes(searchTerm)) {
+        if (userName.includes(searchTerm) || userEmail.includes(searchTerm)) {
             row.style.display = '';
             visibleCount++;
         } else {
@@ -266,12 +279,47 @@ function filterTableRowsBySearch(searchTerm) {
     });
     
     updateFilteredCount(visibleCount);
+    toggleNoResultsMessage(visibleCount);
 }
 
 function updateFilteredCount(count) {
     const filteredCountElement = document.getElementById('filtered-count');
     if (filteredCountElement) {
         filteredCountElement.textContent = count;
+    }
+}
+
+function toggleNoResultsMessage(visibleCount) {
+    const noResultsRow = document.getElementById('no-results-row');
+    const noFeedbackRow = document.getElementById('no-feedback-row');
+    const dataRows = document.querySelectorAll('tbody tr[data-status]');
+    
+    // If there are data rows (feedback exists)
+    if (dataRows.length > 0) {
+        // Hide the "No feedback found" message
+        if (noFeedbackRow) {
+            noFeedbackRow.style.display = 'none';
+        }
+        
+        // Show/hide "No results found" based on visible count
+        if (noResultsRow) {
+            if (visibleCount === 0) {
+                noResultsRow.classList.remove('hidden');
+                noResultsRow.style.display = '';
+            } else {
+                noResultsRow.classList.add('hidden');
+                noResultsRow.style.display = 'none';
+            }
+        }
+    } else {
+        // No data rows exist, show "No feedback found"
+        if (noFeedbackRow) {
+            noFeedbackRow.style.display = '';
+        }
+        if (noResultsRow) {
+            noResultsRow.classList.add('hidden');
+            noResultsRow.style.display = 'none';
+        }
     }
 }
 
@@ -324,73 +372,53 @@ function displayFeedbackDetails(feedback) {
             }
         } else {
             fillColor = 'white';
-            strokeColor = '#94a3b8'; // Gray
+            strokeColor = 'black'; // Black border like create modal
         }
         
         return `
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" 
-                 fill="${fillColor}" stroke="${strokeColor}" stroke-width="1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" 
+                 fill="${fillColor}" stroke="${strokeColor}" stroke-width="2">
                 <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"></polygon>
             </svg>
         `;
     }).join('');
     
     detailsContainer.innerHTML = `
-        <div class="p-8">
-            <div class="flex justify-between items-start mb-6">
-                <div>
-                    <h2 class="text-2xl font-bold text-slate-800">Feedback Details</h2>
-                    <p class="text-slate-600 mt-1">Feedback ID: #${feedback.id}</p>
-                </div>
-                <button type="button" data-tw-dismiss="modal" class="text-slate-400 hover:text-slate-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
-            
-            <!-- User Information -->
-            <div class="bg-slate-50 rounded-lg p-6 mb-6">
-                <h3 class="text-lg font-semibold text-slate-800 mb-4">User Information</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-sm font-medium text-slate-600">Name</label>
-                        <div class="mt-1 text-slate-800">${feedback.user?.name || 'N/A'}</div>
-                    </div>
-                    <div>
-                        <label class="text-sm font-medium text-slate-600">Email</label>
-                        <div class="mt-1 text-slate-800">${feedback.user?.email || 'N/A'}</div>
-                    </div>
-                    <div>
-                        <label class="text-sm font-medium text-slate-600">Status</label>
-                        <div class="mt-1">
-                            <span class="px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(feedback.status)}">
-                                ${feedback.status ? feedback.status.charAt(0).toUpperCase() + feedback.status.slice(1) : 'N/A'}
-                            </span>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-sm font-medium text-slate-600">Date Created</label>
-                        <div class="mt-1 text-slate-800">${formatDate(feedback.created_at)}</div>
-                    </div>
+        <div class="px-6 py-8">
+            <!-- Feedback Description -->
+            <div class="mb-6">
+                <label class="form-label text-base font-semibold text-slate-700">Feedback Description</label>
+                <div class="form-control mt-2 p-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 min-h-24">
+                    ${feedback.description || 'No description provided'}
                 </div>
             </div>
             
             <!-- Rating -->
-            <div class="bg-white rounded-lg border border-slate-200 p-6 mb-6">
-                <h3 class="text-lg font-semibold text-slate-800 mb-4">Rating</h3>
-                <div class="flex items-center">
+            <div class="mb-6">
+                <label class="form-label text-base font-semibold text-slate-700 text-center block">Rating</label>
+                <div class="flex items-center justify-center mt-4 space-x-3">
                     ${starsHtml}
-                    <span class="ml-3 text-lg font-medium">${feedback.rating}/5</span>
+                </div>
+                <div class="text-center mt-3">
+                    <small class="text-slate-500">${feedback.rating}/5 Stars</small>
                 </div>
             </div>
             
-            <!-- Feedback Description -->
-            <div class="bg-white rounded-lg border border-slate-200 p-6">
-                <h3 class="text-lg font-semibold text-slate-800 mb-4">Feedback Description</h3>
-                <div class="text-slate-700 leading-relaxed">
-                    ${feedback.description || 'No description provided'}
+            <!-- Status -->
+            <div class="mb-6">
+                <label class="form-label text-base font-semibold text-slate-700">Status</label>
+                <div class="form-control mt-2 p-3 border border-slate-300 rounded-lg bg-slate-50">
+                    <span class="px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(feedback.status)}">
+                        ${feedback.status ? feedback.status.charAt(0).toUpperCase() + feedback.status.slice(1) : 'N/A'}
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Date Created -->
+            <div class="mb-6">
+                <label class="form-label text-base font-semibold text-slate-700">Date Created</label>
+                <div class="form-control mt-2 p-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700">
+                    ${formatDate(feedback.created_at)}
                 </div>
             </div>
         </div>
@@ -428,11 +456,32 @@ function populateEditForm(feedback) {
 
 function handleCreateFeedback() {
     const form = document.getElementById('createFeedbackForm');
+    const description = document.getElementById('createDescription').value.trim();
     const rating = document.getElementById('rating-input').value;
     
-    // Validate rating is selected
+    // Clear previous errors
+    clearCreateFormErrors();
+    
+    // Validate fields
+    let errors = [];
+    let hasError = false;
+    
+    if (!description) {
+        errors.push('Feedback description is required');
+        document.getElementById('descriptionError').classList.remove('hidden');
+        document.getElementById('createDescription').classList.add('border-red-500');
+        hasError = true;
+    }
+    
     if (!rating || rating == '0') {
-        showToast('Please select a rating before submitting', 'error');
+        errors.push('Please select a rating (1-5 stars)');
+        document.getElementById('ratingError').classList.remove('hidden');
+        hasError = true;
+    }
+    
+    // Show errors if validation fails
+    if (hasError) {
+        showFormErrors('createFormErrors', 'createErrorList', errors);
         return;
     }
     
@@ -447,8 +496,14 @@ function handleCreateFeedback() {
         },
         body: formData
     })
-    .then(response => response.json())
-    .then(data => {
+    .then(response => {
+        // Parse JSON even if status is not OK (like 422)
+        return response.json().then(data => ({
+            status: response.status,
+            data: data
+        }));
+    })
+    .then(({status, data}) => {
         if (data.success) {
             showToast(data.message || 'Feedback created successfully!', 'success');
             
@@ -465,18 +520,69 @@ function handleCreateFeedback() {
                 location.reload();
             }, 1000);
         } else {
-            showToast(data.message || 'Failed to create feedback', 'error');
+            // Show validation errors in modal
+            let errors = [];
+            
+            // Check if there are Laravel validation errors
+            if (data.errors) {
+                // Laravel validation errors object
+                Object.keys(data.errors).forEach(key => {
+                    if (Array.isArray(data.errors[key])) {
+                        data.errors[key].forEach(error => errors.push(error));
+                    } else {
+                        errors.push(data.errors[key]);
+                    }
+                });
+            } else if (data.message) {
+                // Single error message
+                errors.push(data.message);
+            }
+            
+            if (errors.length > 0) {
+                showFormErrors('createFormErrors', 'createErrorList', errors);
+            } else {
+                showToast('Failed to create feedback', 'error');
+            }
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showToast('Error creating feedback. Please try again.', 'error');
+        showFormErrors('createFormErrors', 'createErrorList', ['Error creating feedback. Please try again.']);
     });
 }
 
 function handleUpdateFeedback() {
     const form = document.getElementById('editFeedbackForm');
     const feedbackId = document.getElementById('editFeedbackId').value;
+    const description = document.getElementById('editDescription').value.trim();
+    const rating = document.getElementById('edit-rating-input').value;
+    
+    // Clear previous errors
+    clearEditFormErrors();
+    
+    // Validate fields
+    let errors = [];
+    let hasError = false;
+    
+    if (!description) {
+        errors.push('Feedback description is required');
+        document.getElementById('editDescriptionError').classList.remove('hidden');
+        document.getElementById('editDescription').classList.add('border-red-500');
+        hasError = true;
+    }
+    
+    if (!rating || rating == '0') {
+        errors.push('Please select a rating (1-5 stars)');
+        document.getElementById('editRatingError').classList.remove('hidden');
+        hasError = true;
+    }
+    
+    // Show errors if validation fails
+    if (hasError) {
+        showFormErrors('editFormErrors', 'editErrorList', errors);
+        return;
+    }
+    
     const formData = new FormData(form);
     
     fetch(`/feedback/${feedbackId}`, {
@@ -488,8 +594,14 @@ function handleUpdateFeedback() {
         },
         body: formData
     })
-    .then(response => response.json())
-    .then(data => {
+    .then(response => {
+        // Parse JSON even if status is not OK (like 422)
+        return response.json().then(data => ({
+            status: response.status,
+            data: data
+        }));
+    })
+    .then(({status, data}) => {
         if (data.success) {
             showToast(data.message || 'Feedback updated successfully!', 'success');
             
@@ -502,12 +614,34 @@ function handleUpdateFeedback() {
                 location.reload();
             }, 1000);
         } else {
-            showToast(data.message || 'Failed to update feedback', 'error');
+            // Show validation errors in modal
+            let errors = [];
+            
+            // Check if there are Laravel validation errors
+            if (data.errors) {
+                // Laravel validation errors object
+                Object.keys(data.errors).forEach(key => {
+                    if (Array.isArray(data.errors[key])) {
+                        data.errors[key].forEach(error => errors.push(error));
+                    } else {
+                        errors.push(data.errors[key]);
+                    }
+                });
+            } else if (data.message) {
+                // Single error message
+                errors.push(data.message);
+            }
+            
+            if (errors.length > 0) {
+                showFormErrors('editFormErrors', 'editErrorList', errors);
+            } else {
+                showToast('Failed to update feedback', 'error');
+            }
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showToast('Error updating feedback. Please try again.', 'error');
+        showFormErrors('editFormErrors', 'editErrorList', ['Error updating feedback. Please try again.']);
     });
 }
 
@@ -600,3 +734,69 @@ function showToast(message, type = 'success') {
         }
     }).showToast();
 }
+
+// Form validation error functions
+function showFormErrors(errorDivId, errorListId, errors) {
+    const errorDiv = document.getElementById(errorDivId);
+    const errorList = document.getElementById(errorListId);
+    
+    if (errorDiv && errorList) {
+        errorList.innerHTML = '';
+        errors.forEach(error => {
+            const li = document.createElement('li');
+            li.textContent = error;
+            errorList.appendChild(li);
+        });
+        errorDiv.classList.remove('hidden');
+        
+        // Scroll to top of modal to show errors
+        const modal = errorDiv.closest('.modal-body');
+        if (modal) {
+            modal.scrollTop = 0;
+        }
+    }
+}
+
+function clearCreateFormErrors() {
+    const errorDiv = document.getElementById('createFormErrors');
+    const descriptionError = document.getElementById('descriptionError');
+    const ratingError = document.getElementById('ratingError');
+    const descriptionInput = document.getElementById('createDescription');
+    
+    if (errorDiv) errorDiv.classList.add('hidden');
+    if (descriptionError) descriptionError.classList.add('hidden');
+    if (ratingError) ratingError.classList.add('hidden');
+    if (descriptionInput) descriptionInput.classList.remove('border-red-500');
+}
+
+function clearEditFormErrors() {
+    const errorDiv = document.getElementById('editFormErrors');
+    const descriptionError = document.getElementById('editDescriptionError');
+    const ratingError = document.getElementById('editRatingError');
+    const descriptionInput = document.getElementById('editDescription');
+    
+    if (errorDiv) errorDiv.classList.add('hidden');
+    if (descriptionError) descriptionError.classList.add('hidden');
+    if (ratingError) ratingError.classList.add('hidden');
+    if (descriptionInput) descriptionInput.classList.remove('border-red-500');
+}
+
+// Clear errors when user starts typing or selecting
+document.addEventListener('DOMContentLoaded', function() {
+    // Clear description error on input
+    const createDescription = document.getElementById('createDescription');
+    if (createDescription) {
+        createDescription.addEventListener('input', function() {
+            document.getElementById('descriptionError').classList.add('hidden');
+            this.classList.remove('border-red-500');
+        });
+    }
+    
+    const editDescription = document.getElementById('editDescription');
+    if (editDescription) {
+        editDescription.addEventListener('input', function() {
+            document.getElementById('editDescriptionError').classList.add('hidden');
+            this.classList.remove('border-red-500');
+        });
+    }
+});
