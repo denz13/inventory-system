@@ -31,6 +31,14 @@
                 </a>
             </li>
             @endif
+            @if(auth()->user()->hasPermission('vehicle'))
+            <li>
+                <a href="{{ route('vehicle.index') }}" class="menu">
+                    <div class="menu__icon"> <i data-lucide="car"></i> </div>
+                    <div class="menu__title"> Vehicle </div>
+                </a>
+            </li>
+            @endif
             <li>
                 <a href="{{ route('business.index') }}" class="menu">
                     <div class="menu__icon"> <i data-lucide="file-text"></i> </div>
@@ -41,6 +49,12 @@
                 <a href="{{ route('landlord.index') }}" class="menu">
                     <div class="menu__icon"> <i data-lucide="file-text"></i> </div>
                     <div class="menu__title"> Apply Landlord </div>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('apply-appointment.index') }}" class="menu">
+                    <div class="menu__icon"> <i data-lucide="calendar"></i> </div>
+                    <div class="menu__title"> Apply Appointment </div>
                 </a>
             </li>
             
@@ -92,14 +106,6 @@
                         </a>
                     </li>
                 </ul>
-            </li>
-            @endif
-            @if(auth()->user()->hasPermission('vehicle'))
-            <li>
-                <a href="{{ route('vehicle.index') }}" class="menu">
-                    <div class="menu__icon"> <i data-lucide="car"></i> </div>
-                    <div class="menu__title"> Vehicle </div>
-                </a>
             </li>
             @endif
             @if(auth()->user()->hasPermission('information') || auth()->user()->hasPermission('user management') || auth()->user()->hasPermission('business management') || auth()->user()->hasPermission('vehicle management') || auth()->user()->hasPermission('service management') || auth()->user()->hasPermission('incident management') || auth()->user()->hasPermission('announcement') || auth()->user()->hasPermission('billing management') || auth()->user()->hasPermission('payment account management') || auth()->user()->hasPermission('feedback management') || auth()->user()->hasPermission('appointment management'))
@@ -218,6 +224,12 @@
                             <div class="menu__title"> Landlord Management </div>
                         </a>
                     </li>
+                    <li>
+                        <a href="{{ route('calendar.index') }}" class="menu">
+                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
+                            <div class="menu__title"> Calendar </div>
+                        </a>
+                    </li>
                 </ul>
             </li>
             @endif
@@ -259,6 +271,18 @@
                         <a href="{{ route('landlord-permission.index') }}" class="menu">
                             <div class="menu__icon"> <i data-lucide="activity"></i> </div>
                             <div class="menu__title"> Landlord Permissions </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('appointment-category.index') }}" class="menu">
+                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
+                            <div class="menu__title"> Appointment Category </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('appointment-allowing.index') }}" class="menu">
+                            <div class="menu__icon"> <i data-lucide="activity"></i> </div>
+                            <div class="menu__title"> Appointment Allow Schedule </div>
                         </a>
                     </li>
                 </ul>
