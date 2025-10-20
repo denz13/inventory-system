@@ -288,6 +288,18 @@
                     
                     <div class="mb-6">
                         <label class="form-label text-base font-semibold text-slate-700">Feedback Description <span class="text-red-600">*</span></label>
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-2">
+                            <div class="flex items-start">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-600 mr-2 mt-0.5">
+                                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                </svg>
+                                <div class="text-sm text-yellow-800">
+                                    <strong>Content Policy:</strong> Please keep your feedback respectful and appropriate. Inappropriate language, profanity, or offensive content will not be accepted.
+                                </div>
+                            </div>
+                        </div>
                         <textarea name="description" id="createDescription" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" rows="4" placeholder="Enter feedback description..." required></textarea>
                         <small id="descriptionError" class="text-red-600 hidden mt-1">Description is required</small>
                     </div>
@@ -384,6 +396,18 @@
                     
                     <div class="mb-6">
                         <label class="form-label text-base font-semibold text-slate-700">Feedback Description <span class="text-red-600">*</span></label>
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-2">
+                            <div class="flex items-start">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-600 mr-2 mt-0.5">
+                                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                </svg>
+                                <div class="text-sm text-yellow-800">
+                                    <strong>Content Policy:</strong> Please keep your feedback respectful and appropriate. Inappropriate language, profanity, or offensive content will not be accepted.
+                                </div>
+                            </div>
+                        </div>
                         <textarea name="description" id="editDescription" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" rows="4" required></textarea>
                         <small id="editDescriptionError" class="text-red-600 hidden mt-1">Description is required</small>
                     </div>

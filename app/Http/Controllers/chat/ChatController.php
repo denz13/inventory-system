@@ -173,4 +173,32 @@ class ChatController extends Controller
             
         return response()->json(['success' => true]);
     }
+    
+    public function getLatestMessageSender()
+    {
+        $currentUser = auth()->user();
+        
+        // Get the latest unread message
+        $latestMessage = message::where('to_id', $currentUser->id)
+            ->where('status', 'unread')
+            ->with(['user:id,name,photo'])
+            ->orderBy('created_at', 'desc')
+            ->first();
+            
+        if ($latestMessage) {
+            return response()->json([
+                'success' => true,
+                'sender' => [
+                    'id' => $latestMessage->user->id,
+                    'name' => $latestMessage->user->name,
+                    'photo' => $latestMessage->user->photo ? asset('storage/profiles/' . $latestMessage->user->photo) : asset('img/user.jpg')
+                ]
+            ]);
+        }
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'No unread messages found'
+        ]);
+    }
 }

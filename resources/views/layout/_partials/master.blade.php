@@ -228,6 +228,58 @@ License: You must have a valid license purchased only from themeforest(the above
         </div>
         <!-- END: Chatbot Widget -->
         
+        <!-- BEGIN: Floating Chat Widget -->
+        <div id="floating-chat-widget" class="fixed bottom-6 right-6 z-50 hidden">
+            
+            <!-- Floating Chat Modal -->
+            <div id="floating-chat-modal" class="fixed bottom-20 right-6 w-96 h-[500px] bg-white rounded-lg shadow-2xl border border-slate-200 flex flex-col" style="display: none; visibility: hidden; opacity: 0; transition: opacity 0.3s ease;">
+                <!-- Header -->
+                <div class="flex items-center justify-between p-4 border-b border-slate-200 bg-blue-600 text-white rounded-t-lg">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center mr-2">
+                            <img id="floating-chat-user-photo" alt="User" class="w-6 h-6 rounded-full" src="{{ asset('img/user.jpg') }}">
+                        </div>
+                        <div>
+                            <h3 id="floating-chat-user-name" class="font-semibold text-sm">Chat</h3>
+                            <p id="floating-chat-user-status" class="text-xs text-white/80">Online</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="openFullChat()" class="text-white/80 hover:text-white transition-colors" title="Open full chat">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+                            </svg>
+                        </button>
+                        <button onclick="toggleFloatingChat()" class="text-white/80 hover:text-white transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Messages Area -->
+                <div id="floating-chat-messages" class="flex-1 p-3 overflow-y-auto space-y-2">
+                    <!-- Messages will be loaded here -->
+                </div>
+                
+                <!-- Input Area -->
+                <div class="p-3 border-t border-slate-200">
+                    <div class="flex items-center space-x-2">
+                        <input type="text" id="floating-chat-input" placeholder="Type your message..." class="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" onkeypress="handleFloatingChatKeyPress(event)">
+                        <button onclick="sendFloatingChatMessage()" class="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22,2 15,22 11,13 2,9 22,2"></polygon>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END: Floating Chat Widget -->
+        
         <!-- BEGIN: Database Notifications -->
         @php
             $user = auth()->user();
@@ -987,6 +1039,465 @@ License: You must have a valid license purchased only from themeforest(the above
         });
         </script>
         <!-- END: Chatbot JavaScript -->
+        
+        <!-- BEGIN: Floating Chat JavaScript -->
+        <script>
+        // Floating Chat functionality
+        let floatingChatOpen = false;
+        let currentFloatingChatUserId = null;
+        let currentFloatingChatUserName = '';
+        let currentFloatingChatUserPhoto = '';
+        let floatingChatCheckInterval = null;
+        let floatingChatNotificationCheckInterval = null;
+        let lastMessageCheckTime = 0;
+        
+        // Initialize floating chat
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Floating chat initializing...');
+            
+            // Check if user is authenticated
+            @auth
+                initializeFloatingChat();
+            @else
+                console.log('User not authenticated, floating chat disabled');
+            @endauth
+        });
+        
+        function initializeFloatingChat() {
+            // Start checking for new messages every 5 seconds
+            floatingChatNotificationCheckInterval = setInterval(checkForNewMessages, 5000);
+            
+            // Check for new messages immediately
+            checkForNewMessages();
+            
+            // Initialize tooltip functionality
+            initializeFloatingChatTooltip();
+            
+            console.log('Floating chat initialized');
+        }
+        
+        function initializeFloatingChatTooltip() {
+            const floatingChatIcon = document.getElementById('floating-chat-icon');
+            const tooltip = document.getElementById('floating-chat-tooltip');
+            
+            if (floatingChatIcon && tooltip) {
+                // Show tooltip on hover
+                floatingChatIcon.addEventListener('mouseenter', function() {
+                    if (!floatingChatOpen) {
+                        tooltip.style.opacity = '1';
+                        tooltip.style.transform = 'translateY(0px)';
+                        tooltip.style.pointerEvents = 'auto';
+                    }
+                });
+                
+                // Hide tooltip on mouse leave
+                floatingChatIcon.addEventListener('mouseleave', function() {
+                    tooltip.style.opacity = '0';
+                    tooltip.style.transform = 'translateY(-5px)';
+                    tooltip.style.pointerEvents = 'none';
+                });
+            }
+        }
+        
+        function toggleFloatingChat() {
+            const modal = document.getElementById('floating-chat-modal');
+            const icon = document.getElementById('floating-chat-icon');
+            const notification = document.getElementById('floating-chat-notification');
+            const tooltip = document.getElementById('floating-chat-tooltip');
+            
+            if (floatingChatOpen) {
+                // Close floating chat
+                if (modal) {
+                    modal.style.opacity = '0';
+                    setTimeout(() => {
+                        modal.style.display = 'none';
+                        modal.style.visibility = 'hidden';
+                    }, 300);
+                }
+                floatingChatOpen = false;
+                
+                // Hide tooltip when closing
+                if (tooltip) {
+                    tooltip.style.opacity = '0';
+                }
+                
+                // Stop checking for messages
+                if (floatingChatCheckInterval) {
+                    clearInterval(floatingChatCheckInterval);
+                    floatingChatCheckInterval = null;
+                }
+            } else {
+                // Open floating chat
+                if (modal) {
+                    modal.style.display = 'flex';
+                    modal.style.visibility = 'visible';
+                    modal.offsetHeight; // Trigger reflow
+                    modal.style.opacity = '1';
+                }
+                floatingChatOpen = true;
+                
+                // Hide notification bubble when opened
+                if (notification) {
+                    notification.style.display = 'none';
+                }
+                
+                // Hide tooltip when opened
+                if (tooltip) {
+                    tooltip.style.opacity = '0';
+                }
+                
+                // If we have a current chat user, load their messages
+                if (currentFloatingChatUserId) {
+                    loadFloatingChatMessages(currentFloatingChatUserId);
+                    
+                    // Start checking for new messages every 3 seconds
+                    floatingChatCheckInterval = setInterval(() => {
+                        loadFloatingChatMessages(currentFloatingChatUserId, true);
+                    }, 3000);
+                }
+                
+                // Focus on input when opened
+                setTimeout(() => {
+                    const input = document.getElementById('floating-chat-input');
+                    if (input) input.focus();
+                }, 100);
+            }
+        }
+        
+        function checkForNewMessages() {
+            const now = Date.now();
+            
+            // Prevent too frequent checks (minimum 3 seconds between checks)
+            if (now - lastMessageCheckTime < 3000) {
+                return;
+            }
+            lastMessageCheckTime = now;
+            
+            fetch('/chat/unread-count', {
+                method: 'GET',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.count > 0) {
+                    // Get the latest message sender first
+                    getLatestMessageSender().then(() => {
+                        // Then automatically open the chat modal
+                        if (!floatingChatOpen) {
+                            autoOpenFloatingChat();
+                        }
+                    });
+                } else {
+                    hideFloatingChatWidget();
+                }
+            })
+            .catch(error => {
+                console.error('Error checking for new messages:', error);
+            });
+        }
+        
+        function getLatestMessageSender() {
+            return fetch('/chat/latest-message-sender', {
+                method: 'GET',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.sender) {
+                    // Set current chat user with real data
+                    currentFloatingChatUserId = data.sender.id;
+                    currentFloatingChatUserName = data.sender.name;
+                    currentFloatingChatUserPhoto = data.sender.photo;
+                    
+                    // Update floating chat header
+                    updateFloatingChatHeader();
+                    return data.sender;
+                }
+                return null;
+            })
+            .catch(error => {
+                console.error('Error getting latest message sender:', error);
+                return null;
+            });
+        }
+        
+        function updateFloatingChatHeader() {
+            const userNameEl = document.getElementById('floating-chat-user-name');
+            const userPhotoEl = document.getElementById('floating-chat-user-photo');
+            const userStatusEl = document.getElementById('floating-chat-user-status');
+            
+            if (userNameEl) userNameEl.textContent = currentFloatingChatUserName;
+            if (userPhotoEl) userPhotoEl.src = currentFloatingChatUserPhoto;
+            if (userStatusEl) userStatusEl.textContent = 'Online';
+        }
+        
+        function autoOpenFloatingChat() {
+            const modal = document.getElementById('floating-chat-modal');
+            const widget = document.getElementById('floating-chat-widget');
+            
+            if (modal && widget) {
+                // Show the widget
+                widget.classList.remove('hidden');
+                
+                // Open the modal directly with animation
+                modal.style.display = 'flex';
+                modal.style.visibility = 'visible';
+                modal.offsetHeight; // Trigger reflow
+                
+                // Add bounce animation
+                modal.style.transform = 'scale(0.8)';
+                modal.style.opacity = '0';
+                
+                setTimeout(() => {
+                    modal.style.transform = 'scale(1)';
+                    modal.style.opacity = '1';
+                    modal.style.transition = 'all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+                }, 10);
+                
+                floatingChatOpen = true;
+                
+                // Load messages for the current user
+                if (currentFloatingChatUserId) {
+                    loadFloatingChatMessages(currentFloatingChatUserId);
+                    
+                    // Start checking for new messages every 3 seconds
+                    floatingChatCheckInterval = setInterval(() => {
+                        loadFloatingChatMessages(currentFloatingChatUserId, true);
+                    }, 3000);
+                }
+                
+                // Focus on input
+                setTimeout(() => {
+                    const input = document.getElementById('floating-chat-input');
+                    if (input) input.focus();
+                }, 100);
+                
+                // Play notification sound (if available)
+                try {
+                    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7j9n1unEiBS13yO/eizEIHWq+8+OWT');
+                    audio.volume = 0.3;
+                    audio.play().catch(() => {
+                        // Ignore if audio fails to play
+                    });
+                } catch (e) {
+                    // Ignore audio errors
+                }
+            }
+        }
+        
+        function showFloatingChatWidget() {
+            const widget = document.getElementById('floating-chat-widget');
+            const notification = document.getElementById('floating-chat-notification');
+            
+            if (widget) {
+                widget.classList.remove('hidden');
+                
+                // Show notification bubble
+                if (notification) {
+                    notification.style.display = 'flex';
+                }
+                
+                // Auto-hide notification after 10 seconds
+                setTimeout(() => {
+                    if (notification) {
+                        notification.style.display = 'none';
+                    }
+                }, 10000);
+            }
+        }
+        
+        function hideFloatingChatWidget() {
+            const widget = document.getElementById('floating-chat-widget');
+            if (widget && !floatingChatOpen) {
+                widget.classList.add('hidden');
+            }
+        }
+        
+        function loadFloatingChatMessages(userId, silent = false) {
+            if (!silent) {
+                showFloatingChatLoading();
+            }
+            
+            fetch(`/chat/messages/${userId}`, {
+                method: 'GET',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayFloatingChatMessages(data.messages, data.currentUserId);
+                } else {
+                    showFloatingChatError('Failed to load messages');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading floating chat messages:', error);
+                if (!silent) {
+                    showFloatingChatError('Error loading messages');
+                }
+            });
+        }
+        
+        function displayFloatingChatMessages(messages, currentUserId) {
+            const container = document.getElementById('floating-chat-messages');
+            container.innerHTML = '';
+            
+            messages.forEach(function(message) {
+                const isCurrentUser = message.from_id == currentUserId;
+                const messageHtml = createFloatingChatMessageElement(message, isCurrentUser);
+                container.insertAdjacentHTML('beforeend', messageHtml);
+            });
+            
+            // Scroll to bottom
+            scrollFloatingChatToBottom();
+        }
+        
+        function createFloatingChatMessageElement(message, isCurrentUser) {
+            const messageClass = isCurrentUser ? 'flex justify-end' : 'flex justify-start';
+            const bubbleClass = isCurrentUser ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700';
+            
+            return `
+                <div class="${messageClass}">
+                    <div class="max-w-xs ${bubbleClass} rounded-lg px-3 py-2 text-sm">
+                        <div class="message-text">${escapeHtml(message.message)}</div>
+                        <div class="text-xs opacity-70 mt-1">${formatMessageTime(message.created_at)}</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function sendFloatingChatMessage() {
+            const input = document.getElementById('floating-chat-input');
+            const message = input.value.trim();
+            
+            if (!message || !currentFloatingChatUserId) {
+                return;
+            }
+            
+            const sendBtn = document.querySelector('#floating-chat-modal button[onclick="sendFloatingChatMessage()"]');
+            if (sendBtn) sendBtn.disabled = true;
+            
+            fetch('/chat/send', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    to_id: currentFloatingChatUserId,
+                    message: message
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    input.value = '';
+                    loadFloatingChatMessages(currentFloatingChatUserId, true);
+                } else {
+                    showFloatingChatError('Failed to send message');
+                }
+            })
+            .catch(error => {
+                console.error('Error sending floating chat message:', error);
+                showFloatingChatError('Error sending message');
+            })
+            .finally(() => {
+                if (sendBtn) sendBtn.disabled = false;
+                input.focus();
+            });
+        }
+        
+        function handleFloatingChatKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendFloatingChatMessage();
+            }
+        }
+        
+        function openFullChat() {
+            // Redirect to full chat page
+            window.location.href = '/chat';
+        }
+        
+        // Helper functions
+        function showFloatingChatLoading() {
+            const container = document.getElementById('floating-chat-messages');
+            container.innerHTML = '<div class="text-center py-4"><div class="text-slate-500 text-sm">Loading messages...</div></div>';
+        }
+        
+        function showFloatingChatError(message) {
+            const container = document.getElementById('floating-chat-messages');
+            container.innerHTML = `<div class="text-center py-4"><div class="text-red-500 text-sm">${message}</div></div>`;
+        }
+        
+        function scrollFloatingChatToBottom() {
+            const container = document.getElementById('floating-chat-messages');
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+        
+        function formatMessageTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 1) {
+                return 'Just now';
+            } else if (diffMins < 60) {
+                return `${diffMins}m ago`;
+            } else if (diffHours < 24) {
+                return `${diffHours}h ago`;
+            } else if (diffDays < 7) {
+                return `${diffDays}d ago`;
+            } else {
+                return date.toLocaleDateString();
+            }
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Close floating chat when clicking outside
+        document.addEventListener('click', function(event) {
+            const floatingChatWidget = document.getElementById('floating-chat-widget');
+            const floatingChatModal = document.getElementById('floating-chat-modal');
+            
+            if (floatingChatOpen && !floatingChatWidget.contains(event.target)) {
+                toggleFloatingChat();
+            }
+        });
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (floatingChatCheckInterval) {
+                clearInterval(floatingChatCheckInterval);
+            }
+            if (floatingChatNotificationCheckInterval) {
+                clearInterval(floatingChatNotificationCheckInterval);
+            }
+        });
+        </script>
+        <!-- END: Floating Chat JavaScript -->
         
         <!-- END: JS Assets-->
     </body>
