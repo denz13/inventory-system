@@ -19,8 +19,19 @@
         <!-- BEGIN: Breadcrumb -->
         <nav aria-label="breadcrumb" class="-intro-x h-full mr-auto">
             <ol class="breadcrumb breadcrumb-light">
-                <li class="breadcrumb-item"><a href="#">Golden Country Homes</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Home Owners Association Inc.</li>
+                @foreach($breadcrumbs as $index => $breadcrumb)
+                    @if($loop->last)
+                        <li class="breadcrumb-item active" aria-current="page">{{ $breadcrumb['title'] }}</li>
+                    @else
+                        <li class="breadcrumb-item">
+                            @if($breadcrumb['url'] && $breadcrumb['url'] !== '#')
+                                <a href="{{ $breadcrumb['url'] }}">{{ $breadcrumb['title'] }}</a>
+                            @else
+                                <span>{{ $breadcrumb['title'] }}</span>
+                            @endif
+                        </li>
+                    @endif
+                @endforeach
             </ol>
         </nav>
         <!-- END: Breadcrumb -->

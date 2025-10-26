@@ -3,7 +3,7 @@
 @section('content')
 <div class="grid grid-cols-12 gap-6 mt-5">
     <div class="intro-y col-span-12">
-        <div class="intro-y text-lg font-medium mt-20">
+        <div class="intro-y text-lg font-medium mt-5">
             User Management
         </div>
     </div>
@@ -175,10 +175,12 @@
             </div>
         </div>
         <!-- END: Add User Modal -->
-        <div class="hidden md:block mx-auto text-slate-500">Showing {{ $users->firstItem() }} to {{ $users->lastItem() }} of {{ $users->total() }} entries</div>
+        <div class="hidden md:block mx-auto text-slate-500">
+            Showing <span id="filtered-count">{{ $users->count() }}</span> of <span id="total-count">{{ $users->total() }}</span> entries
+        </div>
         <div class="w-full sm:w-auto mt-3 sm:mt-0 sm:ml-auto md:ml-0">
             <div class="w-56 relative text-slate-500">
-                <input type="text" class="form-control w-56 box pr-10" placeholder="Search...">
+                <input type="text" class="form-control w-56 box pr-10" placeholder="Search..." id="searchInput">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                     stroke-linejoin="round" icon-name="search"

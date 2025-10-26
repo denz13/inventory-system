@@ -8,6 +8,17 @@ document.addEventListener('DOMContentLoaded', function() {
             const settingType = this.getAttribute('data-setting-type');
             const formData = new FormData(this);
             
+            // Add _method field for Laravel PUT method spoofing
+            formData.append('_method', 'PUT');
+            
+            // Get CSRF token from meta tag or form
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
+                             document.querySelector('input[name="_token"]')?.value;
+            
+            if (csrfToken) {
+                formData.set('_token', csrfToken);
+            }
+            
             // Show loading state
             const submitBtn = this.querySelector('button[type="submit"]');
             const originalText = submitBtn.innerHTML;
@@ -21,7 +32,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     showToast(data.message, 'success');
@@ -36,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Error:', error);
-                showToast('An error occurred while updating the setting', 'error');
+                showToast('An error occurred while updating the setting: ' + error.message, 'error');
             })
             .finally(() => {
                 // Reset button state
@@ -117,7 +133,9 @@ function showToast(message, type) {
             duration: 5000,
             gravity: "top",
             position: "right",
-            backgroundColor: type === 'success' ? '#10b981' : '#ef4444',
+            style: {
+                background: type === 'success' ? '#10b981' : '#ef4444'
+            },
             stopOnFocus: true
         }).showToast();
     }

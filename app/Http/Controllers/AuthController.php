@@ -13,6 +13,7 @@ use App\Models\tbl_otp;
 use App\Models\system_settings;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -71,6 +72,21 @@ class AuthController extends Controller
         // Try to find user first for logging purposes
         $user = User::where('email', $request->email)->first();
         
+        // Check if user exists and is active BEFORE attempting login
+        if ($user && (int) $user->active !== 1) {
+            // Log inactive user login attempt
+            try {
+                $user->logCustom("Login attempt blocked for inactive user: {$user->name} ({$user->email})");
+            } catch (\Exception $e) {
+                Log::error('Failed to log inactive user login attempt: ' . $e->getMessage());
+            }
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Your account is inactive. Please contact the administrator for assistance.'
+            ], 403);
+        }
+        
         if (!Auth::attempt([
             'email' => $request->email,
             'password' => $request->password
@@ -88,7 +104,7 @@ class AuthController extends Controller
                 }
             } catch (\Exception $e) {
                 // Log error but don't fail the login response
-                \Log::error('Failed to log failed login attempt: ' . $e->getMessage());
+                Log::error('Failed to log failed login attempt: ' . $e->getMessage());
             }
             
             return response()->json([
@@ -99,6 +115,23 @@ class AuthController extends Controller
 
         // Get the authenticated user
         $authenticatedUser = Auth::user();
+        
+        // Double-check active status after authentication
+        if ((int) $authenticatedUser->active !== 1) {
+            // Log out the user immediately
+            Auth::logout();
+            
+            try {
+                $authenticatedUser->logCustom("Login blocked for inactive user after authentication: {$authenticatedUser->name} ({$authenticatedUser->email})");
+            } catch (\Exception $e) {
+                Log::error('Failed to log inactive user: ' . $e->getMessage());
+            }
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Your account has been deactivated. Please contact the administrator.'
+            ], 403);
+        }
         
         // Check if device verification is needed
         $publicIp = $request->input('public_ip');
@@ -135,7 +168,7 @@ class AuthController extends Controller
             $authenticatedUser->save();
         } catch (\Exception $e) {
             // Log error but don't fail the login
-            \Log::error('Failed to set user online status: ' . $e->getMessage());
+            Log::error('Failed to set user online status: ' . $e->getMessage());
         }
         
         try {
@@ -158,10 +191,10 @@ class AuthController extends Controller
                 'status' => 'login'
             ]);
             
-            \Log::info("Login tracked for user {$authenticatedUser->id}: IP={$ipAddress}, Browser={$browser}, Location={$location}");
+            Log::info("Login tracked for user {$authenticatedUser->id}: IP={$ipAddress}, Browser={$browser}, Location={$location}");
         } catch (\Exception $e) {
             // Log error but don't fail the login
-            \Log::error('Failed to save login information: ' . $e->getMessage());
+            Log::error('Failed to save login information: ' . $e->getMessage());
         }
         
         try {
@@ -169,7 +202,7 @@ class AuthController extends Controller
             $authenticatedUser->logCustom("User logged in successfully: {$authenticatedUser->name} ({$authenticatedUser->email}) from {$ipAddress}");
         } catch (\Exception $e) {
             // Log error but don't fail the login
-            \Log::error('Failed to log login activity: ' . $e->getMessage());
+            Log::error('Failed to log login activity: ' . $e->getMessage());
         }
         
         try {
@@ -180,7 +213,7 @@ class AuthController extends Controller
             );
         } catch (\Exception $e) {
             // Log error but don't fail the login
-            \Log::error('Failed to send welcome notification: ' . $e->getMessage());
+            Log::error('Failed to send welcome notification: ' . $e->getMessage());
         }
 
         $request->session()->regenerate();
@@ -234,7 +267,7 @@ class AuthController extends Controller
                 $user->logCustom("User logged out: {$user->name} ({$user->email}) from {$ipAddress}");
             } catch (\Exception $e) {
                 // Log error but don't fail the logout
-                \Log::error('Failed to log logout activity: ' . $e->getMessage());
+                Log::error('Failed to log logout activity: ' . $e->getMessage());
             }
         }
         
@@ -375,7 +408,7 @@ class AuthController extends Controller
             
             return 'Unknown Location';
         } catch (\Exception $e) {
-            \Log::error('Failed to get location from IP: ' . $e->getMessage());
+            Log::error('Failed to get location from IP: ' . $e->getMessage());
             return 'Unknown Location';
         }
     }
@@ -398,7 +431,7 @@ class AuthController extends Controller
         
         // First time login - needs verification
         if (!$hasLoginHistory) {
-            \Log::info("First time login detected for user {$userId}");
+            Log::info("First time login detected for user {$userId}");
             return true;
         }
         
@@ -409,7 +442,7 @@ class AuthController extends Controller
             ->exists();
         
         if ($knownDevice) {
-            \Log::info("Known device detected for user {$userId}");
+            Log::info("Known device detected for user {$userId}");
             return false; // Known device, no verification needed
         }
         
@@ -424,7 +457,7 @@ class AuthController extends Controller
         $knownLocation = $recentLogins->contains('location', $location);
         
         if (!$knownIp && !$knownLocation) {
-            \Log::info("New device/location detected for user {$userId}: IP={$ipAddress}, Location={$location}");
+            Log::info("New device/location detected for user {$userId}: IP={$ipAddress}, Location={$location}");
             return true; // New device AND new location
         }
         
@@ -478,9 +511,9 @@ class AuthController extends Controller
                     ->subject('New Device Login - Verification Required');
             });
             
-            \Log::info("OTP sent to {$user->email} for device verification");
+            Log::info("OTP sent to {$user->email} for device verification");
         } catch (\Exception $e) {
-            \Log::error("Failed to send OTP email: " . $e->getMessage());
+            Log::error("Failed to send OTP email: " . $e->getMessage());
         }
         
         return $otpCode;
@@ -501,6 +534,20 @@ class AuthController extends Controller
         
         // Find the user
         $user = User::findOrFail($request->user_id);
+        
+        // Check if user is active
+        if ((int) $user->active !== 1) {
+            try {
+                $user->logCustom("OTP verification blocked for inactive user: {$user->name} ({$user->email})");
+            } catch (\Exception $e) {
+                Log::error('Failed to log inactive user OTP attempt: ' . $e->getMessage());
+            }
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Your account has been deactivated. Please contact the administrator.'
+            ], 403);
+        }
         
         // Find the OTP
         $otp = tbl_otp::where('user_id', $user->id)
@@ -566,7 +613,7 @@ class AuthController extends Controller
             $this->sendSecurityAlert($user, $macAddress, $ipAddress, $location, $browser);
             
         } catch (\Exception $e) {
-            \Log::error('Failed to save login information after OTP verification: ' . $e->getMessage());
+            Log::error('Failed to save login information after OTP verification: ' . $e->getMessage());
         }
         
         $request->session()->regenerate();
@@ -610,9 +657,9 @@ class AuthController extends Controller
                     ->subject('Security Alert: New Device Login Detected');
             });
             
-            \Log::info("Security alert sent to {$user->email} for new device login");
+            Log::info("Security alert sent to {$user->email} for new device login");
         } catch (\Exception $e) {
-            \Log::error("Failed to send security alert email: " . $e->getMessage());
+            Log::error("Failed to send security alert email: " . $e->getMessage());
         }
     }
 }
