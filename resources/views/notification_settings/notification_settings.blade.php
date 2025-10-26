@@ -108,7 +108,7 @@
                 <tr>
                     <th class="whitespace-nowrap">USER</th>
                     <th class="whitespace-nowrap">EMAIL</th>
-                    <th class="text-center whitespace-nowrap">MODULE</th>
+                    <th class="text-center whitespace-nowrap">MODULES</th>
                     <th class="text-center whitespace-nowrap">STATUS</th>
                     <th class="text-center whitespace-nowrap">DATE CREATED</th>
                     <th class="text-center whitespace-nowrap">ACTIONS</th>
@@ -124,7 +124,15 @@
                         <div class="font-medium">{{ $setting->user->email ?? 'N/A' }}</div>
                     </td>
                     <td class="w-40">
-                        <div class="font-medium text-center">{{ $setting->module->module_name ?? 'N/A' }}</div>
+                        <div class="text-center">
+                            @if($setting->module)
+                                <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full font-medium">
+                                    {{ $setting->module->module_name }}
+                                </span>
+                            @else
+                                <span class="text-slate-500 text-sm">No module</span>
+                            @endif
+                        </div>
                     </td>
                     <td class="w-40">
                         <div class="flex items-center justify-center 
@@ -224,23 +232,37 @@
                     <input type="hidden" name="_token" value="{{ csrf_token() }}">
                     
                     <div class="mb-6">
-                        <label class="form-label text-base font-semibold text-slate-700">User</label>
-                        <select name="users_id" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" required>
-                            <option value="">Select User</option>
+                        <label class="form-label text-base font-semibold text-slate-700">Filter by Role</label>
+                        <select id="createRoleFilter" class="form-control mt-2 p-3 border border-slate-300 rounded-lg">
+                            <option value="">All Roles</option>
+                            @foreach($roles as $role)
+                                <option value="{{ $role }}">{{ ucfirst($role) }}</option>
+                            @endforeach
+                        </select>
+                        <small class="text-slate-500">Filter users by their role</small>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="form-label text-base font-semibold text-slate-700">Select User</label>
+                        <select name="users_id" id="createUserSelect" data-placeholder="Search and select a user..." class="tom-select w-full" required>
+                            <option value="">Choose User</option>
                             @foreach($users as $user)
-                                <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }})</option>
+                                <option value="{{ $user->id }}" data-role="{{ $user->role }}">{{ $user->name }} ({{ $user->email }})</option>
                             @endforeach
                         </select>
                     </div>
                     
                     <div class="mb-6">
-                        <label class="form-label text-base font-semibold text-slate-700">Module</label>
-                        <select name="module_id" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" required>
-                            <option value="">Select Module</option>
+                        <label class="form-label text-base font-semibold text-slate-700">Modules</label>
+                        <div class="mt-2 p-4 border border-slate-300 rounded-lg max-h-48 overflow-y-auto">
                             @foreach($modules as $module)
-                                <option value="{{ $module->id }}">{{ $module->module_name }}</option>
+                                <label class="flex items-center mb-2">
+                                    <input type="checkbox" name="modules[]" value="{{ $module->id }}" class="form-check-input mr-3">
+                                    <span class="text-slate-700">{{ $module->module_name }}</span>
+                                </label>
                             @endforeach
-                        </select>
+                        </div>
+                        <small class="text-slate-500">Select one or more modules for notification</small>
                     </div>
                     
                     <div class="mb-6">
@@ -309,23 +331,37 @@
                     <input type="hidden" id="editNotificationSettingId">
                     
                     <div class="mb-6">
-                        <label class="form-label text-base font-semibold text-slate-700">User</label>
-                        <select name="users_id" id="editUsersId" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" required>
-                            <option value="">Select User</option>
+                        <label class="form-label text-base font-semibold text-slate-700">Filter by Role</label>
+                        <select id="editRoleFilter" class="form-control mt-2 p-3 border border-slate-300 rounded-lg">
+                            <option value="">All Roles</option>
+                            @foreach($roles as $role)
+                                <option value="{{ $role }}">{{ ucfirst($role) }}</option>
+                            @endforeach
+                        </select>
+                        <small class="text-slate-500">Filter users by their role</small>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="form-label text-base font-semibold text-slate-700">Select User</label>
+                        <select name="users_id" id="editUserSelect" data-placeholder="Search and select a user..." class="tom-select w-full" required>
+                            <option value="">Choose User</option>
                             @foreach($users as $user)
-                                <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }})</option>
+                                <option value="{{ $user->id }}" data-role="{{ $user->role }}">{{ $user->name }} ({{ $user->email }})</option>
                             @endforeach
                         </select>
                     </div>
                     
                     <div class="mb-6">
-                        <label class="form-label text-base font-semibold text-slate-700">Module</label>
-                        <select name="module_id" id="editModuleId" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" required>
-                            <option value="">Select Module</option>
+                        <label class="form-label text-base font-semibold text-slate-700">Modules</label>
+                        <div class="mt-2 p-4 border border-slate-300 rounded-lg max-h-48 overflow-y-auto" id="editModulesContainer">
                             @foreach($modules as $module)
-                                <option value="{{ $module->id }}">{{ $module->module_name }}</option>
+                                <label class="flex items-center mb-2">
+                                    <input type="checkbox" name="modules[]" value="{{ $module->id }}" class="form-check-input mr-3">
+                                    <span class="text-slate-700">{{ $module->module_name }}</span>
+                                </label>
                             @endforeach
-                        </select>
+                        </div>
+                        <small class="text-slate-500">Select one or more modules for notification</small>
                     </div>
                     
                     <div class="mb-6">
@@ -389,4 +425,189 @@
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.css">
     
     <script src="{{ asset('js/notification_settings/notification_settings.js') }}"></script>
+    <script src="{{ asset('js/tom-select.js') }}"></script>
+    
+    <script>
+        // Initialize Tom Select and Role Filtering (following billing-management pattern)
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCreateRoleFilter();
+            initializeEditRoleFilter();
+        });
+        
+        function initializeCreateRoleFilter() {
+            const roleFilter = document.getElementById('createRoleFilter');
+            const userSelect = document.getElementById('createUserSelect');
+            
+            if (!roleFilter || !userSelect) {
+                console.log('Create role filter or user select not found');
+                return;
+            }
+            
+            // Store all user options
+            let allUserOptions = [];
+            
+            // Wait for Tom Select to initialize
+            setTimeout(function() {
+                const tomSelectInstance = userSelect.tomselect;
+                
+                if (tomSelectInstance) {
+                    // Store all original options
+                    Object.keys(tomSelectInstance.options).forEach(key => {
+                        const option = tomSelectInstance.options[key];
+                        allUserOptions.push({
+                            value: option.value,
+                            text: option.text,
+                            role: option.$option ? option.$option.getAttribute('data-role') : ''
+                        });
+                    });
+                    
+                    console.log('Tom Select found, stored', allUserOptions.length, 'user options');
+                } else {
+                    // Fallback: Get from original select element
+                    const options = userSelect.querySelectorAll('option');
+                    options.forEach(option => {
+                        if (option.value) { // Skip empty option
+                            allUserOptions.push({
+                                value: option.value,
+                                text: option.textContent,
+                                role: option.getAttribute('data-role')
+                            });
+                        }
+                    });
+                    
+                    console.log('Tom Select not found, stored', allUserOptions.length, 'user options from original select');
+                }
+            }, 500);
+            
+            // Handle role filter change
+            roleFilter.addEventListener('change', function() {
+                const selectedRole = this.value;
+                console.log('Role filter changed to:', selectedRole || 'All Roles');
+                
+                setTimeout(function() {
+                    const tomSelectInstance = userSelect.tomselect;
+                    
+                    if (tomSelectInstance) {
+                        // Clear existing options
+                        tomSelectInstance.clearOptions();
+                        
+                        // Filter and add options based on selected role (exact match)
+                        const filteredOptions = selectedRole 
+                            ? allUserOptions.filter(opt => opt.role === selectedRole)
+                            : allUserOptions;
+                        
+                        console.log('Filtered to', filteredOptions.length, 'users');
+                        
+                        // Add filtered options
+                        filteredOptions.forEach(option => {
+                            tomSelectInstance.addOption({
+                                value: option.value,
+                                text: option.text,
+                                role: option.role
+                            });
+                        });
+                        
+                        // Clear current selection
+                        tomSelectInstance.clear();
+                        
+                        // Refresh the dropdown
+                        tomSelectInstance.refreshOptions(false);
+                    }
+                }, 100);
+            });
+            
+            console.log('Create role filter initialized');
+        }
+        
+        function initializeEditRoleFilter() {
+            const roleFilter = document.getElementById('editRoleFilter');
+            const userSelect = document.getElementById('editUserSelect');
+            
+            if (!roleFilter || !userSelect) {
+                console.log('Edit role filter or user select not found');
+                return;
+            }
+            
+            // Store all user options
+            let allUserOptions = [];
+            
+            // Wait for Tom Select to initialize
+            setTimeout(function() {
+                const tomSelectInstance = userSelect.tomselect;
+                
+                if (tomSelectInstance) {
+                    // Store all original options
+                    Object.keys(tomSelectInstance.options).forEach(key => {
+                        const option = tomSelectInstance.options[key];
+                        allUserOptions.push({
+                            value: option.value,
+                            text: option.text,
+                            role: option.$option ? option.$option.getAttribute('data-role') : ''
+                        });
+                    });
+                    
+                    console.log('Tom Select found, stored', allUserOptions.length, 'user options for edit modal');
+                } else {
+                    // Fallback: Get from original select element
+                    const options = userSelect.querySelectorAll('option');
+                    options.forEach(option => {
+                        if (option.value) { // Skip empty option
+                            allUserOptions.push({
+                                value: option.value,
+                                text: option.textContent,
+                                role: option.getAttribute('data-role')
+                            });
+                        }
+                    });
+                    
+                    console.log('Tom Select not found, stored', allUserOptions.length, 'user options from original select for edit modal');
+                }
+            }, 500);
+            
+            // Handle role filter change
+            roleFilter.addEventListener('change', function() {
+                const selectedRole = this.value;
+                console.log('Edit role filter changed to:', selectedRole || 'All Roles');
+                
+                setTimeout(function() {
+                    const tomSelectInstance = userSelect.tomselect;
+                    
+                    if (tomSelectInstance) {
+                        const currentValue = tomSelectInstance.getValue();
+                        
+                        // Clear existing options
+                        tomSelectInstance.clearOptions();
+                        
+                        // Filter and add options based on selected role (exact match)
+                        const filteredOptions = selectedRole 
+                            ? allUserOptions.filter(opt => opt.role === selectedRole)
+                            : allUserOptions;
+                        
+                        console.log('Filtered to', filteredOptions.length, 'users');
+                        
+                        // Add filtered options
+                        filteredOptions.forEach(option => {
+                            tomSelectInstance.addOption({
+                                value: option.value,
+                                text: option.text,
+                                role: option.role
+                            });
+                        });
+                        
+                        // Refresh the dropdown
+                        tomSelectInstance.refreshOptions(false);
+                        
+                        // Restore selected value if it's still in filtered list
+                        if (currentValue && filteredOptions.find(opt => opt.value == currentValue)) {
+                            tomSelectInstance.setValue(currentValue);
+                        } else {
+                            tomSelectInstance.clear();
+                        }
+                    }
+                }, 100);
+            });
+            
+            console.log('Edit role filter initialized');
+        }
+    </script>
 @endpush

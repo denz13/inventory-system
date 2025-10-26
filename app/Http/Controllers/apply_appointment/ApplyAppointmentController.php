@@ -52,6 +52,7 @@ class ApplyAppointmentController extends Controller
                 'appointment_category_id' => 'required|exists:appointment_category,id',
                 'description' => 'required|string|max:1000',
                 'appointment_date' => 'required|date|after_or_equal:today',
+                'time' => 'required|string',
             ], [
                 'appointment_category_id.required' => 'Please select an appointment category',
                 'appointment_category_id.exists' => 'Selected category is invalid',
@@ -59,6 +60,7 @@ class ApplyAppointmentController extends Controller
                 'description.max' => 'Description must not exceed 1000 characters',
                 'appointment_date.required' => 'Appointment date is required',
                 'appointment_date.after_or_equal' => 'Appointment date must be today or a future date',
+                'time.required' => 'Please select an appointment time',
             ]);
             
             if ($validator->fails()) {
@@ -116,6 +118,7 @@ class ApplyAppointmentController extends Controller
                 'users_id' => auth()->id(),
                 'description' => $request->description,
                 'appointment_date' => $request->appointment_date,
+                'time' => $request->time,
                 'tracking_number' => $trackingNumber,
                 'status' => 'Pending',
                 'remarks' => null,
@@ -212,6 +215,62 @@ class ApplyAppointmentController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error checking availability: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getAvailableTimeSlots(Request $request)
+    {
+        try {
+            $appointmentDate = $request->input('appointment_date');
+            
+            if (!$appointmentDate) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Appointment date is required'
+                ], 400);
+            }
+            
+            // Generate time slots from 8:00 AM to 5:00 PM with 30-minute intervals
+            $timeSlots = [];
+            $startTime = Carbon::createFromTime(8, 0); // 8:00 AM
+            $endTime = Carbon::createFromTime(17, 0);  // 5:00 PM
+            
+            while ($startTime <= $endTime) {
+                $timeSlots[] = $startTime->format('h:i A');
+                $startTime->addMinutes(30);
+            }
+            
+            // Get already booked time slots for this date
+            $bookedSlots = appointment::where('appointment_date', $appointmentDate)
+                ->whereIn('status', ['Pending', 'Approved'])
+                ->pluck('time')
+                ->toArray();
+            
+            // Filter out booked time slots
+            $availableSlots = array_diff($timeSlots, $bookedSlots);
+            $availableSlots = array_values($availableSlots); // Re-index array
+            
+            if (empty($availableSlots)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No time slots available for this date. All slots are booked.',
+                    'time_slots' => []
+                ]);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'time_slots' => $availableSlots,
+                'total_slots' => count($timeSlots),
+                'available_slots' => count($availableSlots),
+                'booked_slots' => count($bookedSlots)
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching time slots: ' . $e->getMessage()
             ], 500);
         }
     }

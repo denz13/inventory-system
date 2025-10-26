@@ -41,6 +41,7 @@ class VehicleController extends Controller
                 'vehicle_model' => 'required|string|max:255',
                 'cr_no' => 'required|string|max:50',
                 'color_of_vehicle' => 'required|string|max:100',
+                'driver' => 'required|string|max:255',
                 'supporting_documents_attachments.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240'
             ]);
 
@@ -78,6 +79,7 @@ class VehicleController extends Controller
                 'vehicle_model' => $validated['vehicle_model'],
                 'cr_no' => $validated['cr_no'],
                 'color_of_vehicle' => $validated['color_of_vehicle'],
+                'driver' => $validated['driver'],
                 'vehicle_sticker_control_no' => null, // Set to null as this field is removed
                 'status' => 'Pending'
             ]);
@@ -120,6 +122,7 @@ class VehicleController extends Controller
                 'vehicle_model' => 'required|string|max:255',
                 'cr_no' => 'required|string|max:50',
                 'color_of_vehicle' => 'required|string|max:100',
+                'driver' => 'required|string|max:255',
                 'supporting_documents_attachments.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240'
             ]);
 
@@ -172,6 +175,7 @@ class VehicleController extends Controller
                         'vehicle_model' => $validated['vehicle_model'],
                         'cr_no' => $validated['cr_no'],
                         'color_of_vehicle' => $validated['color_of_vehicle'],
+                        'driver' => $validated['driver'],
                         'vehicle_sticker_control_no' => null, // Keep as null
                         'status' => 'Pending'
                     ]);

@@ -2,13 +2,42 @@ document.addEventListener('DOMContentLoaded', function() {
     // Filter state
     let currentStatusFilter = 'all';
     let currentNameSort = 'default';
-    let currentDateFilter = 'all';
 
     // Search functionality
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.addEventListener('input', function() {
             applyFiltersAndSort();
+        });
+    }
+
+    // Date range filter functionality
+    const dateRangeFilter = document.getElementById('dateRangeFilter');
+    if (dateRangeFilter) {
+        // Listen for change event (when Apply is clicked)
+        dateRangeFilter.addEventListener('change', function() {
+            handleDateRangeFilter(this.value);
+        });
+        
+        // Listen for input event (for real-time updates)
+        dateRangeFilter.addEventListener('input', function() {
+            handleDateRangeFilter(this.value);
+        });
+        
+        // Listen for daterange apply event (litepicker specific)
+        dateRangeFilter.addEventListener('daterange:applied', function() {
+            handleDateRangeFilter(this.value);
+        });
+    }
+
+    // Initialize date range watcher for robust change detection
+    initializeDateRangeWatcher();
+
+    // Clear filter / Show All button
+    const clearFilterBtn = document.getElementById('clearFilterBtn');
+    if (clearFilterBtn) {
+        clearFilterBtn.addEventListener('click', function() {
+            showAllData();
         });
     }
 
@@ -32,19 +61,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 currentNameSort = filterValue;
                 const btnText = filterValue === 'default' ? 'Name' : `Name: ${filterValue.toUpperCase()}`;
                 updateFilterButton('nameSortBtn', btnText);
-            } else if (filterType === 'date-filter') {
-                currentDateFilter = filterValue;
-                const dateTexts = {
-                    'all': 'Filter by Date',
-                    'today': 'Date: Today',
-                    'yesterday': 'Date: Yesterday',
-                    'this-week': 'Date: This Week',
-                    'last-week': 'Date: Last Week',
-                    'this-month': 'Date: This Month',
-                    'last-month': 'Date: Last Month',
-                    'this-year': 'Date: This Year'
-                };
-                updateFilterButton('dateFilterBtn', dateTexts[filterValue] || 'Filter by Date');
             }
             
             // Apply all filters and sorting
@@ -68,16 +84,18 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('resetFiltersBtn')?.addEventListener('click', function() {
         currentStatusFilter = 'all';
         currentNameSort = 'default';
-        currentDateFilter = 'all';
         
         if (searchInput) {
             searchInput.value = '';
         }
         
+        if (dateRangeFilter) {
+            dateRangeFilter.value = '';
+        }
+        
         // Reset button texts
         updateFilterButton('statusFilterBtn', 'Status: All');
         updateFilterButton('nameSortBtn', 'Name');
-        updateFilterButton('dateFilterBtn', 'Filter by Date');
         
         // Apply filters (which will show all)
         applyFiltersAndSort();
@@ -106,22 +124,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (paymentRows.length === 0) return;
         
-        // Setup date ranges for filtering
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-        
-        const startOfWeek = new Date(today);
-        startOfWeek.setDate(today.getDate() - today.getDay());
-        
-        const startOfLastWeek = new Date(startOfWeek);
-        startOfLastWeek.setDate(startOfWeek.getDate() - 7);
-        
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const startOfYear = new Date(now.getFullYear(), 0, 1);
-        
         // Step 1: Filter rows
         let visibleRows = paymentRows.filter(row => {
             const rowText = row.textContent.toLowerCase();
@@ -131,44 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const matchesSearch = searchTerm === '' || rowText.includes(searchTerm);
             const matchesStatus = currentStatusFilter === 'all' || rowStatus === currentStatusFilter;
             
-            // Date filter check
-            let matchesDate = true;
-            if (currentDateFilter !== 'all') {
-                const dateAttr = row.getAttribute('data-date');
-                const rowDate = dateAttr ? new Date(dateAttr) : null;
-                
-                if (rowDate && !isNaN(rowDate.getTime())) {
-                    switch (currentDateFilter) {
-                        case 'today':
-                            matchesDate = rowDate >= today;
-                            break;
-                        case 'yesterday':
-                            matchesDate = rowDate >= yesterday && rowDate < today;
-                            break;
-                        case 'this-week':
-                            matchesDate = rowDate >= startOfWeek;
-                            break;
-                        case 'last-week':
-                            matchesDate = rowDate >= startOfLastWeek && rowDate < startOfWeek;
-                            break;
-                        case 'this-month':
-                            matchesDate = rowDate >= startOfMonth;
-                            break;
-                        case 'last-month':
-                            matchesDate = rowDate >= startOfLastMonth && rowDate < startOfMonth;
-                            break;
-                        case 'this-year':
-                            matchesDate = rowDate >= startOfYear;
-                            break;
-                        default:
-                            matchesDate = true;
-                    }
-                } else {
-                    matchesDate = false;
-                }
-            }
-            
-            return matchesSearch && matchesStatus && matchesDate;
+            return matchesSearch && matchesStatus;
         });
         
         // Step 2: Sort visible rows by name if applicable
@@ -217,7 +182,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Check if we should show "no results" message
-        const hasActiveFilters = searchTerm !== '' || currentStatusFilter !== 'all' || currentNameSort !== 'default' || currentDateFilter !== 'all';
+        const dateRangeFilter = document.getElementById('dateRangeFilter');
+        const hasDateFilter = dateRangeFilter && dateRangeFilter.value.trim() !== '';
+        const hasActiveFilters = searchTerm !== '' || currentStatusFilter !== 'all' || currentNameSort !== 'default' || hasDateFilter;
         
         if (visibleCount === 0 && hasActiveFilters && totalRows > 0 && tbody) {
             // Create new no data row
@@ -236,6 +203,162 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             tbody.appendChild(noDataRow);
         }
+    }
+    
+    function initializeDateRangeWatcher() {
+        const dateRangeFilter = document.getElementById('dateRangeFilter');
+        if (!dateRangeFilter) return;
+
+        let lastValue = dateRangeFilter.value;
+
+        // Watch for value changes using interval
+        setInterval(() => {
+            const currentValue = dateRangeFilter.value;
+            if (currentValue !== lastValue) {
+                lastValue = currentValue;
+                handleDateRangeFilter(currentValue);
+            }
+        }, 100);
+
+        // Also listen for clicks on the document to catch date picker Apply clicks
+        document.addEventListener('click', function(e) {
+            // Add a small delay to ensure the value has been updated
+            setTimeout(() => {
+                const currentValue = dateRangeFilter.value;
+                if (currentValue !== lastValue) {
+                    lastValue = currentValue;
+                    handleDateRangeFilter(currentValue);
+                }
+            }, 100);
+        });
+    }
+
+    function handleDateRangeFilter(dateRange) {
+        console.log('Filtering by date range:', dateRange);
+        
+        if (!dateRange || dateRange.trim() === '') {
+            // If no date range selected, show all rows
+            const tableRows = document.querySelectorAll('tbody tr.intro-x');
+            tableRows.forEach(row => {
+                row.style.display = '';
+            });
+            updateFilteredCount();
+            
+            // Remove no results message
+            const tbody = document.querySelector('tbody');
+            const noDataRow = tbody?.querySelector('tr.no-data-found');
+            if (noDataRow) {
+                noDataRow.remove();
+            }
+            return;
+        }
+
+        const tableRows = document.querySelectorAll('tbody tr.intro-x');
+
+        // Parse the date range (format: "1 Aug, 2025 - 31 Aug, 2025")
+        const dateParts = dateRange.split(' - ');
+        if (dateParts.length !== 2) {
+            console.error('Invalid date range format:', dateRange);
+            return;
+        }
+
+        try {
+            // Parse dates more robustly
+            const startDateStr = dateParts[0].trim();
+            const endDateStr = dateParts[1].trim();
+            
+            const startDate = new Date(startDateStr);
+            const endDate = new Date(endDateStr);
+            
+            if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                console.error('Invalid date values:', startDateStr, endDateStr);
+                return;
+            }
+
+            console.log('Date range:', startDate, 'to', endDate);
+
+            let visibleCount = 0;
+            tableRows.forEach(row => {
+                const dateAttr = row.getAttribute('data-date');
+                if (!dateAttr) {
+                    row.style.display = 'none';
+                    return;
+                }
+
+                const rowDate = new Date(dateAttr);
+                
+                // Check if row date is within the selected range
+                if (rowDate >= startDate && rowDate <= endDate) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            updateFilteredCount();
+            
+            // Show no results message if needed
+            updateNoResultsMessage('', currentStatusFilter, visibleCount, tableRows.length);
+            
+            // Clear search input when filtering
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.value = '';
+            }
+        } catch (error) {
+            console.error('Error in date range filtering:', error);
+        }
+    }
+
+    function updateFilteredCount() {
+        const allRows = document.querySelectorAll('tbody tr.intro-x');
+        let visibleCount = 0;
+        
+        allRows.forEach(row => {
+            if (row.style.display !== 'none') {
+                visibleCount++;
+            }
+        });
+        
+        const filteredCount = document.getElementById('filtered-count');
+        if (filteredCount) {
+            filteredCount.textContent = visibleCount;
+        }
+        
+        console.log('Updated filtered count:', visibleCount, 'out of', allRows.length);
+    }
+
+    function showAllData() {
+        console.log('Showing all data - clearing filters');
+        
+        // Clear date range filter
+        const dateRangeFilter = document.getElementById('dateRangeFilter');
+        if (dateRangeFilter) {
+            dateRangeFilter.value = '';
+        }
+        
+        // Clear search input
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.value = '';
+        }
+        
+        // Show all table rows
+        const tableRows = document.querySelectorAll('tbody tr.intro-x');
+        tableRows.forEach(row => {
+            row.style.display = '';
+        });
+        
+        // Remove no results message
+        const tbody = document.querySelector('tbody');
+        const noDataRow = tbody?.querySelector('tr.no-data-found');
+        if (noDataRow) {
+            noDataRow.remove();
+        }
+        
+        // Update counter to show all records
+        updateFilteredCount();
     }
     
     // View billing modal functionality

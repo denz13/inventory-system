@@ -13,7 +13,7 @@ class vehicle_list_details_homeowners extends Model
 
     protected $table = 'tbl_vehicle_list_details_homeowners';
     protected $primaryKey = 'id';
-    protected $fillable = ['vehicle_homeowners_supporting_documents_id','reason', 'plate_number', 'or_no', 'vehicle_model', 'cr_no', 'color_of_vehicle', 'vehicle_sticker_control_no','status'];
+    protected $fillable = ['vehicle_homeowners_supporting_documents_id','driver','reason', 'plate_number', 'or_no', 'vehicle_model', 'cr_no', 'color_of_vehicle', 'vehicle_sticker_control_no','status'];
 
     public function vehicle_homeowners_supporting_documents()
     {

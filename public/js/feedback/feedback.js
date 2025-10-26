@@ -404,16 +404,6 @@ function displayFeedbackDetails(feedback) {
                 </div>
             </div>
             
-            <!-- Status -->
-            <div class="mb-6">
-                <label class="form-label text-base font-semibold text-slate-700">Status</label>
-                <div class="form-control mt-2 p-3 border border-slate-300 rounded-lg bg-slate-50">
-                    <span class="px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(feedback.status)}">
-                        ${feedback.status ? feedback.status.charAt(0).toUpperCase() + feedback.status.slice(1) : 'N/A'}
-                    </span>
-                </div>
-            </div>
-            
             <!-- Date Created -->
             <div class="mb-6">
                 <label class="form-label text-base font-semibold text-slate-700">Date Created</label>
@@ -444,7 +434,8 @@ function loadFeedbackForEdit(feedbackId) {
 function populateEditForm(feedback) {
     document.getElementById('editFeedbackId').value = feedback.id;
     document.getElementById('editDescription').value = feedback.description;
-    document.getElementById('editStatus').value = feedback.status;
+    // Status is now hidden, always set to active
+    document.getElementById('editStatus').value = feedback.status || 'active';
     
     // Set star rating
     setStarRating('edit-rating-stars', 'edit-rating-input', feedback.rating);

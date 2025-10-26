@@ -171,6 +171,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         document.getElementById('editOrNo').value = data.data.supporting_documents.vehicle_details.or_no || '';
                         document.getElementById('editCrNo').value = data.data.supporting_documents.vehicle_details.cr_no || '';
                         document.getElementById('editColorOfVehicle').value = data.data.supporting_documents.vehicle_details.color_of_vehicle || '';
+                        document.getElementById('editDriver').value = data.data.supporting_documents.vehicle_details.driver || '';
                     } else {
                         console.log('No nested structure found. Data structure:', data.data);
                         // Fallback: try to find vehicle details in any available structure
@@ -181,6 +182,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             document.getElementById('editOrNo').value = data.data.vehicle_details.or_no || '';
                             document.getElementById('editCrNo').value = data.data.vehicle_details.cr_no || '';
                             document.getElementById('editColorOfVehicle').value = data.data.vehicle_details.color_of_vehicle || '';
+                            document.getElementById('editDriver').value = data.data.vehicle_details.driver || '';
                         }
                     }
                     
@@ -235,6 +237,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const orNo = vehicle.supporting_documents?.vehicle_details?.or_no || 'N/A';
             const crNo = vehicle.supporting_documents?.vehicle_details?.cr_no || 'N/A';
             const color = vehicle.supporting_documents?.vehicle_details?.color_of_vehicle || 'N/A';
+            const driver = vehicle.supporting_documents?.vehicle_details?.driver || 'N/A';
             const status = vehicle.status || 'N/A';
             const dateCreated = vehicle.created_at ? new Date(vehicle.created_at).toLocaleString() : 'N/A';
             
@@ -284,6 +287,10 @@ document.addEventListener('DOMContentLoaded', function () {
                         <input type="text" class="form-control" value="${crNo}" readonly>
                     </div>
                     <div class="col-span-12 md:col-span-6">
+                        <label class="form-label">Driver Name</label>
+                        <input type="text" class="form-control" value="${driver}" readonly>
+                    </div>
+                    <div class="col-span-12 md:col-span-6">
                         <label class="form-label">Owner</label>
                         <input type="text" class="form-control" value="${userName}" readonly>
                     </div>
@@ -292,12 +299,12 @@ document.addEventListener('DOMContentLoaded', function () {
                         <input type="text" class="form-control" value="${status}" readonly>
                     </div>
                     <div class="col-span-12 md:col-span-6">
-                        <label class="form-label">Supporting Documents</label>
-                        <div class="form-control bg-slate-50">${supportingDoc}</div>
-                    </div>
-                    <div class="col-span-12 md:col-span-6">
                         <label class="form-label">Date Created</label>
                         <input type="text" class="form-control" value="${dateCreated}" readonly>
+                    </div>
+                    <div class="col-span-12">
+                        <label class="form-label">Supporting Documents</label>
+                        <div class="form-control bg-slate-50">${supportingDoc}</div>
                     </div>
                 </div>
             `;

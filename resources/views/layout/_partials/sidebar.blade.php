@@ -28,24 +28,30 @@
             </a>
         </li>
         @endif
+        @if(auth()->user()->hasPermission('apply business'))
         <li>
             <a href="{{ route('business.index') }}" class="side-menu">
                 <div class="side-menu__icon"> <i data-lucide="file-text"></i> </div>
                 <div class="side-menu__title"> Apply Business </div>
             </a>
         </li>
+        @endif
+        @if(auth()->user()->hasPermission('apply landlord'))
         <li>
             <a href="{{ route('landlord.index') }}" class="side-menu">
                 <div class="side-menu__icon"> <i data-lucide="file-text"></i> </div>
                 <div class="side-menu__title"> Apply Landlord </div>
             </a>
         </li>
+        @endif
+        @if(auth()->user()->hasPermission('apply appointment'))
         <li>
             <a href="{{ route('apply-appointment.index') }}" class="side-menu">
                 <div class="side-menu__icon"> <i data-lucide="calendar"></i> </div>
                 <div class="side-menu__title"> Apply Appointment </div>
             </a>
         </li>
+        @endif
         @if(auth()->user()->hasPermission('billing payment'))
         <li>
             <a href="javascript:;" class="side-menu">
@@ -773,24 +779,30 @@
                     </a>
                 </li>
                 @endif
+                @if(auth()->user()->hasPermission('landlord permissions'))
                 <li>
                     <a href="{{ route('landlord-permission.index') }}" class="side-menu">
                         <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
                         <div class="side-menu__title"> Landlord Permissions </div>
                     </a>
                 </li>
+                @endif
+                @if(auth()->user()->hasPermission('appointment category'))
                 <li>
                     <a href="{{ route('appointment-category.index') }}" class="side-menu">
                         <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
                         <div class="side-menu__title"> Appointment Category </div>
                     </a>
                 </li>
+                @endif
+                @if(auth()->user()->hasPermission('appointment allow schedule'))
                 <li>
                     <a href="{{ route('appointment-allowing.index') }}" class="side-menu">
                         <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
                         <div class="side-menu__title"> Appointment Allow Schedule </div>
                     </a>
                 </li>
+                @endif
             </ul>
         </li>
         @endif
@@ -803,18 +815,22 @@
                 </div>
             </a>
             <ul class="">
+                @if(auth()->user()->hasPermission('activity logs'))
                 <li>
                     <a href="{{ route('activity-logs.index') }}" class="side-menu">
                         <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
                         <div class="side-menu__title"> Activity Logs </div>
                     </a>
                 </li>
+                @endif
+                @if(auth()->user()->hasPermission('user login'))
                 <li>
                     <a href="{{ route('users-login.index') }}" class="side-menu">
                         <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
                         <div class="side-menu__title"> Users Login </div>
                     </a>
                 </li>
+                @endif
             </ul>
         </li>
     </ul>

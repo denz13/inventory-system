@@ -72,6 +72,31 @@ function initializeAppointmentManagement() {
         dateInput.addEventListener('change', function() {
             document.getElementById('dateError').classList.add('hidden');
             this.classList.remove('border-red-500');
+            
+            const selectedDate = this.value;
+            const timeWrapper = document.getElementById('timeSelectionWrapper');
+            const timeSelect = document.getElementById('appointmentTime');
+            
+            if (selectedDate && timeWrapper && timeSelect) {
+                // Show time selection and fetch available times
+                timeWrapper.classList.remove('hidden');
+                timeSelect.setAttribute('required', 'required');
+                
+                // Fetch available time slots for the selected date
+                fetchAvailableTimeSlots(selectedDate);
+            } else if (timeWrapper && timeSelect) {
+                timeWrapper.classList.add('hidden');
+                timeSelect.removeAttribute('required');
+                timeSelect.value = '';
+            }
+        });
+    }
+    
+    const timeInput = document.getElementById('appointmentTime');
+    if (timeInput) {
+        timeInput.addEventListener('change', function() {
+            document.getElementById('timeError').classList.add('hidden');
+            this.classList.remove('border-red-500');
         });
     }
 }
@@ -292,6 +317,14 @@ function displayAppointmentDetails(appointment) {
                     <div class="form-control mt-2 p-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700">
                         ${appointment.appointment_date ? formatAppointmentDate(appointment.appointment_date) : 'N/A'}
                     </div>
+                </div>
+            </div>
+            
+            <!-- Appointment Time -->
+            <div class="mb-6">
+                <label class="form-label text-base font-semibold text-slate-700">Appointment Time</label>
+                <div class="form-control mt-2 p-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium">
+                    ${appointment.time || 'N/A'}
                 </div>
             </div>
             
@@ -560,21 +593,88 @@ function showFormErrors(errorDivId, errorListId, errors) {
     }
 }
 
+function fetchAvailableTimeSlots(selectedDate) {
+    const timeSelect = document.getElementById('appointmentTime');
+    const timeSlotInfo = document.getElementById('timeSlotInfo');
+    
+    if (!timeSelect) return;
+    
+    // Show loading state
+    timeSelect.innerHTML = '<option value="">Loading available times...</option>';
+    timeSelect.disabled = true;
+    
+    fetch('/apply-appointment/available-time-slots', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                           document.querySelector('input[name="_token"]')?.value,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            appointment_date: selectedDate
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.time_slots && data.time_slots.length > 0) {
+            // Populate time slots
+            let options = '<option value="">Select Time</option>';
+            data.time_slots.forEach(timeSlot => {
+                options += `<option value="${timeSlot}">${timeSlot}</option>`;
+            });
+            timeSelect.innerHTML = options;
+            timeSelect.disabled = false;
+            
+            if (timeSlotInfo) {
+                timeSlotInfo.textContent = `${data.time_slots.length} time slots available`;
+                timeSlotInfo.classList.remove('text-red-600');
+                timeSlotInfo.classList.add('text-slate-500');
+            }
+        } else {
+            // No time slots available
+            timeSelect.innerHTML = '<option value="">No time slots available</option>';
+            timeSelect.disabled = true;
+            
+            if (timeSlotInfo) {
+                timeSlotInfo.textContent = data.message || 'No time slots available for this date';
+                timeSlotInfo.classList.remove('text-slate-500');
+                timeSlotInfo.classList.add('text-red-600');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching time slots:', error);
+        timeSelect.innerHTML = '<option value="">Error loading times</option>';
+        timeSelect.disabled = true;
+        
+        if (timeSlotInfo) {
+            timeSlotInfo.textContent = 'Error loading time slots. Please try again.';
+            timeSlotInfo.classList.remove('text-slate-500');
+            timeSlotInfo.classList.add('text-red-600');
+        }
+    });
+}
+
 function clearCreateFormErrors() {
     const errorDiv = document.getElementById('createFormErrors');
     const descriptionError = document.getElementById('descriptionError');
     const categoryError = document.getElementById('categoryError');
     const dateError = document.getElementById('dateError');
+    const timeError = document.getElementById('timeError');
     const descriptionInput = document.getElementById('appointmentDescription');
     const categoryInput = document.getElementById('appointmentCategory');
     const dateInput = document.getElementById('appointmentDate');
+    const timeInput = document.getElementById('appointmentTime');
     
     if (errorDiv) errorDiv.classList.add('hidden');
     if (descriptionError) descriptionError.classList.add('hidden');
     if (categoryError) categoryError.classList.add('hidden');
     if (dateError) dateError.classList.add('hidden');
+    if (timeError) timeError.classList.add('hidden');
     if (descriptionInput) descriptionInput.classList.remove('border-red-500');
     if (categoryInput) categoryInput.classList.remove('border-red-500');
     if (dateInput) dateInput.classList.remove('border-red-500');
+    if (timeInput) timeInput.classList.remove('border-red-500');
 }
 

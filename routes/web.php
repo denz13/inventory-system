@@ -310,6 +310,7 @@ Route::post('vehicle-management/sticker/{id}/valid-until', [VehicleManagementCon
     Route::get('apply-appointment', [ApplyAppointmentController::class, 'index'])->name('apply-appointment.index');
     Route::post('apply-appointment', [ApplyAppointmentController::class, 'store'])->name('apply-appointment.store');
     Route::post('apply-appointment/check-availability', [ApplyAppointmentController::class, 'checkAvailability'])->name('apply-appointment.check-availability');
+    Route::post('apply-appointment/available-time-slots', [ApplyAppointmentController::class, 'getAvailableTimeSlots'])->name('apply-appointment.available-time-slots');
     Route::get('apply-appointment/{id}', [ApplyAppointmentController::class, 'show'])->name('apply-appointment.show');
     Route::delete('apply-appointment/{id}', [ApplyAppointmentController::class, 'destroy'])->name('apply-appointment.destroy');
     

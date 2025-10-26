@@ -205,7 +205,9 @@ function displayNotificationSettingDetails(setting) {
                         </div>
                         <div>
                             <label class="form-label text-sm font-semibold text-slate-700">Module</label>
-                            <input type="text" class="form-control mt-1" value="${setting.module ? setting.module.module_name : 'N/A'}" readonly>
+                            <div class="form-control mt-1 bg-white">
+                                ${setting.module ? `<span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full font-medium">${setting.module.module_name}</span>` : 'N/A'}
+                            </div>
                         </div>
                         <div>
                             <label class="form-label text-sm font-semibold text-slate-700">Created Date</label>
@@ -253,9 +255,29 @@ function loadNotificationSettingForEdit(settingId) {
         
         // Set form values
         document.getElementById('editNotificationSettingId').value = setting.id;
-        document.getElementById('editUsersId').value = setting.users_id;
-        document.getElementById('editModuleId').value = setting.module_id;
         document.getElementById('editStatus').value = setting.status;
+        
+        // Set user using Tom Select - wait for it to be ready
+        setTimeout(function() {
+            const editUserSelect = document.getElementById('editUserSelect');
+            if (editUserSelect && editUserSelect.tomselect) {
+                editUserSelect.tomselect.setValue(setting.users_id);
+            }
+        }, 100);
+        
+        // Clear all checkboxes first
+        const checkboxes = document.querySelectorAll('#editModulesContainer input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        
+        // Check the checkbox for the current module
+        if (setting.module_id) {
+            const moduleCheckbox = document.querySelector(`#editModulesContainer input[value="${setting.module_id}"]`);
+            if (moduleCheckbox) {
+                moduleCheckbox.checked = true;
+            }
+        }
         
         // Update form action
         const form = document.getElementById('editNotificationSettingForm');

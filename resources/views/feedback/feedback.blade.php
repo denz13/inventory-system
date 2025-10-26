@@ -64,17 +64,6 @@
             Add My Feedback
         </button>
         
-        <!-- <div class="dropdown ml-2"> 
-            <button class="dropdown-toggle btn btn-outline-secondary" aria-expanded="false" data-tw-toggle="dropdown">Filter by Status</button> 
-            <div class="dropdown-menu w-40"> 
-                <ul class="dropdown-content"> 
-                    <li> <a href="javascript:;" class="dropdown-item" data-filter="all">My Feedback</a> </li> 
-                    <li> <a href="javascript:;" class="dropdown-item" data-filter="active">Active</a> </li> 
-                    <li> <a href="javascript:;" class="dropdown-item" data-filter="inactive">Inactive</a> </li> 
-                </ul> 
-            </div> 
-        </div> -->
-        
         <div class="dropdown ml-2"> 
             <button class="dropdown-toggle btn btn-outline-secondary" aria-expanded="false" data-tw-toggle="dropdown">Filter by Rating</button> 
             <div class="dropdown-menu w-40"> 
@@ -112,7 +101,6 @@
                     <th class="whitespace-nowrap">USER</th>
                     <th class="whitespace-nowrap">EMAIL</th>
                     <th class="text-center whitespace-nowrap">RATING</th>
-                    <th class="text-center whitespace-nowrap">STATUS</th>
                     <th class="text-center whitespace-nowrap">DATE CREATED</th>
                     <th class="text-center whitespace-nowrap">ACTIONS</th>
                 </tr>
@@ -169,27 +157,6 @@
                             <span class="ml-2 text-sm font-medium">{{ $feedback->rating }}/5</span>
                         </div>
                     </td>
-                    <td class="w-40">
-                        <div class="flex items-center justify-center 
-                            @if($feedback->status === 'active') text-success
-                            @elseif($feedback->status === 'inactive') text-slate-500
-                            @else text-slate-500
-                            @endif">
-                            @if($feedback->status === 'active')
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
-                                    <polyline points="9 11 12 14 22 4"></polyline>
-                                    <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
-                                </svg>
-                            @else
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <line x1="15" y1="9" x2="9" y2="15"></line>
-                                    <line x1="9" y1="9" x2="15" y2="15"></line>
-                                </svg>
-                            @endif
-                            {{ ucfirst($feedback->status) }}
-                        </div>
-                    </td>
                     <td class="text-center">
                         <div class="text-slate-500 whitespace-nowrap">{{ $feedback->created_at ? $feedback->created_at->format('M d, Y g:i A') : 'N/A' }}</div>
                     </td>
@@ -223,7 +190,7 @@
                 </tr>
                 @empty
                 <tr class="intro-x" id="no-feedback-row">
-                    <td colspan="7" class="text-center py-8">
+                    <td colspan="6" class="text-center py-8">
                         <div class="text-slate-500">
                             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
                                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -236,7 +203,7 @@
                 @endforelse
                 <!-- No results message (for filtering/search) -->
                 <tr class="intro-x hidden" id="no-results-row">
-                    <td colspan="7" class="text-center py-8">
+                    <td colspan="6" class="text-center py-8">
                         <div class="text-slate-500">
                             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
                                 <circle cx="11" cy="11" r="8"></circle>
@@ -428,13 +395,8 @@
                         <small id="editRatingError" class="text-red-600 hidden mt-1 block text-center">Please select a rating</small>
                     </div>
                     
-                    <div class="mb-6">
-                        <label class="form-label text-base font-semibold text-slate-700">Status <span class="text-red-600">*</span></label>
-                        <select name="status" id="editStatus" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" required>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                        </select>
-                    </div>
+                    <!-- Status field hidden -->
+                    <input type="hidden" name="status" id="editStatus" value="active">
                 </form>
             </div>
             <div class="modal-footer px-6 py-4 bg-slate-50">

@@ -59,33 +59,43 @@ document.addEventListener('DOMContentLoaded', function () {
       const status = appointment.status || 'N/A';
       const description = appointment.description || 'N/A';
       const appointmentDate = appointment.appointment_date ? new Date(appointment.appointment_date).toLocaleDateString() : 'N/A';
+      const appointmentTime = appointment.time || 'N/A';
+      const categoryName = appointment.appointment_category?.category_name || 'N/A';
       const dateCreated = appointment.created_at ? new Date(appointment.created_at).toLocaleString() : 'N/A';
       const remarks = appointment.remarks || 'N/A';
 
       detailsContainer.innerHTML = `
         <div class="grid grid-cols-12 gap-4">
           <div class="col-span-12 md:col-span-6">
-            <label class="form-label">Tracking Number</label>
+            <label class="form-label font-semibold">Tracking Number</label>
             <input type="text" class="form-control" value="${trackingNumber}" readonly>
           </div>
           <div class="col-span-12 md:col-span-6">
-            <label class="form-label">Status</label>
-            <input type="text" class="form-control" value="${status}" readonly>
+            <label class="form-label font-semibold">Category</label>
+            <input type="text" class="form-control" value="${categoryName}" readonly>
           </div>
           <div class="col-span-12">
-            <label class="form-label">Description</label>
+            <label class="form-label font-semibold">Description</label>
             <textarea class="form-control" rows="3" readonly>${description}</textarea>
           </div>
           <div class="col-span-12 md:col-span-6">
-            <label class="form-label">Appointment Date</label>
+            <label class="form-label font-semibold">Appointment Date</label>
             <input type="text" class="form-control" value="${appointmentDate}" readonly>
           </div>
           <div class="col-span-12 md:col-span-6">
-            <label class="form-label">Date Created</label>
+            <label class="form-label font-semibold">Appointment Time</label>
+            <input type="text" class="form-control font-medium text-primary" value="${appointmentTime}" readonly>
+          </div>
+          <div class="col-span-12 md:col-span-6">
+            <label class="form-label font-semibold">Status</label>
+            <input type="text" class="form-control" value="${status}" readonly>
+          </div>
+          <div class="col-span-12 md:col-span-6">
+            <label class="form-label font-semibold">Date Created</label>
             <input type="text" class="form-control" value="${dateCreated}" readonly>
           </div>
           <div class="col-span-12">
-            <label class="form-label">Remarks</label>
+            <label class="form-label font-semibold">Remarks</label>
             <textarea class="form-control" rows="3" readonly>${remarks}</textarea>
           </div>
         </div>

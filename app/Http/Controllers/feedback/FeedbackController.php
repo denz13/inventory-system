@@ -113,13 +113,12 @@ class FeedbackController extends Controller
             $validator = \Validator::make($request->all(), [
                 'description' => 'required|string',
                 'rating' => 'required|integer|min:1|max:5',
-                'status' => 'required|in:active,inactive',
+                'status' => 'nullable|in:active,inactive',
             ], [
                 'description.required' => 'Feedback description is required',
                 'rating.required' => 'Please select a rating',
                 'rating.min' => 'Please select a rating between 1 and 5 stars',
                 'rating.max' => 'Please select a rating between 1 and 5 stars',
-                'status.required' => 'Status is required',
                 'status.in' => 'Status must be either active or inactive',
             ]);
             
@@ -144,7 +143,7 @@ class FeedbackController extends Controller
             $feedback->update([
                 'description' => $request->description,
                 'rating' => $request->rating,
-                'status' => $request->status,
+                'status' => $request->input('status', 'active'), // Default to active if not provided
             ]);
 
             return response()->json([
