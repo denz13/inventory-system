@@ -106,7 +106,7 @@
                     @endif
                 </div>
 
-                <form class="update-setting-form" data-setting-id="{{ $setting->id }}" data-setting-type="{{ $setting->type }}">
+                <form class="update-setting-form" data-setting-id="{{ $setting->id }}" data-setting-type="{{ $setting->type }}" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
                     
@@ -114,7 +114,7 @@
                         @if($setting->type === 'image')
                             <label class="form-label text-sm font-medium text-slate-700">Upload New Image</label>
                             <input type="file" name="value" class="form-control mt-2" accept="image/*" required>
-                            <small class="text-slate-500">Supported formats: JPG, PNG, GIF</small>
+                            <small class="text-slate-500">Supported formats: JPG, PNG, GIF (Max: 5MB)</small>
                         @else
                             <label class="form-label text-sm font-medium text-slate-700">New Value</label>
                             <input type="text" name="value" class="form-control mt-2" value="{{ $setting->value }}" placeholder="Enter new value" required>

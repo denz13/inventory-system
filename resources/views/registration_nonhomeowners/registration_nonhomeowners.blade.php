@@ -14,6 +14,42 @@
     <link rel="stylesheet" href="{{ asset('assets/toastify/toastify.css') }}">
     <!-- END: CSS Assets-->
     <style>
+        /* Enable smooth scrolling using browser scrollbar only */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body.login {
+            min-height: 100vh;
+            height: auto !important;
+            overflow-x: hidden;
+            overflow-y: auto !important;
+        }
+        
+        /* Remove container height restrictions */
+        .container {
+            min-height: 100vh;
+            height: auto;
+        }
+        
+        /* Scrollbar styling for browser scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 5px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        
         .toastify { 
             background: transparent !important; 
             box-shadow: none !important; 
@@ -68,6 +104,25 @@
         .border-red-500 {
             border-color: #ef4444 !important;
         }
+        
+        /* Ensure form sections are visible when zoomed */
+        .block.xl\\:grid {
+            min-height: 100vh;
+        }
+        
+        /* Allow content to expand naturally */
+        .my-auto {
+            margin-top: auto;
+            margin-bottom: auto;
+        }
+        
+        /* On small screens or zoomed, use minimal margins */
+        @media (max-height: 800px) {
+            .my-auto {
+                margin-top: 2rem;
+                margin-bottom: 2rem;
+            }
+        }
     </style>
 </head>
 <body class="login">
@@ -92,7 +147,7 @@
             <!-- END: Registration Info -->
             
             <!-- BEGIN: Registration Form -->
-            <div class="h-screen xl:h-auto flex py-5 xl:py-0 my-10 xl:my-0">
+            <div class="min-h-screen xl:h-auto flex py-5 xl:py-0 my-10 xl:my-0">
                 <div class="my-auto mx-auto xl:ml-20 bg-white dark:bg-darkmode-600 xl:bg-transparent px-5 sm:px-8 py-8 xl:p-0 rounded-md shadow-md xl:shadow-none w-full sm:w-3/4 lg:w-2/4 xl:w-auto">
                     <h2 class="intro-x font-bold text-2xl xl:text-3xl text-center xl:text-left">
                         Sign Up

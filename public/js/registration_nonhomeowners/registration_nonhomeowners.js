@@ -85,17 +85,28 @@ function submitRegistration() {
     // Basic validation
     const requiredFields = ['name', 'email', 'contact_number', 'gender', 'date_of_birth', 'civil_status', 'password'];
     let hasErrors = false;
+    let firstErrorField = null;
     
     requiredFields.forEach(fieldName => {
         const field = document.getElementById(fieldName);
         if (!field || !field.value.trim()) {
             showError(fieldName, `${fieldName.replace('_', ' ')} is required`);
             hasErrors = true;
+            
+            // Track first error field
+            if (!firstErrorField) {
+                firstErrorField = fieldName;
+            }
         }
     });
     
     if (hasErrors) {
         showWarningToast('Please fill in all required fields');
+        
+        // Scroll to first error field
+        if (firstErrorField) {
+            scrollToField(firstErrorField);
+        }
         return;
     }
     
@@ -184,8 +195,20 @@ function submitRegistration() {
 }
 
 function displayFormErrors(errors) {
+    let firstErrorField = null;
+    
     for (const [field, messages] of Object.entries(errors)) {
         showError(field, messages[0]);
+        
+        // Track first error field for scrolling
+        if (!firstErrorField) {
+            firstErrorField = field;
+        }
+    }
+    
+    // Scroll to first error field
+    if (firstErrorField) {
+        scrollToField(firstErrorField);
     }
 }
 
@@ -269,3 +292,17 @@ function showWarningToast(message) {
     }
 }
 
+function scrollToField(fieldName) {
+    const fieldElement = document.getElementById(fieldName);
+    if (fieldElement) {
+        fieldElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+        });
+        
+        // Optional: Add a slight delay then focus
+        setTimeout(() => {
+            fieldElement.focus();
+        }, 300);
+    }
+}
