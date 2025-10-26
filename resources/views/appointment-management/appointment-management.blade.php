@@ -66,22 +66,26 @@
         <div class="intro-y col-span-12 overflow-auto lg:overflow-visible">
             <table class="table table-report -mt-2" id="appointmentTable">
                 <thead>
-                    <tr>
-                        <th class="whitespace-nowrap">TRACKING NUMBER</th>
-                        <th class="whitespace-nowrap">DESCRIPTION</th>
-                        <th class="whitespace-nowrap">DATE & TIME</th>
-                        <th class="text-center whitespace-nowrap">STATUS</th>
-                        <th class="text-center whitespace-nowrap">REMARKS</th>
-                        <th class="text-center whitespace-nowrap">CREATED</th>
-                        <th class="text-center whitespace-nowrap">ACTIONS</th>
-                    </tr>
+                <tr>
+                    <th class="whitespace-nowrap">TRACKING NUMBER</th>
+                    <th class="whitespace-nowrap">DESCRIPTION</th>
+                    <th class="whitespace-nowrap">APPOINTMENT DATE</th>
+                    <th class="whitespace-nowrap">TIME</th>
+                    <th class="text-center whitespace-nowrap">STATUS</th>
+                    <th class="text-center whitespace-nowrap">REMARKS</th>
+                    <th class="text-center whitespace-nowrap">CREATED</th>
+                    <th class="text-center whitespace-nowrap">ACTIONS</th>
+                </tr>
                 </thead>
                 <tbody>
                     @foreach ($appointments as $appointment)
                         <tr class="intro-x" data-tracking="{{ $appointment->tracking_number }}" data-description="{{ $appointment->description }}" data-status="{{ $appointment->status }}">
                             <td><a href="javascript:;" class="font-medium whitespace-nowrap">{{ $appointment->tracking_number }}</a></td>
                             <td class="whitespace-nowrap">{{ Str::limit($appointment->description, 50) }}</td>
-                            <td class="whitespace-nowrap">{{ $appointment->appointment_date ? \Carbon\Carbon::parse($appointment->appointment_date)->format('M d, Y h:i A') : 'N/A' }}</td>
+                            <td class="whitespace-nowrap">{{ $appointment->appointment_date ? \Carbon\Carbon::parse($appointment->appointment_date)->format('M d, Y') : 'N/A' }}</td>
+                            <td class="whitespace-nowrap">
+                                <span class="font-medium text-primary">{{ $appointment->time ?? 'N/A' }}</span>
+                            </td>
                             <td class="w-40">
                                 @php 
                                     $statusClass = match($appointment->status) {
@@ -194,7 +198,7 @@
                     @endforeach
                     <!-- No results message (for search) -->
                     <tr class="intro-x hidden" id="no-results-row">
-                        <td colspan="7" class="text-center py-8">
+                        <td colspan="8" class="text-center py-8">
                             <div class="text-slate-500">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
                                     <circle cx="11" cy="11" r="8"></circle>

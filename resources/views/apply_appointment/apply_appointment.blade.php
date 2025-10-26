@@ -88,6 +88,7 @@
                     <th class="whitespace-nowrap">TRACKING NUMBER</th>
                     <th class="whitespace-nowrap">CATEGORY</th>
                     <th class="whitespace-nowrap">APPOINTMENT DATE</th>
+                    <th class="whitespace-nowrap">TIME</th>
                     <th class="text-center whitespace-nowrap">STATUS</th>
                     <th class="text-center whitespace-nowrap">SUBMITTED DATE</th>
                     <th class="text-center whitespace-nowrap">ACTIONS</th>
@@ -104,6 +105,9 @@
                     </td>
                     <td class="whitespace-nowrap">
                         <span class="font-medium">{{ $appointment->appointment_date ? \Carbon\Carbon::parse($appointment->appointment_date)->format('M d, Y') : 'N/A' }}</span>
+                    </td>
+                    <td class="whitespace-nowrap">
+                        <span class="font-medium text-primary">{{ $appointment->time ?? 'N/A' }}</span>
                     </td>
                     <td class="w-40">
                         <div class="flex items-center justify-center 
@@ -163,7 +167,7 @@
                 </tr>
                 @empty
                 <tr class="intro-x" id="no-appointments-row">
-                    <td colspan="6" class="text-center py-8">
+                    <td colspan="7" class="text-center py-8">
                         <div class="text-slate-500">
                             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
                                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -179,7 +183,7 @@
                 @endforelse
                 <!-- No results message (for filtering/search) -->
                 <tr class="intro-x hidden" id="no-results-row">
-                    <td colspan="6" class="text-center py-8">
+                    <td colspan="7" class="text-center py-8">
                         <div class="text-slate-500">
                             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
                                 <circle cx="11" cy="11" r="8"></circle>
@@ -274,6 +278,15 @@
                             @endif
                         </div>
                         <small id="dateError" class="text-red-600 hidden mt-1">Please select a date</small>
+                    </div>
+                    
+                    <div class="mb-6 hidden" id="timeSelectionWrapper">
+                        <label class="form-label text-base font-semibold text-slate-700">Appointment Time <span class="text-red-600">*</span></label>
+                        <select name="time" id="appointmentTime" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" required>
+                            <option value="">Loading available times...</option>
+                        </select>
+                        <div class="text-xs text-slate-500 mt-1" id="timeSlotInfo">Please select your preferred appointment time</div>
+                        <small id="timeError" class="text-red-600 hidden mt-1">Please select a time</small>
                     </div>
                     
                     <div class="mb-6">

@@ -136,6 +136,7 @@
                 <tr>
                     <th class="whitespace-nowrap">VEHICLE INFO</th>
                     <th class="whitespace-nowrap">PLATE NUMBER</th>
+                    <th class="whitespace-nowrap">DRIVER</th>
                     <th class="whitespace-nowrap">DOCUMENTS</th>
                     <th class="text-center whitespace-nowrap">STATUS</th>
                     <th class="text-center whitespace-nowrap">REGISTERED DATE</th>
@@ -158,6 +159,13 @@
                     <td class="whitespace-nowrap">
                         @if($vehicle->supportingDocuments && $vehicle->supportingDocuments->vehicleDetails)
                             <span class="font-medium">{{ $vehicle->supportingDocuments->vehicleDetails->plate_number }}</span>
+                        @else
+                            <span class="text-slate-400">N/A</span>
+                        @endif
+                    </td>
+                    <td class="whitespace-nowrap">
+                        @if($vehicle->supportingDocuments && $vehicle->supportingDocuments->vehicleDetails)
+                            <span class="font-medium">{{ $vehicle->supportingDocuments->vehicleDetails->driver }}</span>
                         @else
                             <span class="text-slate-400">N/A</span>
                         @endif
@@ -312,6 +320,11 @@
                     </div>
                     
                     <div class="mb-6">
+                        <label class="form-label text-base font-semibold text-slate-700">Driver Name</label>
+                        <input type="text" name="driver" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" placeholder="Enter driver's name" required>
+                    </div>
+                    
+                    <div class="mb-6">
                         <label class="form-label text-base font-semibold text-slate-700">Supporting Documents</label>
                         <input type="file" name="supporting_documents_attachments[]" id="createSupportingDocuments" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" multiple>
                         <div class="text-xs text-slate-500 mt-1">You can select multiple files. Accepted formats: PDF, DOC, DOCX, JPG, JPEG, PNG (Max: 10MB per file)</div>
@@ -413,6 +426,11 @@
                     <div class="mb-6">
                         <label class="form-label text-base font-semibold text-slate-700">Color</label>
                         <input type="text" name="color_of_vehicle" id="editColorOfVehicle" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" required>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="form-label text-base font-semibold text-slate-700">Driver Name</label>
+                        <input type="text" name="driver" id="editDriver" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" placeholder="Enter driver's name" required>
                     </div>
                     
                     <div class="mb-6">
