@@ -11,12 +11,26 @@ use Illuminate\Support\Facades\Validator;
 
 class IncidentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $userIncidents = tbl_incident_report::with(['user', 'assignedGuard'])
-            ->where('user_id', Auth::id())
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        // Build query for user's incidents
+        $query = tbl_incident_report::with(['user', 'assignedGuard'])
+            ->where('user_id', Auth::id());
+        
+        // Apply search filter
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('person_involved_name', 'like', "%{$search}%")
+                  ->orWhere('designation', 'like', "%{$search}%")
+                  ->orWhere('address', 'like', "%{$search}%")
+                  ->orWhere('location_of_incident', 'like', "%{$search}%")
+                  ->orWhere('status', 'like', "%{$search}%");
+            });
+        }
+        
+        $perPage = $request->input('per_page', 10);
+        $userIncidents = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
         $guards = User::where('role', 'guard')
                      ->where('is_online', 1)

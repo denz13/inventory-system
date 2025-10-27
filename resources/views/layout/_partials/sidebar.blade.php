@@ -54,59 +54,59 @@
         @endif
         @if(auth()->user()->hasPermission('billing payment'))
         <li>
-            <a href="javascript:;" class="side-menu">
+        <a href="{{ route('billing-payment.index') }}" class="side-menu">
                 <div class="side-menu__icon"> <i data-lucide="credit-card"></i> </div>
                 <div class="side-menu__title">
                     Billing Payment
-                    <div class="side-menu__sub-icon "> <i data-lucide="chevron-down"></i> </div>
+                    <!-- <div class="side-menu__sub-icon "> <i data-lucide="chevron-down"></i> </div> -->
                 </div>
             </a>
-            <ul class="">
+            <!-- <ul class="">
                 <li>
                     <a href="{{ route('billing-payment.index') }}" class="side-menu">
                         <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
                         <div class="side-menu__title"> Payment Now </div>
                     </a>
                 </li>
-            </ul>
+            </ul> -->
         </li>
         @endif
         @if(auth()->user()->hasPermission('service request'))
         <li>
-            <a href="javascript:;" class="side-menu">
+        <a href="{{ route('complaints.index') }}" class="side-menu">
                 <div class="side-menu__icon"> <i data-lucide="users"></i> </div>
                 <div class="side-menu__title">
                     Service Request 
-                    <div class="side-menu__sub-icon "> <i data-lucide="chevron-down"></i> </div>
+                    <!-- <div class="side-menu__sub-icon "> <i data-lucide="chevron-down"></i> </div> -->
                 </div>
             </a>
-            <ul class="">
+            <!-- <ul class="">
                 <li>
                     <a href="{{ route('complaints.index') }}" class="side-menu">
                         <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
                         <div class="side-menu__title"> Request Now </div>
                     </a>
                 </li>
-            </ul>
+            </ul> -->
         </li>
         @endif
         @if(auth()->user()->hasPermission('incident report'))
         <li>
-            <a href="javascript:;" class="side-menu">
+        <a href="{{ route('incident.index') }}" class="side-menu">
                 <div class="side-menu__icon"> <i data-lucide="alert-circle"></i> </div>
                 <div class="side-menu__title">
                     Incident Report
-                    <div class="side-menu__sub-icon "> <i data-lucide="chevron-down"></i> </div>
+                    <!-- <div class="side-menu__sub-icon "> <i data-lucide="chevron-down"></i> </div> -->
                 </div>
             </a>
-            <ul class="">
+            <!-- <ul class="">
                 <li>
                     <a href="{{ route('incident.index') }}" class="side-menu">
                         <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
                         <div class="side-menu__title"> Report Now </div>
                     </a>
                 </li>
-            </ul>
+            </ul> -->
         </li>
         @endif
         

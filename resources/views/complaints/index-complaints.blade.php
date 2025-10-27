@@ -179,7 +179,6 @@
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg> 
                             </div>
-                <div id="searchResultsCount" class="text-sm text-slate-500 mt-2 text-center" style="display: none;"></div>
             </div>
         </div>
 
@@ -336,19 +335,35 @@
                         <p class="text-slate-500 text-center mb-6">Choose the type of service you need</p>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             @foreach($serviceTypes as $type)
+                                @if(strtolower($type->type) !== 'other')
+                                <div class="service-type-option cursor-pointer p-6 border-2 border-slate-200 rounded-lg hover:border-primary transition-all duration-300 hover:shadow-md" 
+                                     data-type-id="{{ $type->id }}" data-type-name="{{ $type->type }}">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <div class="font-medium text-lg">{{ $type->type }}</div>
+                                            <div class="text-slate-500 text-sm mt-1">{{ $type->status }}</div>
+                                        </div>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-slate-400">
+                                            <polyline points="9 18 15 12 9 6"></polyline>
+                                        </svg>
+                                    </div>
+                                </div>
+                                @endif
+                            @endforeach
+                            
+                            <!-- Other Option -->
                             <div class="service-type-option cursor-pointer p-6 border-2 border-slate-200 rounded-lg hover:border-primary transition-all duration-300 hover:shadow-md" 
-                                 data-type-id="{{ $type->id }}" data-type-name="{{ $type->type }}">
+                                 data-type-id="other" data-type-name="Other">
                                 <div class="flex items-center justify-between">
                                     <div>
-                                        <div class="font-medium text-lg">{{ $type->type }}</div>
-                                        <div class="text-slate-500 text-sm mt-1">{{ $type->status }}</div>
+                                        <div class="font-medium text-lg">Other</div>
+                                        <div class="text-slate-500 text-sm mt-1">Custom service request</div>
                                     </div>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-slate-400">
                                         <polyline points="9 18 15 12 9 6"></polyline>
                                     </svg>
                                 </div>
                             </div>
-                            @endforeach
                         </div>
                     </div>
 
@@ -396,13 +411,50 @@
                         
                         <div class="mb-6">
                             <label class="form-label">Description</label>
-                            <textarea name="complaint_description" class="form-control" rows="8" placeholder="Please describe your service request in detail..." required></textarea>
+                            <textarea name="complaint_description" id="regularComplaintDescription" class="form-control" rows="8" placeholder="Please describe your service request in detail..."></textarea>
                             <div class="text-slate-500 text-xs mt-1">Be as specific as possible to help us serve you better. No character limit.</div>
                         </div>
                         
                         <div class="flex justify-end gap-2">
                             <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-24">Cancel</button>
                             <button type="submit" class="btn btn-primary w-24">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                                    <path d="M22 2L11 13"></path>
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                </svg>
+                                Submit
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 4: Other/Custom Service Request -->
+                    <div id="stepOther" class="step-content hidden">
+                        <h3 class="text-lg font-medium mb-4 text-center">Custom Service Request</h3>
+                        <p class="text-slate-500 text-center mb-6">Enter your custom service type and description</p>
+                        <div class="mb-6">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="backToStep1FromOther">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                                    <polyline points="15 18 9 12 15 6"></polyline>
+                                </svg>
+                                Back to Service Types
+                            </button>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label class="form-label">Custom Service Type *</label>
+                            <input type="text" id="customServiceType" class="form-control" placeholder="Enter your service type (e.g., Plumbing, Electrical, etc.)">
+                            <div class="text-slate-500 text-xs mt-1">Please specify what kind of service you need</div>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label class="form-label">Description *</label>
+                            <textarea id="customDescription" name="custom_complaint_description" class="form-control" rows="8" placeholder="Please describe your service request in detail..."></textarea>
+                            <div class="text-slate-500 text-xs mt-1">Be as specific as possible to help us serve you better. No character limit.</div>
+                        </div>
+                        
+                        <div class="flex justify-end gap-2">
+                            <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-24">Cancel</button>
+                            <button type="submit" class="btn btn-primary w-24" id="submitCustomRequest">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
                                     <path d="M22 2L11 13"></path>
                                     <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>

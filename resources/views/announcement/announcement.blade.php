@@ -178,8 +178,20 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
                                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                             </svg>
-                            <div class="font-medium">No announcements found</div>
-                            <div class="text-sm">Start by creating your first announcement</div>
+                            <div class="font-medium">
+                                @if(request()->has('search') || request()->has('status'))
+                                    No results found
+                                @else
+                                    No announcements found
+                                @endif
+                            </div>
+                            <div class="text-sm">
+                                @if(request()->has('search') || request()->has('status'))
+                                    Try adjusting your search or filter criteria
+                                @else
+                                    Start by creating your first announcement
+                                @endif
+                            </div>
                         </div>
                     </td>
                 </tr>
@@ -362,5 +374,5 @@
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('js/announcement/announcement.js') }}"></script>
+    <script src="{{ asset('js/announcement/announcement.js') }}?v={{ time() }}"></script>
 @endpush

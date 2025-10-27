@@ -11,14 +11,37 @@ use App\Models\User;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class VehicleManagementController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $vehicles = vehicle_homeowners::with(['user', 'supportingDocuments.vehicleDetails.stickerControl'])
-            ->latest()
-            ->paginate(12);
+        // Build query for vehicles
+        $query = vehicle_homeowners::with(['user', 'supportingDocuments.vehicleDetails.stickerControl']);
+        
+        // Apply search filter
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('type_of_vehicle', 'like', "%{$search}%")
+                  ->orWhere('status', 'like', "%{$search}%")
+                  ->orWhereHas('user', function($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('supportingDocuments.vehicleDetails', function($q) use ($search) {
+                      $q->where('owner', 'like', "%{$search}%")
+                        ->orWhere('driver', 'like', "%{$search}%")
+                        ->orWhere('plate_number', 'like', "%{$search}%")
+                        ->orWhere('vehicle_model', 'like', "%{$search}%")
+                        ->orWhere('color_of_vehicle', 'like', "%{$search}%");
+                  });
+            });
+        }
+        
+        $perPage = $request->input('per_page', 10);
+        $vehicles = $query->latest()->paginate($perPage);
+        
         $owners = User::select('id','name')->orderBy('name')->get();
         
         // Get unique statuses for filter
@@ -85,7 +108,7 @@ class VehicleManagementController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollback();
-            \Log::error('Error approving vehicle: ' . $e->getMessage());
+            Log::error('Error approving vehicle: ' . $e->getMessage());
             return response()->json([
                 'error' => 'Error approving vehicle: ' . $e->getMessage()
             ], 500);
@@ -118,7 +141,7 @@ class VehicleManagementController extends Controller
                 'sticker_control' => $stickerControl
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error setting validity date: ' . $e->getMessage());
+            Log::error('Error setting validity date: ' . $e->getMessage());
             return response()->json([
                 'error' => 'Error setting validity date: ' . $e->getMessage()
             ], 500);
@@ -154,7 +177,7 @@ class VehicleManagementController extends Controller
                 'vehicle' => $vehicle->fresh()
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error declining vehicle: ' . $e->getMessage());
+            Log::error('Error declining vehicle: ' . $e->getMessage());
             return response()->json([
                 'error' => 'Error declining vehicle: ' . $e->getMessage()
             ], 500);
@@ -168,6 +191,8 @@ class VehicleManagementController extends Controller
                 'user_id' => ['required', 'exists:users,id'],
                 'type_of_vehicle' => ['required', 'string', 'max:255'],
                 'status' => ['required', Rule::in(['Pending', 'Active', 'Inactive'])],
+                'owner' => ['required', 'string', 'max:255'],
+                'driver' => ['required', 'string', 'max:255'],
                 'plate_number' => ['required', 'string', 'max:20'],
                 'or_no' => ['required', 'string', 'max:50'],
                 'vehicle_model' => ['required', 'string', 'max:255'],
@@ -205,6 +230,8 @@ class VehicleManagementController extends Controller
             // Create vehicle details record
             vehicle_list_details_homeowners::create([
                 'vehicle_homeowners_supporting_documents_id' => $supportingDocuments->id,
+                'owner' => $validated['owner'],
+                'driver' => $validated['driver'],
                 'plate_number' => $validated['plate_number'],
                 'or_no' => $validated['or_no'],
                 'vehicle_model' => $validated['vehicle_model'],
@@ -238,6 +265,8 @@ class VehicleManagementController extends Controller
                 'user_id' => ['required', 'exists:users,id'],
                 'type_of_vehicle' => ['required', 'string', 'max:255'],
                 'status' => ['required', Rule::in(['Pending', 'Active', 'Inactive'])],
+                'owner' => ['required', 'string', 'max:255'],
+                'driver' => ['required', 'string', 'max:255'],
                 'plate_number' => ['required', 'string', 'max:20'],
                 'or_no' => ['required', 'string', 'max:50'],
                 'vehicle_model' => ['required', 'string', 'max:255'],
@@ -291,6 +320,8 @@ class VehicleManagementController extends Controller
 
                 if ($vehicle->supportingDocuments->vehicleDetails) {
                     $vehicle->supportingDocuments->vehicleDetails->update([
+                        'owner' => $validated['owner'],
+                        'driver' => $validated['driver'],
                         'plate_number' => $validated['plate_number'],
                         'or_no' => $validated['or_no'],
                         'vehicle_model' => $validated['vehicle_model'],

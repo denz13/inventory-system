@@ -10,9 +10,33 @@ use Illuminate\Support\Facades\Log;
 
 class LandlordController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $landlords = applied_landlord::with('user')->orderBy('created_at', 'desc')->paginate(10);
+        $query = applied_landlord::with('user')
+            ->where('submitted_by', auth()->id());
+        
+        // Apply search filter
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone_number', 'like', "%{$search}%")
+                  ->orWhere('property_name', 'like', "%{$search}%")
+                  ->orWhere('unit_number', 'like', "%{$search}%")
+                  ->orWhere('nationality', 'like', "%{$search}%");
+            });
+        }
+        
+        // Apply status filter
+        if ($request->has('status') && $request->status != 'all') {
+            $query->where('status', $request->status);
+        }
+        
+        $perPage = $request->input('per_page', 10);
+        $landlords = $query->orderBy('created_at', 'desc')->paginate($perPage);
+        
         return view('landlord.landlord', compact('landlords'));
     }
 
@@ -93,7 +117,12 @@ class LandlordController extends Controller
     public function show($id)
     {
         try {
-            $landlord = applied_landlord::with('user')->findOrFail($id);
+            // Only show if it belongs to the current user
+            $landlord = applied_landlord::with('user')
+                ->where('id', $id)
+                ->where('submitted_by', auth()->id())
+                ->firstOrFail();
+            
             return response()->json([
                 'success' => true,
                 'data' => $landlord
@@ -101,7 +130,7 @@ class LandlordController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Landlord not found'
+                'message' => 'Landlord not found or you do not have permission to view it'
             ], 404);
         }
     }
@@ -109,7 +138,10 @@ class LandlordController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            $landlord = applied_landlord::findOrFail($id);
+            // Only allow update if it belongs to the current user
+            $landlord = applied_landlord::where('id', $id)
+                ->where('submitted_by', auth()->id())
+                ->firstOrFail();
             
             $validated = $request->validate([
                 'first_name' => 'required|string|max:255',
@@ -164,7 +196,10 @@ class LandlordController extends Controller
     public function destroy($id)
     {
         try {
-            $landlord = applied_landlord::findOrFail($id);
+            // Only allow delete if it belongs to the current user
+            $landlord = applied_landlord::where('id', $id)
+                ->where('submitted_by', auth()->id())
+                ->firstOrFail();
             
             // Delete file if exists
             if ($landlord->supporting_documents) {
@@ -182,7 +217,7 @@ class LandlordController extends Controller
             Log::error('Landlord delete error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete landlord'
+                'message' => 'Failed to delete landlord or you do not have permission'
             ], 500);
         }
     }

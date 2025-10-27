@@ -288,14 +288,14 @@
                                 <div class="mt-1 text-slate-600" data-field="gender">{{ ucfirst($user->gender ?? 'Not provided') }}</div>
                             </div>
                             <!-- Active Status -->
-                            <div class="mb-5">
+                            <!-- <div class="mb-5">
                                 <label class="form-label font-medium">Active Status</label>
                                 <div class="mt-1" data-field="active">
                                     <span class="px-2 py-1 rounded-full text-xs {{ $user->active == 'yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                         {{ $user->active == 'yes' ? 'Active' : 'Inactive' }}
                                     </span>
                                 </div>
-                            </div>
+                            </div> -->
                             <!-- Street -->
                             <div class="mb-5">
                                 <label class="form-label font-medium">Street</label>

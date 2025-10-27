@@ -2,6 +2,51 @@ document.addEventListener('DOMContentLoaded', function () {
   var addForm = document.getElementById('addVehicleForm');
   var editForm = document.getElementById('editVehicleForm');
   var table = document.getElementById('vehicleTable');
+  
+  // Get URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  let searchTerm = urlParams.get('search') || '';
+  
+  // Initialize search functionality - Server-side (Enter key only)
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+      searchInput.value = searchTerm; // Set initial value from URL
+      
+      // Search only when Enter key is pressed
+      searchInput.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter' || e.keyCode === 13) {
+              e.preventDefault();
+              performServerSideSearch();
+          }
+      });
+      
+      // Also allow clicking the search icon to trigger search
+      const searchIcon = searchInput.parentElement.querySelector('svg');
+      if (searchIcon) {
+          searchIcon.style.cursor = 'pointer';
+          searchIcon.addEventListener('click', function() {
+              performServerSideSearch();
+          });
+      }
+  }
+  
+  function performServerSideSearch() {
+      const url = new URL(window.location.href);
+      const searchValue = searchInput ? searchInput.value.trim() : '';
+      
+      // Update URL parameters
+      if (searchValue) {
+          url.searchParams.set('search', searchValue);
+      } else {
+          url.searchParams.delete('search');
+      }
+      
+      // Reset to page 1 when searching
+      url.searchParams.delete('page');
+      
+      // Reload page with new parameters
+      window.location.href = url.toString();
+  }
 
   async function postForm(form, url, method) {
     const formData = new FormData(form);
@@ -34,80 +79,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-    // Search functionality
-    const searchInput = document.getElementById('searchInput');
-    
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            applySearch();
-        });
-    }
-
-    // Apply search filter
-    function applySearch() {
-        const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
-        const tbody = document.querySelector('#vehicleTable tbody');
-        const vehicleRows = Array.from(document.querySelectorAll('#vehicleTable tbody tr.intro-x'));
-        
-        if (vehicleRows.length === 0) return;
-        
-        let visibleCount = 0;
-        
-        vehicleRows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            
-            // Check search match
-            const matchesSearch = searchTerm === '' || text.includes(searchTerm);
-            
-            // Show/hide row based on search
-            if (matchesSearch) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
-            }
-        });
-        
-        // Update filtered count
-        const filteredCountElement = document.querySelector('.hidden.md\\:block .text-slate-500');
-        if (filteredCountElement && searchTerm !== '') {
-            filteredCountElement.textContent = `Showing ${visibleCount} of ${vehicleRows.length} entries`;
-        }
-        
-        // Show/hide no results message
-        updateNoResultsMessage(searchTerm, visibleCount, vehicleRows.length, tbody);
-    }
-
-    // Update no results message
-    function updateNoResultsMessage(searchTerm, visibleCount, totalRows, tbody) {
-        let noDataRow = tbody?.querySelector('tr.no-data-found');
-        
-        // Remove existing no data row if it exists
-        if (noDataRow) {
-            noDataRow.remove();
-        }
-        
-        // Check if we should show "no results" message
-        const hasActiveSearch = searchTerm !== '';
-        
-        if (visibleCount === 0 && hasActiveSearch && totalRows > 0 && tbody) {
-            // Create new no data row
-            noDataRow = document.createElement('tr');
-            noDataRow.className = 'no-data-found';
-            noDataRow.innerHTML = `
-                <td colspan="11" class="text-center py-8">
-                    <div class="text-slate-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
-                            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
-                        <div class="font-medium">No vehicles found</div>
-                        <div class="text-sm">No vehicles match your search. Try adjusting your search terms.</div>
-                    </div>
-                </td>
-            `;
-            tbody.appendChild(noDataRow);
-        }
-    }
+    // Old client-side search functions removed - now using server-side search
 
   // Bind type-of-vehicle radio to hidden inputs (Add)
   function bindTypeRadios(groupName, hiddenId, otherWrapId, otherInputId) {
@@ -210,6 +182,8 @@ document.addEventListener('DOMContentLoaded', function () {
           
           setValue('view_type_of_vehicle_text', v.type_of_vehicle);
           setValue('view_owner_name_text', v.user?.name || 'N/A');
+          setValue('view_owner', details.owner);
+          setValue('view_driver', details.driver);
           setValue('view_plate_number', details.plate_number);
           setValue('view_vehicle_model', details.vehicle_model);
           setValue('view_or_no', details.or_no);
@@ -302,6 +276,8 @@ document.addEventListener('DOMContentLoaded', function () {
           }
           
           // Populate vehicle details
+          setVal('edit_owner', details.owner);
+          setVal('edit_driver', details.driver);
           setVal('edit_plate_number', details.plate_number);
           setVal('edit_or_no', details.or_no);
           setVal('edit_cr_no', details.cr_no);

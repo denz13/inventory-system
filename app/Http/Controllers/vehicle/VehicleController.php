@@ -14,11 +14,13 @@ use Illuminate\Support\Facades\Storage;
 
 class VehicleController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $perPage = $request->input('per_page', 10);
+        
         $vehicles = vehicle_homeowners::with(['user', 'supportingDocuments.vehicleDetails'])
             ->orderBy('created_at', 'desc')
-            ->paginate(10);
+            ->paginate($perPage);
             
         // Get unique status values from the database
         $statuses = vehicle_homeowners::select('status')
@@ -41,6 +43,7 @@ class VehicleController extends Controller
                 'vehicle_model' => 'required|string|max:255',
                 'cr_no' => 'required|string|max:50',
                 'color_of_vehicle' => 'required|string|max:100',
+                'owner' => 'required|string|max:255',
                 'driver' => 'required|string|max:255',
                 'supporting_documents_attachments.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240'
             ]);
@@ -79,6 +82,7 @@ class VehicleController extends Controller
                 'vehicle_model' => $validated['vehicle_model'],
                 'cr_no' => $validated['cr_no'],
                 'color_of_vehicle' => $validated['color_of_vehicle'],
+                'owner' => $validated['owner'],
                 'driver' => $validated['driver'],
                 'vehicle_sticker_control_no' => null, // Set to null as this field is removed
                 'status' => 'Pending'
@@ -122,6 +126,7 @@ class VehicleController extends Controller
                 'vehicle_model' => 'required|string|max:255',
                 'cr_no' => 'required|string|max:50',
                 'color_of_vehicle' => 'required|string|max:100',
+                'owner' => 'required|string|max:255',
                 'driver' => 'required|string|max:255',
                 'supporting_documents_attachments.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240'
             ]);
@@ -175,6 +180,7 @@ class VehicleController extends Controller
                         'vehicle_model' => $validated['vehicle_model'],
                         'cr_no' => $validated['cr_no'],
                         'color_of_vehicle' => $validated['color_of_vehicle'],
+                        'owner' => $validated['owner'],
                         'driver' => $validated['driver'],
                         'vehicle_sticker_control_no' => null, // Keep as null
                         'status' => 'Pending'
@@ -320,12 +326,14 @@ class VehicleController extends Controller
         }
     }
 
-    public function trash()
+    public function trash(Request $request)
     {
+        $perPage = $request->input('per_page', 10);
+        
         $deletedVehicles = vehicle_homeowners::with(['user', 'supportingDocuments.vehicleDetails'])
             ->onlyTrashed()
             ->orderBy('deleted_at', 'desc')
-            ->paginate(10);
+            ->paginate($perPage);
 
         return view('vehicle.trash', compact('deletedVehicles'));
     }

@@ -533,5 +533,5 @@
     <script src="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.min.js"></script>
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.css">
     
-    <script src="{{ asset('js/incident-report-management/incident-report-management.js') }}"></script>
+    <script src="{{ asset('js/incident-report-management/incident-report-management.js') }}?v={{ time() }}"></script>
 @endpush

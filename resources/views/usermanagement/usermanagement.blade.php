@@ -38,6 +38,35 @@
     <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2">
         <button class="btn btn-primary shadow-md mr-2" data-tw-toggle="modal" data-tw-target="#add-user-modal">Add New
             User</button>
+        
+        <!-- Role Filter Dropdown -->
+        <div class="dropdown mr-2">
+            <button class="dropdown-toggle btn btn-outline-secondary w-full sm:w-auto" aria-expanded="false" data-tw-toggle="dropdown">
+                <span id="filterButtonText">Filter by Role</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 ml-2 inline-block">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            </button>
+            <div class="dropdown-menu w-56">
+                <ul class="dropdown-content">
+                    <li>
+                        <a href="javascript:;" class="dropdown-item role-filter-item" data-role="">
+                            All Roles
+                        </a>
+                    </li>
+                    @if($roles->isNotEmpty())
+                        <li><hr class="dropdown-divider"></li>
+                        @foreach($roles as $role)
+                            <li>
+                                <a href="javascript:;" class="dropdown-item role-filter-item" data-role="{{ $role }}">
+                                    {{ ucwords($role) }}
+                                </a>
+                            </li>
+                        @endforeach
+                    @endif
+                </ul>
+            </div>
+        </div>
 
         <!-- BEGIN: Add User Modal -->
         <div id="add-user-modal" class="modal" data-tw-backdrop="static" tabindex="-1" aria-hidden="true">
@@ -196,7 +225,7 @@
             <table class="table table-report -mt-2" id="usersTable">
                 <thead>
                     <tr>
-                        <th class="whitespace-nowrap">IMAGES</th>
+                        <th class="whitespace-nowrap">USER ID</th>
                         <th class="whitespace-nowrap">NAME</th>
                         <th class="whitespace-nowrap">EMAIL</th>
                         <th class="text-center whitespace-nowrap">CONTACT</th>
@@ -210,9 +239,7 @@
                         <tr class="intro-x">
                             <td class="w-40">
                                 <div class="flex items-center justify-center">
-                                    <div class="w-10 h-10 image-fit zoom-in">
-                                        <img alt="Photo" class="tooltip rounded-full" src="{{ $user->photo_url }}">
-                                    </div>
+                                    <span class="font-medium">{{ $user->id }}</span>
                                 </div>
                             </td>
                             <td>
@@ -445,5 +472,5 @@
 @endsection
 
 @push('scripts')
-<script src="{{ asset('js/usermanagement/usermanagement.js') }}"></script>
+<script src="{{ asset('js/usermanagement/usermanagement.js') }}?v={{ time() }}"></script>
 @endpush

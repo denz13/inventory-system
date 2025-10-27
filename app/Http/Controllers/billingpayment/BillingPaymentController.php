@@ -17,13 +17,36 @@ use Carbon\Carbon;
 
 class BillingPaymentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // Get current logged-in user's billings
-        $userBillings = tbl_billing_management::with(['billingItems'])
-            ->where('user_id', Auth::id())
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        // Build query for user's billings
+        $query = tbl_billing_management::with(['billingItems'])
+            ->where('user_id', Auth::id());
+        
+        // Apply search filter
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('billing_date', 'like', "%{$search}%")
+                  ->orWhere('id', 'like', "%{$search}%")
+                  ->orWhere('status', 'like', "%{$search}%")
+                  ->orWhere('amount_due', 'like', "%{$search}%");
+            });
+        }
+        
+        // Apply date range filter
+        if ($request->has('date_from') && $request->has('date_to')) {
+            $dateFrom = $request->date_from;
+            $dateTo = $request->date_to;
+            
+            // For billing_date that might be a range, we'll try to extract the first date
+            $query->where(function($q) use ($dateFrom, $dateTo) {
+                $q->whereBetween('created_at', [$dateFrom, $dateTo]);
+            });
+        }
+        
+        $perPage = $request->input('per_page', 10);
+        $userBillings = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
         // Get bank account types and categories for payment modal
         $bankAccountTypes = tbl_bank_account_type::where('status', 'Active')->get();

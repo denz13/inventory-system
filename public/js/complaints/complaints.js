@@ -2,17 +2,46 @@ document.addEventListener('DOMContentLoaded', function() {
     let selectedType = null;
     let selectedCategory = null;
     
-    // Filter state
-    let currentServiceTypeFilter = 'all';
-    let currentCategoryFilter = 'all';
-    let currentStatusFilter = 'all';
-    let currentDateFilter = 'all';
+    // Get URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    let currentServiceTypeFilter = urlParams.get('service_type') || 'all';
+    let currentCategoryFilter = urlParams.get('category') || 'all';
+    let currentStatusFilter = urlParams.get('status') || 'all';
+    let currentDateFilter = urlParams.get('date_filter') || 'all';
+    let searchTerm = urlParams.get('search') || '';
     
-    // Search functionality
+    // Initialize search functionality - Server-side (Enter key only)
     const searchInput = document.getElementById('searchInput');
-    const clearSearchBtn = document.getElementById('clearSearch');
+    if (searchInput) {
+        searchInput.value = searchTerm; // Set initial value from URL
+        
+        // Search only when Enter key is pressed
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                e.preventDefault();
+                applyServerSideFilters();
+            }
+        });
+        
+        // Also allow clicking the search icon to trigger search
+        const searchIcon = searchInput.parentElement.querySelector('svg');
+        if (searchIcon) {
+            searchIcon.style.cursor = 'pointer';
+            searchIcon.addEventListener('click', function() {
+                applyServerSideFilters();
+            });
+        }
+        
+        // Focus search input on Ctrl+K
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                searchInput.focus();
+            }
+        });
+    }
     
-    // Universal filter handler
+    // Universal filter handler - Server-side
     document.addEventListener('click', function(e) {
         if (e.target.matches('[data-filter-type]')) {
             const filterType = e.target.getAttribute('data-filter-type');
@@ -20,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const dropdown = e.target.closest('.dropdown');
             
-            // Update the appropriate filter/sort state and button
+            // Update the appropriate filter state and button
             if (filterType === 'service-type') {
                 currentServiceTypeFilter = filterValue;
                 updateFilterButton('serviceTypeFilterBtn', filterValue === 'all' ? 'Service Type: All' : `Service Type: ${filterValue}`);
@@ -44,8 +73,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateFilterButton('dateFilterBtn', dateTexts[filterValue] || 'Filter by Date');
             }
             
-            // Apply all filters and sorting
-            applyFiltersAndSort();
+            // Apply all filters server-side
+            applyServerSideFilters();
             
             // Close dropdown
             if (dropdown) {
@@ -63,47 +92,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Reset filters button
     document.getElementById('resetFiltersBtn')?.addEventListener('click', function() {
-        currentServiceTypeFilter = 'all';
-        currentCategoryFilter = 'all';
-        currentStatusFilter = 'all';
-        currentDateFilter = 'all';
-        
-        if (searchInput) {
-            searchInput.value = '';
-        }
-        
-        // Reset button texts
-        updateFilterButton('serviceTypeFilterBtn', 'Service Type: All');
-        updateFilterButton('categoryFilterBtn', 'Category: All');
-        updateFilterButton('statusFilterBtn', 'Status: All');
-        updateFilterButton('dateFilterBtn', 'Filter by Date');
-        
-        // Apply filters (which will show all)
-        applyFiltersAndSort();
+        window.location.href = window.location.pathname;
     });
-    
-    if (searchInput) {
-        // Search as you type
-        searchInput.addEventListener('input', function() {
-            applyFiltersAndSort();
-        });
-        
-        // Search on Enter key
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                applyFiltersAndSort();
-            }
-        });
-        
-        // Focus search input on Ctrl+K
-        document.addEventListener('keydown', function(e) {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                e.preventDefault();
-                searchInput.focus();
-            }
-        });
-    }
     
     // Update filter button text
     function updateFilterButton(buttonId, text) {
@@ -118,134 +108,69 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Main function to apply all filters and sorting
-    function applyFiltersAndSort() {
-        const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
-        const tbody = document.querySelector('tbody');
-        const complaintRows = Array.from(document.querySelectorAll('tbody tr.intro-x'));
+    // Apply server-side filters by updating URL and reloading
+    function applyServerSideFilters() {
+        const url = new URL(window.location.href);
+        const searchValue = searchInput ? searchInput.value.trim() : '';
         
-        if (complaintRows.length === 0) return;
-        
-        // Setup date ranges for filtering
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-        
-        const startOfWeek = new Date(today);
-        startOfWeek.setDate(today.getDate() - today.getDay());
-        
-        const startOfLastWeek = new Date(startOfWeek);
-        startOfLastWeek.setDate(startOfWeek.getDate() - 7);
-        
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        
-        // Step 1: Filter rows
-        let visibleRows = complaintRows.filter(row => {
-            const rowText = row.textContent.toLowerCase();
-            const rowServiceType = row.getAttribute('data-service-type');
-            const rowCategory = row.getAttribute('data-category');
-            const rowStatus = row.getAttribute('data-status');
-            
-            // Check if row matches search term, service type, category, and status filter
-            const matchesSearch = searchTerm === '' || rowText.includes(searchTerm);
-            const matchesServiceType = currentServiceTypeFilter === 'all' || rowServiceType === currentServiceTypeFilter;
-            const matchesCategory = currentCategoryFilter === 'all' || rowCategory === currentCategoryFilter;
-            const matchesStatus = currentStatusFilter === 'all' || rowStatus === currentStatusFilter;
-            
-            // Date filter check
-            let matchesDate = true;
-            if (currentDateFilter !== 'all') {
-                const dateAttr = row.getAttribute('data-date');
-                const rowDate = dateAttr ? new Date(dateAttr) : null;
-                
-                if (rowDate && !isNaN(rowDate.getTime())) {
-                    switch (currentDateFilter) {
-                        case 'today':
-                            matchesDate = rowDate >= today;
-                            break;
-                        case 'yesterday':
-                            matchesDate = rowDate >= yesterday && rowDate < today;
-                            break;
-                        case 'this-week':
-                            matchesDate = rowDate >= startOfWeek;
-                            break;
-                        case 'last-week':
-                            matchesDate = rowDate >= startOfLastWeek && rowDate < startOfWeek;
-                            break;
-                        case 'this-month':
-                            matchesDate = rowDate >= startOfMonth;
-                            break;
-                        case 'last-month':
-                            matchesDate = rowDate >= startOfLastMonth && rowDate < startOfMonth;
-                            break;
-                        default:
-                            matchesDate = true;
-                    }
-                } else {
-                    matchesDate = false;
-                }
-            }
-            
-            return matchesSearch && matchesServiceType && matchesCategory && matchesStatus && matchesDate;
-        });
-        
-        // Step 2: Hide all rows first
-        complaintRows.forEach(row => {
-            row.style.display = 'none';
-        });
-        
-        // Step 3: Show and reorder visible rows
-        visibleRows.forEach((row, index) => {
-            row.style.display = '';
-            tbody.appendChild(row); // Move to end (reorder)
-        });
-        
-        // Update filtered count display
-        const filteredCountElement = document.getElementById('filtered-count');
-        if (filteredCountElement) {
-            filteredCountElement.textContent = visibleRows.length;
+        // Update URL parameters
+        if (searchValue) {
+            url.searchParams.set('search', searchValue);
+        } else {
+            url.searchParams.delete('search');
         }
         
-        // Show/hide no results message
-        updateNoResultsMessage(searchTerm, currentStatusFilter, visibleRows.length, complaintRows.length);
+        if (currentServiceTypeFilter && currentServiceTypeFilter !== 'all') {
+            url.searchParams.set('service_type', currentServiceTypeFilter);
+        } else {
+            url.searchParams.delete('service_type');
+        }
+        
+        if (currentCategoryFilter && currentCategoryFilter !== 'all') {
+            url.searchParams.set('category', currentCategoryFilter);
+        } else {
+            url.searchParams.delete('category');
+        }
+        
+        if (currentStatusFilter && currentStatusFilter !== 'all') {
+            url.searchParams.set('status', currentStatusFilter);
+        } else {
+            url.searchParams.delete('status');
+        }
+        
+        if (currentDateFilter && currentDateFilter !== 'all') {
+            url.searchParams.set('date_filter', currentDateFilter);
+        } else {
+            url.searchParams.delete('date_filter');
+        }
+        
+        // Reset to page 1 when filtering
+        url.searchParams.delete('page');
+        
+        // Reload page with new parameters
+        window.location.href = url.toString();
     }
     
-    // Update no results message
-    function updateNoResultsMessage(searchTerm, statusFilter, visibleCount, totalRows) {
-        const tbody = document.querySelector('tbody');
-        let noDataRow = tbody?.querySelector('tr.no-data-found');
-        
-        // Remove existing no data row if it exists
-        if (noDataRow) {
-            noDataRow.remove();
-        }
-        
-        // Check if we should show "no results" message
-        const hasActiveFilters = searchTerm !== '' || 
-                                 currentServiceTypeFilter !== 'all' || 
-                                 currentCategoryFilter !== 'all' ||
-                                 currentStatusFilter !== 'all' || 
-                                 currentDateFilter !== 'all';
-        
-        if (visibleCount === 0 && hasActiveFilters && totalRows > 0 && tbody) {
-            // Create new no data row
-            noDataRow = document.createElement('tr');
-            noDataRow.className = 'no-data-found';
-            noDataRow.innerHTML = `
-                <td colspan="6" class="text-center py-8">
-                    <div class="text-slate-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
-                            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
-                        <div class="font-medium">No complaints found</div>
-                        <div class="text-sm">No complaints match your current filters. Try adjusting your filters.</div>
-                    </div>
-                </td>
-            `;
-            tbody.appendChild(noDataRow);
-        }
+    // Set initial filter button states from URL
+    if (currentServiceTypeFilter && currentServiceTypeFilter !== 'all') {
+        updateFilterButton('serviceTypeFilterBtn', `Service Type: ${currentServiceTypeFilter}`);
+    }
+    if (currentCategoryFilter && currentCategoryFilter !== 'all') {
+        updateFilterButton('categoryFilterBtn', `Category: ${currentCategoryFilter}`);
+    }
+    if (currentStatusFilter && currentStatusFilter !== 'all') {
+        updateFilterButton('statusFilterBtn', `Status: ${currentStatusFilter.charAt(0).toUpperCase() + currentStatusFilter.slice(1)}`);
+    }
+    if (currentDateFilter && currentDateFilter !== 'all') {
+        const dateTexts = {
+            'today': 'Date: Today',
+            'yesterday': 'Date: Yesterday',
+            'this-week': 'Date: This Week',
+            'last-week': 'Date: Last Week',
+            'this-month': 'Date: This Month',
+            'last-month': 'Date: Last Month'
+        };
+        updateFilterButton('dateFilterBtn', dateTexts[currentDateFilter] || 'Filter by Date');
     }
 
     // Service Type Selection
@@ -264,11 +189,17 @@ document.addEventListener('DOMContentLoaded', function() {
             
             selectedType = { id: typeId, name: typeName };
             
-            // Load categories for this type
-            loadCategories(typeId);
-            
-            // Show step 2
-            showStep(2);
+            // Check if "Other" option was selected
+            if (typeId === 'other') {
+                // Show custom service request form
+                showStep('other');
+            } else {
+                // Load categories for this type
+                loadCategories(typeId);
+                
+                // Show step 2
+                showStep(2);
+            }
         });
     });
 
@@ -337,10 +268,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         // Show the requested step
-        document.getElementById(`step${stepNumber}`).classList.remove('hidden');
-        
-        // Update step indicator
-        updateStepIndicator(stepNumber);
+        if (stepNumber === 'other') {
+            document.getElementById('stepOther').classList.remove('hidden');
+            updateStepIndicator(1); // Show as step 1 active
+        } else {
+            document.getElementById(`step${stepNumber}`).classList.remove('hidden');
+            updateStepIndicator(stepNumber);
+        }
     }
 
     // Update step indicator
@@ -364,6 +298,11 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedType = null;
         selectedCategory = null;
         
+        // Clear regular description
+        if (document.getElementById('regularComplaintDescription')) {
+            document.getElementById('regularComplaintDescription').value = '';
+        }
+        
         // Clear selections
         document.querySelectorAll('.service-type-option, .category-option').forEach(opt => {
             opt.classList.remove('selected');
@@ -375,8 +314,29 @@ document.addEventListener('DOMContentLoaded', function() {
         showStep(2);
         selectedCategory = null;
         
+        // Clear regular description
+        if (document.getElementById('regularComplaintDescription')) {
+            document.getElementById('regularComplaintDescription').value = '';
+        }
+        
         // Clear category selection
         document.querySelectorAll('.category-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+    });
+    
+    // Back to Step 1 from Other
+    document.getElementById('backToStep1FromOther').addEventListener('click', function() {
+        showStep(1);
+        selectedType = null;
+        selectedCategory = null;
+        
+        // Clear custom form
+        document.getElementById('customServiceType').value = '';
+        document.getElementById('customDescription').value = '';
+        
+        // Clear selections
+        document.querySelectorAll('.service-type-option').forEach(opt => {
             opt.classList.remove('selected');
         });
     });
@@ -385,13 +345,43 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('requestServiceForm').addEventListener('submit', function(e) {
         e.preventDefault();
         
-        if (!selectedType || !selectedCategory) {
-            showToast('Please select both service type and category.', 'error');
-            return;
-        }
-        
         const formData = new FormData(this);
-        formData.append('service_management_category_id', selectedCategory.id);
+        
+        // Check if this is a custom "Other" request
+        if (selectedType && selectedType.id === 'other') {
+            // Validate custom fields
+            const customServiceType = document.getElementById('customServiceType').value.trim();
+            const customDescription = document.getElementById('customDescription').value.trim();
+            
+            if (!customServiceType) {
+                showToast('Please enter a custom service type.', 'error');
+                return;
+            }
+            
+            if (!customDescription) {
+                showToast('Please enter a description.', 'error');
+                return;
+            }
+            
+            // Add custom data to form
+            formData.append('is_custom', '1');
+            formData.append('custom_service_type', customServiceType);
+            formData.append('complaint_description', customDescription);
+        } else {
+            // Regular flow validation
+            if (!selectedType || !selectedCategory) {
+                showToast('Please select both service type and category.', 'error');
+                return;
+            }
+            
+            const regularDescription = document.getElementById('regularComplaintDescription').value.trim();
+            if (!regularDescription) {
+                showToast('Please enter a description.', 'error');
+                return;
+            }
+            
+            formData.append('service_management_category_id', selectedCategory.id);
+        }
         
         // Show loading state
         const submitBtn = this.querySelector('button[type="submit"]');
@@ -443,6 +433,17 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedType = null;
         selectedCategory = null;
         document.getElementById('requestServiceForm').reset();
+        
+        // Clear custom fields
+        if (document.getElementById('customServiceType')) {
+            document.getElementById('customServiceType').value = '';
+        }
+        if (document.getElementById('customDescription')) {
+            document.getElementById('customDescription').value = '';
+        }
+        if (document.getElementById('regularComplaintDescription')) {
+            document.getElementById('regularComplaintDescription').value = '';
+        }
         
         // Clear selections
         document.querySelectorAll('.service-type-option, .category-option').forEach(opt => {

@@ -81,7 +81,7 @@
                 <ul class="dropdown-content"> 
                     <li> <a href="javascript:;" class="dropdown-item" data-module-filter="all">All Modules</a> </li> 
                     @foreach($modules as $module)
-                        <li> <a href="javascript:;" class="dropdown-item" data-module-filter="{{ $module->id }}">{{ $module->module_name }}</a> </li> 
+                        <li> <a href="javascript:;" class="dropdown-item" data-module-filter="{{ $module->id }}">{{ ucwords($module->module_name) }}</a> </li> 
                     @endforeach
                 </ul> 
             </div> 
@@ -233,7 +233,7 @@
                     
                     <div class="mb-6">
                         <label class="form-label text-base font-semibold text-slate-700">User</label>
-                        <select name="users_id" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" required>
+                        <select name="users_id" id="createUserSelect" data-placeholder="Search and select a user..." class="tom-select w-full" required>
                             <option value="">Select User</option>
                             @foreach($users as $user)
                                 <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }})</option>
@@ -247,7 +247,7 @@
                             @foreach($modules as $module)
                                 <label class="flex items-center mb-2">
                                     <input type="checkbox" name="permissions[]" value="{{ $module->id }}" class="form-check-input mr-3">
-                                    <span class="text-slate-700">{{ $module->module_name }}</span>
+                                    <span class="text-slate-700">{{ ucwords($module->module_name) }}</span>
                                 </label>
                             @endforeach
                         </div>
@@ -316,7 +316,7 @@
                     
                     <div class="mb-6">
                         <label class="form-label text-base font-semibold text-slate-700">User</label>
-                        <select name="users_id" id="editUsersId" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" required>
+                        <select name="users_id" id="editUsersId" data-placeholder="Search and select a user..." class="tom-select w-full" required>
                             <option value="">Select User</option>
                             @foreach($users as $user)
                                 <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }})</option>
@@ -330,7 +330,7 @@
                             @foreach($modules as $module)
                                 <label class="flex items-center mb-2">
                                     <input type="checkbox" name="permissions[]" value="{{ $module->id }}" class="form-check-input mr-3">
-                                    <span class="text-slate-700">{{ $module->module_name }}</span>
+                                    <span class="text-slate-700">{{ ucwords($module->module_name) }}</span>
                                 </label>
                             @endforeach
                         </div>
@@ -396,6 +396,9 @@
     <!-- Toastify for notifications -->
     <script src="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.min.js"></script>
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.css">
+    
+    <!-- Tom Select for searchable dropdowns -->
+    <script src="{{ asset('js/tom-select.js') }}"></script>
     
     <script src="{{ asset('js/permission_settings/permission_settings.js') }}"></script>
 @endpush

@@ -68,35 +68,43 @@
                                             </select>
                                         </div>
 
-                                        <div class="col-span-12">
-                                            <label class="form-label mb-3">Vehicle Details</label>
-                                            <div class="grid grid-cols-12 gap-4">
-                                                <div class="col-span-12 md:col-span-6">
-                                                    <label class="form-label">Plate Number *</label>
-                                                    <input type="text" name="plate_number" class="form-control" required>
-                                                </div>
-                                                <div class="col-span-12 md:col-span-6">
-                                                    <label class="form-label">OR Number *</label>
-                                                    <input type="text" name="or_no" class="form-control" required>
-                                                </div>
-                                                <div class="col-span-12 md:col-span-6">
-                                                    <label class="form-label">CR Number *</label>
-                                                    <input type="text" name="cr_no" class="form-control" required>
-                                                </div>
-                                                <div class="col-span-12 md:col-span-6">
-                                                    <label class="form-label">Vehicle Model *</label>
-                                                    <input type="text" name="vehicle_model" class="form-control" required>
-                                                </div>
-                                                <div class="col-span-12 md:col-span-6">
-                                                    <label class="form-label">Color *</label>
-                                                    <input type="text" name="color_of_vehicle" class="form-control" required>
-                                                </div>
-                                                <div class="col-span-12 md:col-span-6">
-                                                    <label class="form-label">Sticker Control Number</label>
-                                                    <input type="text" name="vehicle_sticker_control_no" class="form-control" placeholder="Optional">
-                                                </div>
+                                    <div class="col-span-12">
+                                        <label class="form-label mb-3">Vehicle Details</label>
+                                        <div class="grid grid-cols-12 gap-4">
+                                            <div class="col-span-12 md:col-span-6">
+                                                <label class="form-label">Owner of Vehicle *</label>
+                                                <input type="text" name="owner" class="form-control" placeholder="Enter owner's name" required>
+                                            </div>
+                                            <div class="col-span-12 md:col-span-6">
+                                                <label class="form-label">Driver Name *</label>
+                                                <input type="text" name="driver" class="form-control" placeholder="Enter driver's name" required>
+                                            </div>
+                                            <div class="col-span-12 md:col-span-6">
+                                                <label class="form-label">Plate Number *</label>
+                                                <input type="text" name="plate_number" class="form-control" required>
+                                            </div>
+                                            <div class="col-span-12 md:col-span-6">
+                                                <label class="form-label">OR Number *</label>
+                                                <input type="text" name="or_no" class="form-control" required>
+                                            </div>
+                                            <div class="col-span-12 md:col-span-6">
+                                                <label class="form-label">CR Number *</label>
+                                                <input type="text" name="cr_no" class="form-control" required>
+                                            </div>
+                                            <div class="col-span-12 md:col-span-6">
+                                                <label class="form-label">Vehicle Model *</label>
+                                                <input type="text" name="vehicle_model" class="form-control" required>
+                                            </div>
+                                            <div class="col-span-12 md:col-span-6">
+                                                <label class="form-label">Color *</label>
+                                                <input type="text" name="color_of_vehicle" class="form-control" required>
+                                            </div>
+                                            <div class="col-span-12 md:col-span-6">
+                                                <label class="form-label">Sticker Control Number</label>
+                                                <input type="text" name="vehicle_sticker_control_no" class="form-control" placeholder="Optional">
                                             </div>
                                         </div>
+                                    </div>
 
                                         <div class="col-span-12">
                                             <label class="form-label">Supporting Documents</label>
@@ -157,10 +165,10 @@
                     @forelse ($vehicles as $veh)
                         <tr class="intro-x" data-status="{{ $veh->status }}">
                             <td class="whitespace-nowrap">{{ $veh->type_of_vehicle }}</td>
-                            <td class="whitespace-nowrap">{{ optional($veh->user)->name ?: 'N/A' }}</td>
                             @php 
                                 $details = $veh->supportingDocuments?->vehicleDetails;
                             @endphp
+                            <td class="whitespace-nowrap">{{ $details->owner ?? '-' }}</td>
                             <td class="whitespace-nowrap">{{ $details->plate_number ?? '-' }}</td>
                             <td class="whitespace-nowrap">{{ $details->or_no ?? '-' }}</td>
                             <td class="whitespace-nowrap">{{ $details->cr_no ?? '-' }}</td>
@@ -281,8 +289,20 @@
                                     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
                                         <path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3"></path>
                                     </svg>
-                                    <div class="font-medium">No vehicles found</div>
-                                    <div class="text-sm">Start by adding your first vehicle</div>
+                                    <div class="font-medium">
+                                        @if(request()->has('search'))
+                                            No results found
+                                        @else
+                                            No vehicles found
+                                        @endif
+                                    </div>
+                                    <div class="text-sm">
+                                        @if(request()->has('search'))
+                                            Try adjusting your search criteria
+                                        @else
+                                            Start by adding your first vehicle
+                                        @endif
+                                    </div>
                                 </div>
                             </td>
                         </tr>
@@ -389,6 +409,14 @@
                                         <label class="form-label mb-3">Vehicle Details</label>
                                         <div class="grid grid-cols-12 gap-4">
                                             <div class="col-span-12 md:col-span-6">
+                                                <label class="form-label">Owner of Vehicle *</label>
+                                                <input type="text" name="owner" id="edit_owner" class="form-control" placeholder="Enter owner's name" required>
+                                            </div>
+                                            <div class="col-span-12 md:col-span-6">
+                                                <label class="form-label">Driver Name *</label>
+                                                <input type="text" name="driver" id="edit_driver" class="form-control" placeholder="Enter driver's name" required>
+                                            </div>
+                                            <div class="col-span-12 md:col-span-6">
                                                 <label class="form-label">Plate Number *</label>
                                                 <input type="text" name="plate_number" id="edit_plate_number" class="form-control" required>
                                             </div>
@@ -449,8 +477,16 @@
                                     <input type="text" id="view_type_of_vehicle_text" class="form-control capitalize" readonly>
                                 </div>
                                 <div class="col-span-12 md:col-span-6">
-                                    <label class="form-label">Owner</label>
+                                    <label class="form-label">Registered By</label>
                                     <input type="text" id="view_owner_name_text" class="form-control" readonly>
+                                </div>
+                                <div class="col-span-12 md:col-span-6">
+                                    <label class="form-label">Owner of Vehicle</label>
+                                    <input type="text" id="view_owner" class="form-control" readonly>
+                                </div>
+                                <div class="col-span-12 md:col-span-6">
+                                    <label class="form-label">Driver Name</label>
+                                    <input type="text" id="view_driver" class="form-control" readonly>
                                 </div>
                                 <div class="col-span-12 md:col-span-6">
                                     <label class="form-label">Plate Number</label>
@@ -619,5 +655,5 @@
     <script src="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.min.js"></script>
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.css">
     
-    <script src="{{ asset('js/vehiclemanagement/vehiclemanagement.js') }}"></script>
+    <script src="{{ asset('js/vehiclemanagement/vehiclemanagement.js') }}?v={{ time() }}"></script>
 @endpush

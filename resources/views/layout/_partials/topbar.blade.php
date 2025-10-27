@@ -1,7 +1,7 @@
 <div class="top-bar-boxed h-[70px] z-[51] relative border-b border-white/[0.08] mt-12 md:-mt-5 -mx-3 sm:-mx-8 px-3 sm:px-8 md:pt-0 mb-12">
     <div class="h-full flex items-center">
         <!-- BEGIN: Logo -->
-        <a href="" class="-intro-x hidden md:flex">
+        <a href="{{ route('dashboard') }}" class="-intro-x hidden md:flex hover:opacity-80 transition-opacity">
             @if($topbarTopLogo && $topbarTopLogo->value)
                 <img alt="Topbar Logo" class="w-6" src="{{ asset('storage/' . $topbarTopLogo->value) }}">
             @else

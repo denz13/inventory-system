@@ -136,6 +136,7 @@
                 <tr>
                     <th class="whitespace-nowrap">VEHICLE INFO</th>
                     <th class="whitespace-nowrap">PLATE NUMBER</th>
+                    <th class="whitespace-nowrap">OWNER</th>
                     <th class="whitespace-nowrap">DRIVER</th>
                     <th class="whitespace-nowrap">DOCUMENTS</th>
                     <th class="text-center whitespace-nowrap">STATUS</th>
@@ -159,6 +160,13 @@
                     <td class="whitespace-nowrap">
                         @if($vehicle->supportingDocuments && $vehicle->supportingDocuments->vehicleDetails)
                             <span class="font-medium">{{ $vehicle->supportingDocuments->vehicleDetails->plate_number }}</span>
+                        @else
+                            <span class="text-slate-400">N/A</span>
+                        @endif
+                    </td>
+                    <td class="whitespace-nowrap">
+                        @if($vehicle->supportingDocuments && $vehicle->supportingDocuments->vehicleDetails)
+                            <span class="font-medium">{{ $vehicle->supportingDocuments->vehicleDetails->owner }}</span>
                         @else
                             <span class="text-slate-400">N/A</span>
                         @endif
@@ -239,7 +247,7 @@
                 </tr>
                 @empty
                 <tr class="intro-x">
-                    <td colspan="6" class="text-center py-8">
+                    <td colspan="8" class="text-center py-8">
                         <div class="text-slate-500">
                             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
                                 <path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3"></path>
@@ -319,9 +327,15 @@
                         <input type="text" name="color_of_vehicle" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" placeholder="e.g., Red, Blue, White" required>
                     </div>
                     
-                    <div class="mb-6">
-                        <label class="form-label text-base font-semibold text-slate-700">Driver Name</label>
-                        <input type="text" name="driver" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" placeholder="Enter driver's name" required>
+                    <div class="grid grid-cols-12 gap-4 mb-6">
+                        <div class="col-span-12 md:col-span-6">
+                            <label class="form-label text-base font-semibold text-slate-700">Owner of Vehicle</label>
+                            <input type="text" name="owner" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" placeholder="Enter owner's name" required>
+                        </div>
+                        <div class="col-span-12 md:col-span-6">
+                            <label class="form-label text-base font-semibold text-slate-700">Driver Name</label>
+                            <input type="text" name="driver" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" placeholder="Enter driver's name" required>
+                        </div>
                     </div>
                     
                     <div class="mb-6">
@@ -428,9 +442,15 @@
                         <input type="text" name="color_of_vehicle" id="editColorOfVehicle" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" required>
                     </div>
                     
-                    <div class="mb-6">
-                        <label class="form-label text-base font-semibold text-slate-700">Driver Name</label>
-                        <input type="text" name="driver" id="editDriver" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" placeholder="Enter driver's name" required>
+                    <div class="grid grid-cols-12 gap-4 mb-6">
+                        <div class="col-span-12 md:col-span-6">
+                            <label class="form-label text-base font-semibold text-slate-700">Owner of Vehicle</label>
+                            <input type="text" name="owner" id="editOwner" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" placeholder="Enter owner's name" required>
+                        </div>
+                        <div class="col-span-12 md:col-span-6">
+                            <label class="form-label text-base font-semibold text-slate-700">Driver Name</label>
+                            <input type="text" name="driver" id="editDriver" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" placeholder="Enter driver's name" required>
+                        </div>
                     </div>
                     
                     <div class="mb-6">

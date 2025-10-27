@@ -8,10 +8,29 @@ use App\Models\tbl_announcement;
 
 class AnnouncementController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $announcements = tbl_announcement::orderBy('created_at', 'desc')
-            ->paginate(10);
+        // Build query for announcements
+        $query = tbl_announcement::query();
+        
+        // Apply search filter
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('type', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhere('visible_to', 'like', "%{$search}%")
+                  ->orWhere('status', 'like', "%{$search}%");
+            });
+        }
+        
+        // Apply status filter
+        if ($request->has('status') && $request->status != 'all') {
+            $query->where('status', $request->status);
+        }
+        
+        $perPage = $request->input('per_page', 10);
+        $announcements = $query->orderBy('created_at', 'desc')->paginate($perPage);
             
         return view('announcement.announcement', compact('announcements'));
     }

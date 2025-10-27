@@ -128,7 +128,7 @@ function displayPermissionSettingDetails(setting) {
     const permissionsHtml = setting.permission_settings_list && setting.permission_settings_list.length > 0 
         ? setting.permission_settings_list.map(permission => `
             <span class="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full mr-2 mb-2">
-                ${permission.permission_allowed}
+                ${capitalizeWords(permission.permission_allowed)}
             </span>
         `).join('')
         : '<span class="text-slate-500">No permissions assigned</span>';
@@ -304,8 +304,15 @@ function loadPermissionSettingForEdit(settingId) {
                 
                 // Set form values
                 document.getElementById('editPermissionSettingId').value = setting.id;
-                document.getElementById('editUsersId').value = setting.users_id;
                 document.getElementById('editStatus').value = setting.status;
+                
+                // Set user using Tom Select - wait for it to be ready
+                setTimeout(function() {
+                    const editUserSelect = document.getElementById('editUsersId');
+                    if (editUserSelect && editUserSelect.tomselect) {
+                        editUserSelect.tomselect.setValue(setting.users_id);
+                    }
+                }, 100);
                 
                 // Clear all checkboxes first
                 document.querySelectorAll('#editPermissionsContainer input[type="checkbox"]').forEach(checkbox => {
@@ -450,4 +457,11 @@ function showToast(message, type = 'success') {
         backgroundColor: backgroundColor,
         stopOnFocus: true
     }).showToast();
+}
+
+function capitalizeWords(str) {
+    if (!str) return '';
+    return str.toLowerCase().split(' ').map(word => {
+        return word.charAt(0).toUpperCase() + word.slice(1);
+    }).join(' ');
 }

@@ -171,6 +171,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         document.getElementById('editOrNo').value = data.data.supporting_documents.vehicle_details.or_no || '';
                         document.getElementById('editCrNo').value = data.data.supporting_documents.vehicle_details.cr_no || '';
                         document.getElementById('editColorOfVehicle').value = data.data.supporting_documents.vehicle_details.color_of_vehicle || '';
+                        document.getElementById('editOwner').value = data.data.supporting_documents.vehicle_details.owner || '';
                         document.getElementById('editDriver').value = data.data.supporting_documents.vehicle_details.driver || '';
                     } else {
                         console.log('No nested structure found. Data structure:', data.data);
@@ -182,6 +183,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             document.getElementById('editOrNo').value = data.data.vehicle_details.or_no || '';
                             document.getElementById('editCrNo').value = data.data.vehicle_details.cr_no || '';
                             document.getElementById('editColorOfVehicle').value = data.data.vehicle_details.color_of_vehicle || '';
+                            document.getElementById('editOwner').value = data.data.vehicle_details.owner || '';
                             document.getElementById('editDriver').value = data.data.vehicle_details.driver || '';
                         }
                     }
@@ -237,6 +239,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const orNo = vehicle.supporting_documents?.vehicle_details?.or_no || 'N/A';
             const crNo = vehicle.supporting_documents?.vehicle_details?.cr_no || 'N/A';
             const color = vehicle.supporting_documents?.vehicle_details?.color_of_vehicle || 'N/A';
+            const owner = vehicle.supporting_documents?.vehicle_details?.owner || 'N/A';
             const driver = vehicle.supporting_documents?.vehicle_details?.driver || 'N/A';
             const status = vehicle.status || 'N/A';
             const dateCreated = vehicle.created_at ? new Date(vehicle.created_at).toLocaleString() : 'N/A';
@@ -287,11 +290,15 @@ document.addEventListener('DOMContentLoaded', function () {
                         <input type="text" class="form-control" value="${crNo}" readonly>
                     </div>
                     <div class="col-span-12 md:col-span-6">
+                        <label class="form-label">Owner of Vehicle</label>
+                        <input type="text" class="form-control" value="${owner}" readonly>
+                    </div>
+                    <div class="col-span-12 md:col-span-6">
                         <label class="form-label">Driver Name</label>
                         <input type="text" class="form-control" value="${driver}" readonly>
                     </div>
                     <div class="col-span-12 md:col-span-6">
-                        <label class="form-label">Owner</label>
+                        <label class="form-label">Registered By</label>
                         <input type="text" class="form-control" value="${userName}" readonly>
                     </div>
                     <div class="col-span-12 md:col-span-6">
@@ -539,7 +546,7 @@ document.addEventListener('DOMContentLoaded', function () {
             noDataRow = document.createElement('tr');
             noDataRow.className = 'no-data-found';
             noDataRow.innerHTML = `
-                <td colspan="6" class="text-center py-8">
+                <td colspan="8" class="text-center py-8">
                     <div class="text-slate-500">
                         <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
                             <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
