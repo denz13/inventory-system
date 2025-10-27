@@ -1,9 +1,66 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize search functionality
-    initializeSearch();
+    // Get URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    let currentStatusFilter = urlParams.get('status') || 'all';
+    let searchTerm = urlParams.get('search') || '';
     
-    // Initialize filter functionality
-    initializeFilters();
+    // Initialize search functionality - Server-side (Enter key only)
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.value = searchTerm; // Set initial value from URL
+        
+        // Search only when Enter key is pressed
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                e.preventDefault();
+                applyServerSideFilters();
+            }
+        });
+        
+        // Also allow clicking the search icon to trigger search
+        const searchIcon = searchInput.parentElement.querySelector('svg');
+        if (searchIcon) {
+            searchIcon.style.cursor = 'pointer';
+            searchIcon.addEventListener('click', function() {
+                applyServerSideFilters();
+            });
+        }
+    }
+    
+    // Initialize filter functionality - Server-side
+    const filterItems = document.querySelectorAll('[data-filter]');
+    filterItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            currentStatusFilter = this.getAttribute('data-filter');
+            applyServerSideFilters();
+        });
+    });
+    
+    // Apply server-side filters by updating URL and reloading
+    function applyServerSideFilters() {
+        const url = new URL(window.location.href);
+        const searchValue = searchInput ? searchInput.value.trim() : '';
+        
+        // Update URL parameters
+        if (searchValue) {
+            url.searchParams.set('search', searchValue);
+        } else {
+            url.searchParams.delete('search');
+        }
+        
+        if (currentStatusFilter && currentStatusFilter !== 'all') {
+            url.searchParams.set('status', currentStatusFilter);
+        } else {
+            url.searchParams.delete('status');
+        }
+        
+        // Reset to page 1 when filtering
+        url.searchParams.delete('page');
+        
+        // Reload page with new parameters
+        window.location.href = url.toString();
+    }
     
     // Initialize modal handlers
     initializeModals();
@@ -11,73 +68,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize form handlers
     initializeForms();
 });
-
-function initializeSearch() {
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const tableRows = document.querySelectorAll('tbody tr.intro-x');
-            let visibleCount = 0;
-            
-            tableRows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                if (text.includes(searchTerm)) {
-                    row.style.display = '';
-                    visibleCount++;
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-            
-            // Update filtered count
-            const filteredCountElement = document.getElementById('filtered-count');
-            if (filteredCountElement) {
-                filteredCountElement.textContent = visibleCount;
-            }
-        });
-    }
-}
-
-function initializeFilters() {
-    const filterItems = document.querySelectorAll('[data-filter]');
-    
-    filterItems.forEach(item => {
-        item.addEventListener('click', function(e) {
-            e.preventDefault();
-            const filter = this.getAttribute('data-filter');
-            filterAnnouncementsByStatus(filter);
-        });
-    });
-}
-
-function filterAnnouncementsByStatus(status) {
-    const tableRows = document.querySelectorAll('tbody tr.intro-x');
-    let visibleCount = 0;
-    
-    tableRows.forEach(row => {
-        const rowStatus = row.getAttribute('data-status');
-        
-        if (status === 'all' || rowStatus === status) {
-            row.style.display = '';
-            visibleCount++;
-        } else {
-            row.style.display = 'none';
-        }
-    });
-    
-    // Update filtered count
-    const filteredCountElement = document.getElementById('filtered-count');
-    if (filteredCountElement) {
-        filteredCountElement.textContent = visibleCount;
-    }
-    
-    // Clear search input when filtering
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.value = '';
-    }
-}
 
 function initializeModals() {
     // View announcement modal

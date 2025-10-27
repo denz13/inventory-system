@@ -1,15 +1,33 @@
 document.addEventListener('DOMContentLoaded', function() {
-    let currentStatusFilter = 'all';
+    // Get URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    let currentStatusFilter = urlParams.get('status') || 'all';
+    let searchTerm = urlParams.get('search') || '';
     
-    // Initialize search functionality - EXACT SAME AS BUSINESS.JS
+    // Initialize search functionality - Server-side (Enter key only)
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            applyAllFilters();
+        searchInput.value = searchTerm; // Set initial value from URL
+        
+        // Search only when Enter key is pressed
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                e.preventDefault();
+                applyServerSideFilters();
+            }
         });
+        
+        // Also allow clicking the search icon to trigger search
+        const searchIcon = searchInput.parentElement.querySelector('svg');
+        if (searchIcon) {
+            searchIcon.style.cursor = 'pointer';
+            searchIcon.addEventListener('click', function() {
+                applyServerSideFilters();
+            });
+        }
     }
 
-    // Universal filter handler - EXACT SAME AS BUSINESS.JS
+    // Universal filter handler - Server-side
     document.addEventListener('click', function(e) {
         if (e.target.matches('[data-filter-type]')) {
             const filterType = e.target.getAttribute('data-filter-type');
@@ -23,8 +41,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateFilterButton('statusFilterBtn', filterValue === 'all' ? 'Status: All' : `Status: ${filterValue.charAt(0).toUpperCase() + filterValue.slice(1)}`);
             }
             
-            // Apply all filters
-            applyAllFilters();
+            // Apply filters on server-side
+            applyServerSideFilters();
             
             // Close dropdown
             if (dropdown) {
@@ -40,24 +58,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Reset filters button - EXACT SAME AS BUSINESS.JS
+    // Reset filters button
     document.getElementById('resetFiltersBtn')?.addEventListener('click', function() {
-        currentStatusFilter = 'all';
-        
-        if (searchInput) {
-            searchInput.value = '';
-        }
-        
-        // Reset button texts
-        updateFilterButton('statusFilterBtn', 'Status: All');
-        
-        // Apply filters (which will show all)
-        applyAllFilters();
-        
-        showToast('All filters have been reset', 'success');
+        window.location.href = window.location.pathname;
     });
 
-    // Update filter button text - EXACT SAME AS BUSINESS.JS
+    // Update filter button text
     function updateFilterButton(buttonId, text) {
         const button = document.getElementById(buttonId);
         if (button) {
@@ -70,74 +76,34 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Apply all filters - EXACT SAME AS BUSINESS.JS
-    function applyAllFilters() {
-        const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
-        const landlordRows = Array.from(document.querySelectorAll('#landlordTable tbody tr.intro-x'));
+    // Apply server-side filters by updating URL and reloading
+    function applyServerSideFilters() {
+        const url = new URL(window.location.href);
+        const searchValue = searchInput ? searchInput.value.trim() : '';
         
-        if (landlordRows.length === 0) return;
-        
-        let visibleCount = 0;
-        
-        landlordRows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            const rowStatus = row.getAttribute('data-status');
-            
-            // Check search match
-            const matchesSearch = searchTerm === '' || text.includes(searchTerm);
-            
-            // Check status match
-            const matchesStatus = currentStatusFilter === 'all' || rowStatus === currentStatusFilter;
-            
-            // Show/hide row based on both filters
-            if (matchesSearch && matchesStatus) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
-            }
-        });
-        
-        // Update filtered count
-        const filteredCountElement = document.getElementById('filtered-count');
-        if (filteredCountElement) {
-            filteredCountElement.textContent = visibleCount;
+        // Update URL parameters
+        if (searchValue) {
+            url.searchParams.set('search', searchValue);
+        } else {
+            url.searchParams.delete('search');
         }
         
-        // Show/hide no results message
-        updateNoResultsMessage(searchTerm, currentStatusFilter, visibleCount, landlordRows.length);
+        if (currentStatusFilter && currentStatusFilter !== 'all') {
+            url.searchParams.set('status', currentStatusFilter);
+        } else {
+            url.searchParams.delete('status');
+        }
+        
+        // Reset to page 1 when filtering
+        url.searchParams.delete('page');
+        
+        // Reload page with new parameters
+        window.location.href = url.toString();
     }
 
-    // Update no results message - EXACT SAME AS BUSINESS.JS
-    function updateNoResultsMessage(searchTerm, statusFilter, visibleCount, totalRows) {
-        const tbody = document.querySelector('#landlordTable tbody');
-        let noDataRow = tbody?.querySelector('tr.no-data-found');
-        
-        // Remove existing no data row if it exists
-        if (noDataRow) {
-            noDataRow.remove();
-        }
-        
-        // Check if we should show "no results" message
-        const hasActiveFilters = searchTerm !== '' || currentStatusFilter !== 'all';
-        
-        if (visibleCount === 0 && hasActiveFilters && totalRows > 0 && tbody) {
-            // Create new no data row
-            noDataRow = document.createElement('tr');
-            noDataRow.className = 'no-data-found';
-            noDataRow.innerHTML = `
-                <td colspan="10" class="text-center py-8">
-                    <div class="text-slate-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
-                            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
-                        <div class="font-medium">No landlords found</div>
-                        <div class="text-sm">No landlords match your current filters. Try adjusting your filters.</div>
-                    </div>
-                </td>
-            `;
-            tbody.appendChild(noDataRow);
-        }
+    // Set initial filter button state from URL
+    if (currentStatusFilter && currentStatusFilter !== 'all') {
+        updateFilterButton('statusFilterBtn', `Status: ${currentStatusFilter.charAt(0).toUpperCase() + currentStatusFilter.slice(1)}`);
     }
 
     // Handle Add Landlord Form - EXACT SAME STRUCTURE AS BUSINESS.JS

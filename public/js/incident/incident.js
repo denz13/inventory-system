@@ -1,36 +1,46 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Search functionality
+    // Search functionality - Server-side (Enter key only)
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase().trim();
-            filterIncidents(searchTerm);
-        });
-    }
-
-    // Filter incidents based on search term
-    function filterIncidents(searchTerm) {
-        const incidentRows = document.querySelectorAll('tbody tr.intro-x');
-        let visibleCount = 0;
-
-        incidentRows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            if (text.includes(searchTerm) || searchTerm === '') {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
+        // Get search term from URL if it exists
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchTerm = urlParams.get('search') || '';
+        searchInput.value = searchTerm;
+        
+        // Search only when Enter key is pressed
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                e.preventDefault();
+                performServerSideSearch();
             }
         });
-
-        // Update search results count
-        const resultsCount = document.getElementById('searchResultsCount');
-        if (searchTerm && resultsCount) {
-            resultsCount.textContent = `Found ${visibleCount} result(s)`;
-            resultsCount.style.display = 'block';
-        } else if (resultsCount) {
-            resultsCount.style.display = 'none';
+        
+        // Also allow clicking the search icon to trigger search
+        const searchIcon = searchInput.parentElement.querySelector('svg');
+        if (searchIcon) {
+            searchIcon.style.cursor = 'pointer';
+            searchIcon.addEventListener('click', function() {
+                performServerSideSearch();
+            });
         }
+    }
+    
+    function performServerSideSearch() {
+        const url = new URL(window.location.href);
+        const searchValue = searchInput ? searchInput.value.trim() : '';
+        
+        // Update URL parameters
+        if (searchValue) {
+            url.searchParams.set('search', searchValue);
+        } else {
+            url.searchParams.delete('search');
+        }
+        
+        // Reset to page 1 when searching
+        url.searchParams.delete('page');
+        
+        // Reload page with new parameters
+        window.location.href = url.toString();
     }
 
     // Event listeners for view, edit, and delete buttons

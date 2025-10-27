@@ -2,8 +2,36 @@ document.addEventListener('DOMContentLoaded', function () {
     var form = document.getElementById('addUserForm');
     var table = document.querySelector('.table.table-report');
     
-    // Initialize search functionality
-    initializeSearch();
+    // Get URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    let currentRoleFilter = urlParams.get('role') || '';
+    let searchTerm = urlParams.get('search') || '';
+    
+    // Initialize search functionality - Server-side (Enter key only)
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.value = searchTerm; // Set initial value from URL
+        
+        // Search only when Enter key is pressed
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                e.preventDefault();
+                applyServerSideFilters();
+            }
+        });
+        
+        // Also allow clicking the search icon to trigger search
+        const searchIcon = searchInput.parentElement.querySelector('svg');
+        if (searchIcon) {
+            searchIcon.style.cursor = 'pointer';
+            searchIcon.addEventListener('click', function() {
+                applyServerSideFilters();
+            });
+        }
+    }
+    
+    // Initialize role filter - Server-side
+    initializeRoleFilter();
     
     // Handle User Status Toggle
     document.querySelectorAll('.user-status-toggle').forEach(toggle => {
@@ -336,90 +364,65 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Search functionality
-    function initializeSearch() {
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) {
-            searchInput.addEventListener('input', debounce(handleSearch, 300));
-        }
+    // Role filter functionality - Server-side
+    function initializeRoleFilter() {
+        const roleFilterItems = document.querySelectorAll('.role-filter-item');
+        roleFilterItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                currentRoleFilter = this.getAttribute('data-role');
+                
+                // Update button text
+                const filterButtonText = document.getElementById('filterButtonText');
+                if (currentRoleFilter === '') {
+                    filterButtonText.textContent = 'Filter by Role';
+                } else {
+                    filterButtonText.textContent = this.textContent.trim();
+                }
+                
+                // Apply filters server-side
+                applyServerSideFilters();
+            });
+        });
     }
-
-    function handleSearch() {
-        const searchValue = document.getElementById('searchInput').value.toLowerCase();
-        const tableRows = document.querySelectorAll('tbody tr.intro-x');
+    
+    // Apply server-side filters by updating URL and reloading
+    function applyServerSideFilters() {
+        const url = new URL(window.location.href);
+        const searchValue = searchInput ? searchInput.value.trim() : '';
         
-        tableRows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            if (text.includes(searchValue) || searchValue === '') {
-                row.style.display = '';
+        // Update URL parameters
+        if (searchValue) {
+            url.searchParams.set('search', searchValue);
+        } else {
+            url.searchParams.delete('search');
+        }
+        
+        if (currentRoleFilter && currentRoleFilter !== '') {
+            url.searchParams.set('role', currentRoleFilter);
+        } else {
+            url.searchParams.delete('role');
+        }
+        
+        // Reset to page 1 when filtering
+        url.searchParams.delete('page');
+        
+        // Reload page with new parameters
+        window.location.href = url.toString();
+    }
+    
+    // Set initial filter button state from URL
+    if (currentRoleFilter && currentRoleFilter !== '') {
+        const filterButtonText = document.getElementById('filterButtonText');
+        if (filterButtonText) {
+            // Find the matching role to get the display text
+            const matchingItem = document.querySelector(`.role-filter-item[data-role="${currentRoleFilter}"]`);
+            if (matchingItem) {
+                filterButtonText.textContent = matchingItem.textContent.trim();
             } else {
-                row.style.display = 'none';
+                filterButtonText.textContent = currentRoleFilter.charAt(0).toUpperCase() + currentRoleFilter.slice(1);
             }
-        });
-        
-        updateFilteredCount();
-        showNoDataMessage();
-    }
-
-    function updateFilteredCount() {
-        const allRows = document.querySelectorAll('tbody tr.intro-x');
-        let visibleCount = 0;
-        
-        allRows.forEach(row => {
-            if (row.style.display !== 'none') {
-                visibleCount++;
-            }
-        });
-        
-        const filteredCount = document.getElementById('filtered-count');
-        if (filteredCount) {
-            filteredCount.textContent = visibleCount;
         }
-        
-        return visibleCount;
-    }
-
-    function showNoDataMessage() {
-        const tbody = document.querySelector('tbody');
-        const visibleCount = updateFilteredCount();
-        
-        // Remove existing no data row if it exists
-        const existingNoData = document.getElementById('no-data-row');
-        if (existingNoData) {
-            existingNoData.remove();
-        }
-        
-        // If no visible rows, show no data message
-        if (visibleCount === 0) {
-            const noDataRow = document.createElement('tr');
-            noDataRow.id = 'no-data-row';
-            noDataRow.className = 'intro-x';
-            noDataRow.innerHTML = `
-                <td colspan="7" class="text-center py-12">
-                    <div class="text-slate-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
-                        <div class="font-medium text-lg">No results found</div>
-                        <div class="text-sm mt-1">Try adjusting your search to find what you're looking for</div>
-                    </div>
-                </td>
-            `;
-            tbody.appendChild(noDataRow);
-        }
-    }
-
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
     }
 });
 

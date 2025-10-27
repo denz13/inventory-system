@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\Dashboard;
 
 use Livewire\Component;
+use Livewire\WithPagination;
 use App\Models\tbl_billing_management;
 use App\Models\tbl_billing_management_list;
 use App\Models\User;
@@ -16,6 +17,15 @@ use App\Models\tbl_announcement;
 
 class Dashboard extends Component
 {
+    use WithPagination;
+    
+    public $perPage = 10;
+    
+    public function updatingPerPage()
+    {
+        $this->resetPage();
+    }
+    
     public function render()
     {
         // Get active announcements
@@ -87,8 +97,8 @@ class Dashboard extends Component
         $totalAppointments = tbl_appointment::count();
         $totalVehicles = vehicle_management_list::count();
         
-        // Get recent users for the list
-        $recentUsers = User::orderBy('created_at', 'desc')->limit(4)->get();
+        // Get recent users with pagination
+        $recentUsers = User::orderBy('created_at', 'desc')->paginate($this->perPage);
         
         // Get email verification statistics
         $verifiedUsers = User::whereNotNull('email_verified_at')->count();

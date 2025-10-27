@@ -85,7 +85,6 @@
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg> 
                             </div>
-                <div id="searchResultsCount" class="text-sm text-slate-500 mt-2 text-center" style="display: none;"></div>
             </div>
         </div>
 
@@ -198,6 +197,21 @@
                     </td>
                 </tr>
                 @endforelse
+                <!-- No Results Found Message (shown when search returns no results) -->
+                <!-- @if(request()->has('search') && $userIncidents->count() === 0 && $userIncidents->total() === 0)
+                <tr id="noResultsRow">
+                    <td colspan="6" class="text-center py-8">
+                        <div class="text-slate-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                            <div class="font-medium">No results found</div>
+                            <div class="text-sm">Try adjusting your search criteria</div>
+                        </div>
+                    </td>
+                </tr>
+                @endif -->
             </tbody>
         </table>
     </div>

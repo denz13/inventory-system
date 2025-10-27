@@ -13,10 +13,40 @@ use Illuminate\Validation\Rule;
 
 class UserManagamentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::latest()->paginate(12);
-        return view('usermanagement.usermanagement', compact('users'));
+        // Build query for users
+        $query = User::query();
+        
+        // Apply search filter
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('contact_number', 'like', "%{$search}%")
+                  ->orWhere('role', 'like', "%{$search}%")
+                  ->orWhere('id', 'like', "%{$search}%");
+            });
+        }
+        
+        // Apply role filter
+        if ($request->has('role') && $request->role != '' && $request->role != 'all') {
+            $query->where('role', $request->role);
+        }
+        
+        $perPage = $request->input('per_page', 10);
+        $users = $query->orderBy('id', 'asc')->paginate($perPage);
+        
+        // Get distinct roles from the database
+        $roles = User::whereNotNull('role')
+                    ->where('role', '!=', '')
+                    ->distinct()
+                    ->pluck('role')
+                    ->sort()
+                    ->values();
+        
+        return view('usermanagement.usermanagement', compact('users', 'roles'));
     }
 
     public function create()

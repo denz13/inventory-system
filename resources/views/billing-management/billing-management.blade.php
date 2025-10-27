@@ -105,7 +105,20 @@
             </thead>
             <tbody>
                 @forelse($billings as $billing)
-                <tr class="intro-x" data-status="{{ $billing->status }}" data-billing-date="{{ $billing->billing_date }}">
+                @php
+                    // Extract the first date if billing_date is a range (e.g., "27 Oct, 2025 - 27 Nov, 2025")
+                    $billingDateForFilter = $billing->billing_date;
+                    if (strpos($billing->billing_date, ' - ') !== false) {
+                        $billingDateForFilter = trim(explode(' - ', $billing->billing_date)[0]);
+                    }
+                    // Try to format to Y-m-d for JavaScript
+                    try {
+                        $formattedDate = \Carbon\Carbon::parse($billingDateForFilter)->format('Y-m-d');
+                    } catch (\Exception $e) {
+                        $formattedDate = $billingDateForFilter;
+                    }
+                @endphp
+                <tr class="intro-x" data-status="{{ $billing->status }}" data-billing-date="{{ $formattedDate }}">
                     <td class="w-40">
                         <div class="font-medium">{{ $billing->user->name ?? 'Unknown User' }}</div>
                         <div class="text-slate-500 text-xs mt-0.5">{{ $billing->user->email ?? 'N/A' }}</div>
@@ -230,6 +243,21 @@
                     </td>
                 </tr>
                 @endforelse
+                <!-- No Results Found Message (shown when search/filter returns no results) -->
+                <tr id="noResultsRow" style="display: none;">
+                    <td colspan="6" class="text-center py-8">
+                        <div class="text-slate-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                <line x1="11" y1="8" x2="11" y2="14"></line>
+                                <line x1="8" y1="11" x2="14" y2="11"></line>
+                            </svg>
+                            <div class="font-medium">No results found</div>
+                            <div class="text-sm">Try adjusting your search or filter criteria</div>
+                        </div>
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>
@@ -481,7 +509,7 @@
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('js/billing-management/billing-management.js') }}"></script>
+    <script src="{{ asset('js/billing-management/billing-management.js') }}?v={{ time() }}"></script>
     <script src="{{ asset('js/tom-select.js') }}"></script>
     <script>
         // Custom tooltip functionality

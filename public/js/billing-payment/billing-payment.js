@@ -13,10 +13,48 @@ let uploadedFile = null;
 let filePond = null;
 
 function initializeEventListeners() {
-    // Search functionality
+    // Search functionality - Server-side (Enter key only)
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
-        searchInput.addEventListener('input', debounce(handleSearch, 300));
+        // Get search term from URL if it exists
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchTerm = urlParams.get('search') || '';
+        searchInput.value = searchTerm;
+        
+        // Search only when Enter key is pressed
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                e.preventDefault();
+                performServerSideSearch();
+            }
+        });
+        
+        // Also allow clicking the search icon to trigger search
+        const searchIcon = searchInput.parentElement.querySelector('svg');
+        if (searchIcon) {
+            searchIcon.style.cursor = 'pointer';
+            searchIcon.addEventListener('click', function() {
+                performServerSideSearch();
+            });
+        }
+    }
+    
+    function performServerSideSearch() {
+        const url = new URL(window.location.href);
+        const searchValue = searchInput ? searchInput.value.trim() : '';
+        
+        // Update URL parameters
+        if (searchValue) {
+            url.searchParams.set('search', searchValue);
+        } else {
+            url.searchParams.delete('search');
+        }
+        
+        // Reset to page 1 when searching
+        url.searchParams.delete('page');
+        
+        // Reload page with new parameters
+        window.location.href = url.toString();
     }
 
     // Date range filter functionality
@@ -45,7 +83,8 @@ function initializeEventListeners() {
     const clearFilterBtn = document.getElementById('clearFilterBtn');
     if (clearFilterBtn) {
         clearFilterBtn.addEventListener('click', function() {
-            showAllData();
+            // Clear all filters by going to clean URL
+            window.location.href = window.location.pathname;
         });
     }
 
@@ -152,27 +191,7 @@ function initializeEventListeners() {
     }
 }
 
-function handleSearch() {
-    const searchValue = document.getElementById('searchInput').value.toLowerCase();
-    const tableRows = document.querySelectorAll('tbody tr.intro-x');
-    
-    tableRows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        if (text.includes(searchValue) || searchValue === '') {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
-    });
-    
-    updateFilteredCount();
-    
-    // Clear date range filter when searching
-    const dateRangeFilter = document.getElementById('dateRangeFilter');
-    if (dateRangeFilter && searchValue !== '') {
-        dateRangeFilter.value = '';
-    }
-}
+// handleSearch() removed - now using server-side search
 
 function initializeDateRangeWatcher() {
     const dateRangeFilter = document.getElementById('dateRangeFilter');
@@ -237,21 +256,41 @@ function handleDateRangeFilter(dateRange) {
             return;
         }
 
+        // Normalize dates to start of day for proper comparison
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(23, 59, 59, 999);
+
         console.log('Date range:', startDate, 'to', endDate);
 
         tableRows.forEach(row => {
             const billingDateStr = row.getAttribute('data-billing-date');
             if (!billingDateStr) {
+                console.log('No billing date found for row, hiding');
                 row.style.display = 'none';
                 return;
             }
 
+            // Parse date - handle YYYY-MM-DD format
             const billingDate = new Date(billingDateStr);
+            
+            // Check if date is valid
+            if (isNaN(billingDate.getTime())) {
+                console.error('Invalid billing date:', billingDateStr);
+                row.style.display = 'none';
+                return;
+            }
+            
+            // Normalize billing date to start of day
+            billingDate.setHours(0, 0, 0, 0);
+            
+            console.log('Comparing billing date:', billingDate.toDateString(), '(' + billingDateStr + ') with range:', startDate.toDateString(), '-', endDate.toDateString());
             
             // Check if billing date is within the selected range
             if (billingDate >= startDate && billingDate <= endDate) {
+                console.log('✓ Date is in range, showing row');
                 row.style.display = '';
             } else {
+                console.log('✗ Date is out of range, hiding row');
                 row.style.display = 'none';
             }
         });
@@ -270,6 +309,7 @@ function handleDateRangeFilter(dateRange) {
 
 function updateFilteredCount() {
     const allRows = document.querySelectorAll('tbody tr.intro-x');
+    const noResultsRow = document.getElementById('noResultsRow');
     let visibleCount = 0;
     
     allRows.forEach(row => {
@@ -277,6 +317,15 @@ function updateFilteredCount() {
             visibleCount++;
         }
     });
+    
+    // Show/hide "no results found" message
+    if (noResultsRow) {
+        if (visibleCount === 0 && allRows.length > 0) {
+            noResultsRow.style.display = '';
+        } else {
+            noResultsRow.style.display = 'none';
+        }
+    }
     
     const filteredCount = document.getElementById('filtered-count');
     if (filteredCount) {
@@ -286,30 +335,7 @@ function updateFilteredCount() {
     console.log('Updated filtered count:', visibleCount, 'out of', allRows.length);
 }
 
-function showAllData() {
-    console.log('Showing all data - clearing filters');
-    
-    // Clear date range filter
-    const dateRangeFilter = document.getElementById('dateRangeFilter');
-    if (dateRangeFilter) {
-        dateRangeFilter.value = '';
-    }
-    
-    // Clear search input
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.value = '';
-    }
-    
-    // Show all table rows
-    const tableRows = document.querySelectorAll('tbody tr.intro-x');
-    tableRows.forEach(row => {
-        row.style.display = '';
-    });
-    
-    // Update counter to show all records
-    updateFilteredCount();
-}
+// showAllData() removed - now using URL redirect to clear filters
 
 function loadBillingDetails(billingId) {
     const billingDetailsDiv = document.getElementById('billing-details');
@@ -1035,17 +1061,7 @@ function showToast(message, type = 'success') {
     }
 }
 
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
+// debounce() removed - no longer needed with server-side search
 
 // Step Navigation Functions (like complaints modal)
 function showPaymentStep(stepNumber) {

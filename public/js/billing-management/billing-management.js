@@ -2,6 +2,29 @@
 
 // Billing Management JavaScript
 document.addEventListener('DOMContentLoaded', function() {
+    // Clear date range filter on page load if no URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    if (!urlParams.has('search') && !urlParams.has('page') && !urlParams.has('per_page')) {
+        const dateRangeFilter = document.getElementById('dateRangeFilter');
+        if (dateRangeFilter) {
+            dateRangeFilter.value = '';
+            
+            // Wait a bit for Litepicker to initialize, then clear it
+            setTimeout(() => {
+                if (dateRangeFilter._litepicker) {
+                    try {
+                        dateRangeFilter._litepicker.clearSelection();
+                        console.log('Cleared Litepicker selection on page load');
+                    } catch (e) {
+                        console.log('Could not clear Litepicker:', e);
+                    }
+                }
+            }, 500);
+            
+            console.log('Cleared date range filter on page load');
+        }
+    }
+    
     initializeEventListeners();
     addInitialBillingItem();
     initializeDateRangeWatcher();
@@ -238,10 +261,47 @@ async function fetchAndSetUserBillingDateRange(userId) {
 }
 
 function initializeEventListeners() {
-    // Search and filter functionality
+    // Search functionality - Server-side (Enter key only)
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
-        searchInput.addEventListener('input', debounce(handleSearch, 300));
+        // Get search term from URL if it exists
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchTerm = urlParams.get('search') || '';
+        searchInput.value = searchTerm;
+        
+        // Search only when Enter key is pressed
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                e.preventDefault();
+                performServerSideSearch();
+            }
+        });
+        
+        // Also allow clicking the search icon to trigger search
+        const searchIcon = searchInput.parentElement.querySelector('svg');
+        if (searchIcon) {
+            searchIcon.style.cursor = 'pointer';
+            searchIcon.addEventListener('click', function() {
+                performServerSideSearch();
+            });
+        }
+    }
+    
+    function performServerSideSearch() {
+        const searchValue = searchInput.value.trim();
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        if (searchValue) {
+            urlParams.set('search', searchValue);
+        } else {
+            urlParams.delete('search');
+        }
+        
+        // Reset to page 1 when searching
+        urlParams.delete('page');
+        
+        // Reload page with search parameter
+        window.location.href = window.location.pathname + '?' + urlParams.toString();
     }
 
     // Date range filter functionality
@@ -263,11 +323,15 @@ function initializeEventListeners() {
         });
     }
 
+    // Initialize date range watcher for robust change detection
+    initializeDateRangeWatcher();
+
     // Clear filter / Show All button
     const clearFilterBtn = document.getElementById('clearFilterBtn');
     if (clearFilterBtn) {
         clearFilterBtn.addEventListener('click', function() {
-            showAllData();
+            // Clear all filters by going to clean URL
+            window.location.href = window.location.pathname;
         });
     }
 
@@ -317,30 +381,40 @@ function initializeEventListeners() {
     });
 }
 
-function handleSearch() {
-    const searchValue = document.getElementById('searchInput').value.toLowerCase();
-    const tableRows = document.querySelectorAll('tbody tr.intro-x');
-    
-    tableRows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        if (text.includes(searchValue) || searchValue === '') {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
-    });
-    
-    updateFilteredCount();
-    
-    // Clear date range filter when searching
+// handleSearch() removed - now using server-side search
+
+function initializeDateRangeWatcher() {
     const dateRangeFilter = document.getElementById('dateRangeFilter');
-    if (dateRangeFilter && searchValue !== '') {
-        dateRangeFilter.value = '';
-    }
+    if (!dateRangeFilter) return;
+
+    let lastValue = dateRangeFilter.value;
+
+    // Watch for value changes using interval
+    setInterval(() => {
+        const currentValue = dateRangeFilter.value;
+        if (currentValue !== lastValue) {
+            lastValue = currentValue;
+            handleDateRangeFilter(currentValue);
+        }
+    }, 100);
+
+    // Also listen for clicks on the document to catch date picker Apply clicks
+    document.addEventListener('click', function(e) {
+        // Add a small delay to ensure the value has been updated
+        setTimeout(() => {
+            const currentValue = dateRangeFilter.value;
+            if (currentValue !== lastValue) {
+                lastValue = currentValue;
+                handleDateRangeFilter(currentValue);
+            }
+        }, 100);
+    });
 }
 
 function handleDateRangeFilter(dateRange) {
-    if (!dateRange) {
+    console.log('Filtering by date range:', dateRange);
+    
+    if (!dateRange || dateRange.trim() === '') {
         // If no date range selected, show all rows
         const tableRows = document.querySelectorAll('tbody tr.intro-x');
         tableRows.forEach(row => {
@@ -355,41 +429,77 @@ function handleDateRangeFilter(dateRange) {
     // Parse the date range (format: "1 Aug, 2025 - 31 Aug, 2025")
     const dateParts = dateRange.split(' - ');
     if (dateParts.length !== 2) {
-        console.error('Invalid date range format');
+        console.error('Invalid date range format:', dateRange);
         return;
     }
 
-    const startDate = new Date(dateParts[0]);
-    const endDate = new Date(dateParts[1]);
-
-    tableRows.forEach(row => {
-        const billingDateStr = row.getAttribute('data-billing-date');
-        if (!billingDateStr) {
-            row.style.display = 'none';
+    try {
+        // Parse dates more robustly
+        const startDateStr = dateParts[0].trim();
+        const endDateStr = dateParts[1].trim();
+        
+        const startDate = new Date(startDateStr);
+        const endDate = new Date(endDateStr);
+        
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+            console.error('Invalid date values:', startDateStr, endDateStr);
             return;
         }
 
-        const billingDate = new Date(billingDateStr);
-        
-        // Check if billing date is within the selected range
-        if (billingDate >= startDate && billingDate <= endDate) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
-    });
+        // Normalize dates to start of day for proper comparison
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(23, 59, 59, 999);
 
-    updateFilteredCount();
-    
-    // Clear search input when filtering
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.value = '';
+        console.log('Date range:', startDate, 'to', endDate);
+
+        tableRows.forEach(row => {
+            const billingDateStr = row.getAttribute('data-billing-date');
+            if (!billingDateStr) {
+                console.log('No billing date found for row, hiding');
+                row.style.display = 'none';
+                return;
+            }
+
+            // Parse date - handle YYYY-MM-DD format
+            const billingDate = new Date(billingDateStr);
+            
+            // Check if date is valid
+            if (isNaN(billingDate.getTime())) {
+                console.error('Invalid billing date:', billingDateStr);
+                row.style.display = 'none';
+                return;
+            }
+            
+            // Normalize billing date to start of day
+            billingDate.setHours(0, 0, 0, 0);
+            
+            console.log('Comparing billing date:', billingDate.toDateString(), '(' + billingDateStr + ') with range:', startDate.toDateString(), '-', endDate.toDateString());
+            
+            // Check if billing date is within the selected range
+            if (billingDate >= startDate && billingDate <= endDate) {
+                console.log('✓ Date is in range, showing row');
+                row.style.display = '';
+            } else {
+                console.log('✗ Date is out of range, hiding row');
+                row.style.display = 'none';
+            }
+        });
+
+        updateFilteredCount();
+        
+        // Clear search input when filtering
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.value = '';
+        }
+    } catch (error) {
+        console.error('Error in date range filtering:', error);
     }
 }
 
 function updateFilteredCount() {
     const allRows = document.querySelectorAll('tbody tr.intro-x');
+    const noResultsRow = document.getElementById('noResultsRow');
     let visibleCount = 0;
     
     allRows.forEach(row => {
@@ -398,34 +508,24 @@ function updateFilteredCount() {
         }
     });
     
+    // Show/hide "no results found" message
+    if (noResultsRow) {
+        if (visibleCount === 0 && allRows.length > 0) {
+            noResultsRow.style.display = '';
+        } else {
+            noResultsRow.style.display = 'none';
+        }
+    }
+    
     const filteredCount = document.getElementById('filtered-count');
     if (filteredCount) {
         filteredCount.textContent = visibleCount;
     }
+    
+    console.log('Updated filtered count:', visibleCount, 'out of', allRows.length);
 }
 
-function showAllData() {
-    // Clear date range filter
-    const dateRangeFilter = document.getElementById('dateRangeFilter');
-    if (dateRangeFilter) {
-        dateRangeFilter.value = '';
-    }
-    
-    // Clear search input
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.value = '';
-    }
-    
-    // Show all table rows
-    const tableRows = document.querySelectorAll('tbody tr.intro-x');
-    tableRows.forEach(row => {
-        row.style.display = '';
-    });
-    
-    // Update counter to show all records
-    updateFilteredCount();
-}
+// showAllData() removed - now using URL redirect to clear filters
 
 function addInitialBillingItem() {
     const container = document.getElementById('billingItemsContainer');
@@ -685,17 +785,7 @@ function showToast(message, type = 'success') {
     }
 }
 
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
+// debounce() removed - no longer needed with server-side search
 
 // Initialize modal handlers when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {

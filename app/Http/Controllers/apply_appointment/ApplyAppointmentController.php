@@ -15,18 +15,31 @@ use Carbon\Carbon;
 
 class ApplyAppointmentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         // Get active appointment categories
         $categories = appointment_category::where('status', 'Active')
             ->orderBy('category_name', 'asc')
             ->get();
         
-        // Get user's appointments with pagination
-        $appointments = appointment::with(['users', 'appointmentCategory'])
-            ->where('users_id', auth()->id())
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        // Build query for user's appointments
+        $query = appointment::with(['users', 'appointmentCategory'])
+            ->where('users_id', auth()->id());
+        
+        // Apply search filter
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('tracking_number', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhereHas('appointmentCategory', function($q) use ($search) {
+                      $q->where('category_name', 'like', "%{$search}%");
+                  });
+            });
+        }
+        
+        $perPage = $request->input('per_page', 10);
+        $appointments = $query->orderBy('created_at', 'desc')->paginate($perPage);
         
         // Get active schedule with dates
         $activeSchedule = appointment_schedule_daily::with('scheduleDates')

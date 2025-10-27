@@ -15,9 +15,30 @@ use Carbon\Carbon;
 
 class BillingManagementController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $billings = tbl_billing_management::with(['user', 'billingItems'])->paginate(10);
+        // Build query for billings
+        $query = tbl_billing_management::with(['user', 'billingItems']);
+        
+        // Apply search filter
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('billing_date', 'like', "%{$search}%")
+                  ->orWhere('amount_due', 'like', "%{$search}%")
+                  ->orWhere('status', 'like', "%{$search}%")
+                  ->orWhereHas('user', function($userQuery) use ($search) {
+                      $userQuery->where('name', 'like', "%{$search}%")
+                               ->orWhere('email', 'like', "%{$search}%");
+                  });
+            });
+        }
+        
+        // Get per_page from request, default to 10
+        $perPage = $request->input('per_page', 10);
+        $perPage = in_array($perPage, [10, 25, 35, 50]) ? $perPage : 10;
+        
+        $billings = $query->orderBy('created_at', 'desc')->paginate($perPage);
         $users = User::all();
         
         // Get distinct roles from users table

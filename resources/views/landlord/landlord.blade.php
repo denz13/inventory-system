@@ -5,7 +5,7 @@
 <!-- Alert Message -->
 <div class="intro-y col-span-12 mt-6 -mb-6">
     <div class="alert alert-dismissible show box bg-primary text-white flex items-center mb-6" role="alert">
-        <span>Landlord Management: Register landlords with their personal and property information. Upload supporting documents and track registration status.</span>
+        <span>Apply Landlord: Register landlords with their personal and property information. Upload supporting documents and track registration status.</span>
         <button type="button" class="btn-close text-white" data-tw-dismiss="alert" aria-label="Close"> 
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x w-4 h-4"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
@@ -16,7 +16,7 @@
 <div class="grid grid-cols-12 gap-6 mt-5">
         <div class="intro-y col-span-12">
             <div class="intro-y text-lg font-medium mt-10">
-            Landlord Management
+            Apply Landlord
             </div>
         </div>
 
