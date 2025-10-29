@@ -1,17 +1,67 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Filter state
-    let currentStatusFilter = 'all';
-    let currentNameSort = 'default';
+    // Get URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Initialize filter states from URL
+    let currentStatusFilter = urlParams.get('status') || 'all';
+    let currentNameSort = urlParams.get('name_sort') || 'default';
 
-    // Search functionality
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            applyFiltersAndSort();
-        });
+    // Update button texts based on URL parameters
+    if (currentStatusFilter !== 'all') {
+        const statusText = currentStatusFilter === 'sent to owners' ? 'Status: Pending Payment' :
+                         currentStatusFilter === 'under review' ? 'Status: Under Review' :
+                         `Status: ${currentStatusFilter.charAt(0).toUpperCase() + currentStatusFilter.slice(1)}`;
+        updateFilterButton('statusFilterBtn', statusText);
+    }
+    
+    if (currentNameSort !== 'default') {
+        const btnText = `Name: ${currentNameSort.toUpperCase()}`;
+        updateFilterButton('nameSortBtn', btnText);
     }
 
-    // Date range filter functionality
+    // Search functionality - Server-side (Enter key or icon click)
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        // Get search term from URL if it exists
+        const searchTerm = urlParams.get('search') || '';
+        searchInput.value = searchTerm;
+        
+        // Search only when Enter key is pressed
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                e.preventDefault();
+                performServerSideSearch();
+            }
+        });
+        
+        // Also allow clicking the search icon to trigger search
+        const searchIcon = searchInput.parentElement.querySelector('svg');
+        if (searchIcon) {
+            searchIcon.style.cursor = 'pointer';
+            searchIcon.addEventListener('click', function() {
+                performServerSideSearch();
+            });
+        }
+    }
+    
+    function performServerSideSearch() {
+        const searchValue = searchInput.value.trim();
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        if (searchValue) {
+            urlParams.set('search', searchValue);
+        } else {
+            urlParams.delete('search');
+        }
+        
+        // Reset to page 1 when searching
+        urlParams.delete('page');
+        
+        // Reload page with search parameter
+        window.location.href = window.location.pathname + '?' + urlParams.toString();
+    }
+
+    // Date range filter functionality - Server-side
     const dateRangeFilter = document.getElementById('dateRangeFilter');
     if (dateRangeFilter) {
         // Listen for change event (when Apply is clicked)
@@ -19,88 +69,110 @@ document.addEventListener('DOMContentLoaded', function() {
             handleDateRangeFilter(this.value);
         });
         
-        // Listen for input event (for real-time updates)
-        dateRangeFilter.addEventListener('input', function() {
-            handleDateRangeFilter(this.value);
-        });
-        
-        // Listen for daterange apply event (litepicker specific)
-        dateRangeFilter.addEventListener('daterange:applied', function() {
-            handleDateRangeFilter(this.value);
-        });
+        // Initialize date range watcher
+        initializeDateRangeWatcher();
     }
+    
+    function handleDateRangeFilter(dateRange) {
+        console.log('Date range selected:', dateRange);
+        
+        if (!dateRange || dateRange.trim() === '') {
+            return;
+        }
 
-    // Initialize date range watcher for robust change detection
-    initializeDateRangeWatcher();
+        // Parse the date range (format: "1 Aug, 2025 - 31 Aug, 2025")
+        const dateParts = dateRange.split(' - ');
+        if (dateParts.length !== 2) {
+            console.error('Invalid date range format:', dateRange);
+            return;
+        }
+
+        try {
+            const startDate = new Date(dateParts[0].trim());
+            const endDate = new Date(dateParts[1].trim());
+            
+            if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                console.error('Invalid date values');
+                return;
+            }
+
+            // Format dates as YYYY-MM-DD
+            const dateFrom = startDate.toISOString().split('T')[0];
+            const dateTo = endDate.toISOString().split('T')[0];
+            
+            // Update URL with date range
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('date_from', dateFrom);
+            urlParams.set('date_to', dateTo);
+            urlParams.delete('page'); // Reset to page 1
+            
+            // Reload page with date filter
+            window.location.href = window.location.pathname + '?' + urlParams.toString();
+            
+        } catch (error) {
+            console.error('Error in date range filtering:', error);
+        }
+    }
+    
+    function initializeDateRangeWatcher() {
+        if (!dateRangeFilter) return;
+
+        let lastValue = dateRangeFilter.value;
+
+        // Watch for value changes using interval
+        setInterval(() => {
+            const currentValue = dateRangeFilter.value;
+            if (currentValue !== lastValue) {
+                lastValue = currentValue;
+                handleDateRangeFilter(currentValue);
+            }
+        }, 100);
+    }
 
     // Clear filter / Show All button
     const clearFilterBtn = document.getElementById('clearFilterBtn');
     if (clearFilterBtn) {
         clearFilterBtn.addEventListener('click', function() {
-            showAllData();
+            // Clear all filters by going to clean URL
+            window.location.href = window.location.pathname;
         });
     }
 
-    // Universal filter handler
+    // Universal filter handler - Server-side
     document.addEventListener('click', function(e) {
         if (e.target.matches('[data-filter-type]')) {
             const filterType = e.target.getAttribute('data-filter-type');
             const filterValue = e.target.getAttribute('data-filter-value');
             
-            const dropdown = e.target.closest('.dropdown');
+            const urlParams = new URLSearchParams(window.location.search);
             
-            // Update the appropriate filter/sort state and button
+            // Update URL parameters based on filter type
             if (filterType === 'status') {
-                currentStatusFilter = filterValue;
-                const statusText = filterValue === 'all' ? 'Status: All' : 
-                                 filterValue === 'sent to owners' ? 'Status: Pending Payment' :
-                                 filterValue === 'under review' ? 'Status: Under Review' :
-                                 `Status: ${filterValue.charAt(0).toUpperCase() + filterValue.slice(1)}`;
-                updateFilterButton('statusFilterBtn', statusText);
+                if (filterValue === 'all') {
+                    urlParams.delete('status');
+                } else {
+                    urlParams.set('status', filterValue);
+                }
             } else if (filterType === 'name-sort') {
-                currentNameSort = filterValue;
-                const btnText = filterValue === 'default' ? 'Name' : `Name: ${filterValue.toUpperCase()}`;
-                updateFilterButton('nameSortBtn', btnText);
-            }
-            
-            // Apply all filters and sorting
-            applyFiltersAndSort();
-            
-            // Close dropdown
-            if (dropdown) {
-                const dropdownToggle = dropdown.querySelector('.dropdown-toggle');
-                if (dropdownToggle) {
-                    dropdownToggle.setAttribute('aria-expanded', 'false');
-                    const dropdownMenu = dropdown.querySelector('.dropdown-menu');
-                    if (dropdownMenu) {
-                        dropdownMenu.classList.remove('show');
-                    }
+                if (filterValue === 'default') {
+                    urlParams.delete('name_sort');
+                } else {
+                    urlParams.set('name_sort', filterValue);
                 }
             }
+            
+            // Reset to page 1 when filtering
+            urlParams.delete('page');
+            
+            // Reload page with new filter
+            window.location.href = window.location.pathname + '?' + urlParams.toString();
         }
     });
 
     // Reset filters button
     document.getElementById('resetFiltersBtn')?.addEventListener('click', function() {
-        currentStatusFilter = 'all';
-        currentNameSort = 'default';
-        
-        if (searchInput) {
-            searchInput.value = '';
-        }
-        
-        if (dateRangeFilter) {
-            dateRangeFilter.value = '';
-        }
-        
-        // Reset button texts
-        updateFilterButton('statusFilterBtn', 'Status: All');
-        updateFilterButton('nameSortBtn', 'Name');
-        
-        // Apply filters (which will show all)
-        applyFiltersAndSort();
-        
-        showToast('Filters reset successfully', 'success');
+        // Clear all filters by going to clean URL
+        window.location.href = window.location.pathname;
     });
 
     // Update filter button text
@@ -114,251 +186,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 button.insertBefore(icon, button.firstChild);
             }
         }
-    }
-
-    // Main function to apply all filters and sorting
-    function applyFiltersAndSort() {
-        const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
-        const tbody = document.querySelector('tbody');
-        const paymentRows = Array.from(document.querySelectorAll('tbody tr.intro-x'));
-        
-        if (paymentRows.length === 0) return;
-        
-        // Step 1: Filter rows
-        let visibleRows = paymentRows.filter(row => {
-            const rowText = row.textContent.toLowerCase();
-            const rowStatus = row.getAttribute('data-status');
-            
-            // Check if row matches search term and status filter
-            const matchesSearch = searchTerm === '' || rowText.includes(searchTerm);
-            const matchesStatus = currentStatusFilter === 'all' || rowStatus === currentStatusFilter;
-            
-            return matchesSearch && matchesStatus;
-        });
-        
-        // Step 2: Sort visible rows by name if applicable
-        if (currentNameSort !== 'default') {
-            visibleRows.sort((a, b) => {
-                const nameA = a.getAttribute('data-user-name')?.toLowerCase() || '';
-                const nameB = b.getAttribute('data-user-name')?.toLowerCase() || '';
-                
-                if (currentNameSort === 'a-z') {
-                    return nameA.localeCompare(nameB);
-                } else { // z-a
-                    return nameB.localeCompare(nameA);
-                }
-            });
-        }
-        
-        // Step 3: Hide all rows first
-        paymentRows.forEach(row => {
-            row.style.display = 'none';
-        });
-        
-        // Step 4: Show and reorder visible rows
-        visibleRows.forEach((row, index) => {
-            row.style.display = '';
-            tbody.appendChild(row); // Move to end (reorder)
-        });
-        
-        // Update filtered count display
-        const filteredCountElement = document.getElementById('filtered-count');
-        if (filteredCountElement) {
-            filteredCountElement.textContent = visibleRows.length;
-        }
-        
-        // Show/hide no results message
-        updateNoResultsMessage(searchTerm, currentStatusFilter, visibleRows.length, paymentRows.length);
-    }
-
-    // Update no results message
-    function updateNoResultsMessage(searchTerm, statusFilter, visibleCount, totalRows) {
-        const tbody = document.querySelector('tbody');
-        let noDataRow = tbody?.querySelector('tr.no-data-found');
-        
-        // Remove existing no data row if it exists
-        if (noDataRow) {
-            noDataRow.remove();
-        }
-        
-        // Check if we should show "no results" message
-        const dateRangeFilter = document.getElementById('dateRangeFilter');
-        const hasDateFilter = dateRangeFilter && dateRangeFilter.value.trim() !== '';
-        const hasActiveFilters = searchTerm !== '' || currentStatusFilter !== 'all' || currentNameSort !== 'default' || hasDateFilter;
-        
-        if (visibleCount === 0 && hasActiveFilters && totalRows > 0 && tbody) {
-            // Create new no data row
-            noDataRow = document.createElement('tr');
-            noDataRow.className = 'no-data-found';
-            noDataRow.innerHTML = `
-                <td colspan="8" class="text-center py-8">
-                    <div class="text-slate-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
-                            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
-                        <div class="font-medium">No payments found</div>
-                        <div class="text-sm">No payments match your current filters. Try adjusting your filters.</div>
-                    </div>
-                </td>
-            `;
-            tbody.appendChild(noDataRow);
-        }
-    }
-    
-    function initializeDateRangeWatcher() {
-        const dateRangeFilter = document.getElementById('dateRangeFilter');
-        if (!dateRangeFilter) return;
-
-        let lastValue = dateRangeFilter.value;
-
-        // Watch for value changes using interval
-        setInterval(() => {
-            const currentValue = dateRangeFilter.value;
-            if (currentValue !== lastValue) {
-                lastValue = currentValue;
-                handleDateRangeFilter(currentValue);
-            }
-        }, 100);
-
-        // Also listen for clicks on the document to catch date picker Apply clicks
-        document.addEventListener('click', function(e) {
-            // Add a small delay to ensure the value has been updated
-            setTimeout(() => {
-                const currentValue = dateRangeFilter.value;
-                if (currentValue !== lastValue) {
-                    lastValue = currentValue;
-                    handleDateRangeFilter(currentValue);
-                }
-            }, 100);
-        });
-    }
-
-    function handleDateRangeFilter(dateRange) {
-        console.log('Filtering by date range:', dateRange);
-        
-        if (!dateRange || dateRange.trim() === '') {
-            // If no date range selected, show all rows
-            const tableRows = document.querySelectorAll('tbody tr.intro-x');
-            tableRows.forEach(row => {
-                row.style.display = '';
-            });
-            updateFilteredCount();
-            
-            // Remove no results message
-            const tbody = document.querySelector('tbody');
-            const noDataRow = tbody?.querySelector('tr.no-data-found');
-            if (noDataRow) {
-                noDataRow.remove();
-            }
-            return;
-        }
-
-        const tableRows = document.querySelectorAll('tbody tr.intro-x');
-
-        // Parse the date range (format: "1 Aug, 2025 - 31 Aug, 2025")
-        const dateParts = dateRange.split(' - ');
-        if (dateParts.length !== 2) {
-            console.error('Invalid date range format:', dateRange);
-            return;
-        }
-
-        try {
-            // Parse dates more robustly
-            const startDateStr = dateParts[0].trim();
-            const endDateStr = dateParts[1].trim();
-            
-            const startDate = new Date(startDateStr);
-            const endDate = new Date(endDateStr);
-            
-            if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-                console.error('Invalid date values:', startDateStr, endDateStr);
-                return;
-            }
-
-            console.log('Date range:', startDate, 'to', endDate);
-
-            let visibleCount = 0;
-            tableRows.forEach(row => {
-                const dateAttr = row.getAttribute('data-date');
-                if (!dateAttr) {
-                    row.style.display = 'none';
-                    return;
-                }
-
-                const rowDate = new Date(dateAttr);
-                
-                // Check if row date is within the selected range
-                if (rowDate >= startDate && rowDate <= endDate) {
-                    row.style.display = '';
-                    visibleCount++;
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-
-            updateFilteredCount();
-            
-            // Show no results message if needed
-            updateNoResultsMessage('', currentStatusFilter, visibleCount, tableRows.length);
-            
-            // Clear search input when filtering
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput) {
-                searchInput.value = '';
-            }
-        } catch (error) {
-            console.error('Error in date range filtering:', error);
-        }
-    }
-
-    function updateFilteredCount() {
-        const allRows = document.querySelectorAll('tbody tr.intro-x');
-        let visibleCount = 0;
-        
-        allRows.forEach(row => {
-            if (row.style.display !== 'none') {
-                visibleCount++;
-            }
-        });
-        
-        const filteredCount = document.getElementById('filtered-count');
-        if (filteredCount) {
-            filteredCount.textContent = visibleCount;
-        }
-        
-        console.log('Updated filtered count:', visibleCount, 'out of', allRows.length);
-    }
-
-    function showAllData() {
-        console.log('Showing all data - clearing filters');
-        
-        // Clear date range filter
-        const dateRangeFilter = document.getElementById('dateRangeFilter');
-        if (dateRangeFilter) {
-            dateRangeFilter.value = '';
-        }
-        
-        // Clear search input
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) {
-            searchInput.value = '';
-        }
-        
-        // Show all table rows
-        const tableRows = document.querySelectorAll('tbody tr.intro-x');
-        tableRows.forEach(row => {
-            row.style.display = '';
-        });
-        
-        // Remove no results message
-        const tbody = document.querySelector('tbody');
-        const noDataRow = tbody?.querySelector('tr.no-data-found');
-        if (noDataRow) {
-            noDataRow.remove();
-        }
-        
-        // Update counter to show all records
-        updateFilteredCount();
     }
     
     // View billing modal functionality

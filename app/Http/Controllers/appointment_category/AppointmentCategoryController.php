@@ -9,9 +9,30 @@ use Illuminate\Support\Facades\Validator;
 
 class AppointmentCategoryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $categories = appointment_category::orderBy('created_at', 'desc')->paginate(10);
+        // Get per_page from request, default to 10
+        $perPage = $request->input('per_page', 10);
+        
+        // Start with base query
+        $query = appointment_category::query();
+        
+        // Apply search filter
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where('category_name', 'like', "%{$search}%");
+        }
+        
+        // Apply status filter
+        if ($request->has('status') && $request->status != '' && $request->status != 'all') {
+            $query->where('status', $request->status);
+        }
+        
+        // Order and paginate
+        $categories = $query->orderBy('created_at', 'desc')
+            ->paginate($perPage)
+            ->appends($request->except('page'));
+        
         $statuses = appointment_category::distinct()->pluck('status')->filter()->values();
         
         return view('appointment_category.appointment_category', compact('categories', 'statuses'));
@@ -21,6 +42,8 @@ class AppointmentCategoryController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'category_name' => 'required|string|max:255|unique:appointment_category,category_name',
+            'for_role' => 'nullable|array',
+            'for_role.*' => 'in:home owners,non home owners',
             'status' => 'required|in:Active,Inactive'
         ]);
         
@@ -33,8 +56,12 @@ class AppointmentCategoryController extends Controller
         }
         
         try {
+            // Convert for_role array to comma-separated string
+            $forRole = $request->has('for_role') ? implode(',', $request->for_role) : null;
+            
             $category = appointment_category::create([
                 'category_name' => $request->category_name,
+                'for_role' => $forRole,
                 'status' => $request->status
             ]);
             
@@ -71,6 +98,8 @@ class AppointmentCategoryController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'category_name' => 'required|string|max:255|unique:appointment_category,category_name,' . $id,
+            'for_role' => 'nullable|array',
+            'for_role.*' => 'in:home owners,non home owners',
             'status' => 'required|in:Active,Inactive'
         ]);
         
@@ -83,9 +112,13 @@ class AppointmentCategoryController extends Controller
         }
         
         try {
+            // Convert for_role array to comma-separated string
+            $forRole = $request->has('for_role') ? implode(',', $request->for_role) : null;
+            
             $category = appointment_category::findOrFail($id);
             $category->update([
                 'category_name' => $request->category_name,
+                'for_role' => $forRole,
                 'status' => $request->status
             ]);
             

@@ -1,78 +1,63 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Activity Logs script loaded');
     
-    // Initialize search functionality
+    // Initialize search from URL
+    initializeSearchFromURL();
+    
+    // Initialize search functionality - server-side
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            applySearch();
-        });
-    }
-
-    // Apply search filter
-    function applySearch() {
-        const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
-        const logRows = Array.from(document.querySelectorAll('#activityLogsTable tbody tr.intro-x'));
-        
-        if (logRows.length === 0) return;
-        
-        let visibleCount = 0;
-        
-        logRows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            
-            // Check search match
-            const matchesSearch = searchTerm === '' || text.includes(searchTerm);
-            
-            // Show/hide row based on search
-            if (matchesSearch) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                performServerSideSearch();
             }
         });
         
-        // Update filtered count
-        const filteredCountElement = document.getElementById('filtered-count');
-        if (filteredCountElement) {
-            filteredCountElement.textContent = visibleCount;
-        }
-        
-        // Show/hide no results message
-        updateNoResultsMessage(searchTerm, visibleCount, logRows.length);
+        // Also trigger on input with debounce
+        searchInput.addEventListener('input', debounce(performServerSideSearch, 500));
     }
 
-    // Update no results message
-    function updateNoResultsMessage(searchTerm, visibleCount, totalRows) {
-        const tbody = document.querySelector('#activityLogsTable tbody');
-        let noDataRow = tbody?.querySelector('tr.no-data-found');
+    // Initialize search input from URL parameter
+    function initializeSearchFromURL() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchValue = urlParams.get('search');
+        const searchInput = document.getElementById('searchInput');
         
-        // Remove existing no data row if it exists
-        if (noDataRow) {
-            noDataRow.remove();
+        if (searchInput && searchValue) {
+            searchInput.value = searchValue;
+        }
+    }
+
+    // Server-side search function
+    function performServerSideSearch() {
+        const searchValue = document.getElementById('searchInput').value;
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        if (searchValue) {
+            urlParams.set('search', searchValue);
+        } else {
+            urlParams.delete('search');
         }
         
-        // Check if we should show "no results" message
-        const hasActiveFilters = searchTerm !== '';
+        // Reset to page 1 when searching
+        urlParams.delete('page');
         
-        if (visibleCount === 0 && hasActiveFilters && totalRows > 0 && tbody) {
-            // Create new no data row
-            noDataRow = document.createElement('tr');
-            noDataRow.className = 'no-data-found';
-            noDataRow.innerHTML = `
-                <td colspan="5" class="text-center py-8">
-                    <div class="text-slate-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
-                            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
-                        <div class="font-medium">No activity logs found</div>
-                        <div class="text-sm">No logs match your search. Try a different search term.</div>
-                    </div>
-                </td>
-            `;
-            tbody.appendChild(noDataRow);
-        }
+        // Redirect with new search parameter
+        window.location.search = urlParams.toString();
+    }
+
+    // Debounce function
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
     }
 
     // Handle View Activity Log

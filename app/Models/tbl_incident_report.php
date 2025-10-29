@@ -16,6 +16,7 @@ class tbl_incident_report extends Model
         'user_id',
         'person_involved_name',
         'address',
+        'street',
         'designation',
         'datetime_of_incident',
         'location_of_incident',

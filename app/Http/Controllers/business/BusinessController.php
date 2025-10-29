@@ -12,16 +12,35 @@ use Illuminate\Support\Facades\Storage;
 
 class BusinessController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         // Get per_page from request, default to 10
-        $perPage = request('per_page', 10);
+        $perPage = $request->input('per_page', 10);
         
-        // Get current user's businesses only
-        $businesses = business_management_list::with('user')
-            ->where('user_id', Auth::id())
-            ->orderBy('created_at', 'desc')
-            ->paginate($perPage);
+        // Start query - Get current user's businesses only
+        $query = business_management_list::with('user')
+            ->where('user_id', Auth::id());
+        
+        // Search functionality
+        if ($request->has('search') && $request->search !== '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('business_name', 'LIKE', "%{$search}%")
+                  ->orWhere('type_of_business', 'LIKE', "%{$search}%")
+                  ->orWhere('address', 'LIKE', "%{$search}%");
+            });
+        }
+        
+        // Status filter
+        if ($request->has('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+        
+        // Order by creation date
+        $query->orderBy('created_at', 'desc');
+        
+        // Paginate results and append query parameters
+        $businesses = $query->paginate($perPage)->appends($request->except('page'));
 
         return view('business.business', compact('businesses'));
     }

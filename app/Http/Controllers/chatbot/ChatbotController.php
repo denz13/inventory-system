@@ -4,6 +4,9 @@ namespace App\Http\Controllers\chatbot;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\module;
+use App\Models\notification_settings;
+use App\Models\Notification;
 
 class ChatbotController extends Controller
 {
@@ -54,8 +57,9 @@ class ChatbotController extends Controller
             $guestId = $validated['guest_id'] ?? null;
             
             // Save guest message to database
+            $guestMessage = null;
             if ($guestId) {
-                \App\Models\chatbot_messages::create([
+                $guestMessage = \App\Models\chatbot_messages::create([
                     'from_guest_id' => $guestId,
                     'from_users_id' => null,
                     'message' => $userMessage,
@@ -65,8 +69,12 @@ class ChatbotController extends Controller
                 
                 \Log::info('Guest message saved', [
                     'guest_id' => $guestId,
-                    'message' => $userMessage
+                    'message' => $userMessage,
+                    'message_id' => $guestMessage->id
                 ]);
+                
+                // Send notification to users with chatbot notification settings
+                $this->sendChatbotNotifications($guestMessage, $guestId);
             }
             
             // Generate bot response
@@ -339,5 +347,182 @@ class ChatbotController extends Controller
         
         // Default response
         return "I understand you're asking about: \"{$message}\". I can help you with vehicle management, business registration, service requests, incident reports, and user management. Could you be more specific about what you need help with?";
+    }
+
+    /**
+     * Get users with active chatbot notification settings
+     */
+    private function getChatbotNotificationUsers()
+    {
+        // First, let's check all available modules to see what's in the database
+        $allModules = module::all();
+        \Log::info('All modules in database for chatbot', [
+            'modules' => $allModules->map(function($module) {
+                return [
+                    'id' => $module->id,
+                    'name' => $module->module_name,
+                    'status' => $module->status
+                ];
+            })
+        ]);
+
+        // Try different variations of the chatbot module name
+        $possibleModuleNames = [
+            'guest chatbot',
+            'Guest Chatbot',
+            'Guest ChatBot',
+            'chatbot',
+            'Chatbot',
+            'ChatBot',
+            'chat bot',
+            'Chat Bot',
+            'chatbot management',
+            'Chatbot Management'
+        ];
+
+        $chatbotModule = null;
+        foreach ($possibleModuleNames as $moduleName) {
+            $chatbotModule = module::where('module_name', $moduleName)
+                ->where('status', 'active')
+                ->first();
+            
+            if ($chatbotModule) {
+                \Log::info('Found chatbot module with name', [
+                    'module_name' => $moduleName,
+                    'module_id' => $chatbotModule->id
+                ]);
+                break;
+            }
+        }
+
+        \Log::info('Chatbot module lookup result', [
+            'module_found' => $chatbotModule ? true : false,
+            'module_id' => $chatbotModule->id ?? 'N/A',
+            'module_name' => $chatbotModule->module_name ?? 'N/A',
+            'module_status' => $chatbotModule->status ?? 'N/A'
+        ]);
+
+        if (!$chatbotModule) {
+            \Log::warning('Chatbot module not found or inactive. Available modules:', [
+                'available_modules' => $allModules->pluck('module_name')->toArray()
+            ]);
+            return collect();
+        }
+
+        // Get users with active notification settings for chatbot
+        $notificationSettings = notification_settings::with('user')
+            ->where('module_id', $chatbotModule->id)
+            ->where('status', 'active')
+            ->get();
+
+        \Log::info('Chatbot notification settings found', [
+            'settings_count' => $notificationSettings->count(),
+            'settings' => $notificationSettings->map(function($setting) {
+                return [
+                    'id' => $setting->id,
+                    'user_id' => $setting->users_id,
+                    'user_name' => $setting->user->name ?? 'N/A',
+                    'status' => $setting->status
+                ];
+            })
+        ]);
+
+        return $notificationSettings->pluck('user')->filter(); // Remove null users
+    }
+
+    /**
+     * Send notification to users with chatbot notification settings
+     */
+    private function sendChatbotNotifications($guestMessage, $guestId)
+    {
+        try {
+            \Log::info('Starting chatbot notifications', [
+                'message_id' => $guestMessage->id,
+                'guest_id' => $guestId,
+                'message' => \Str::limit($guestMessage->message, 50)
+            ]);
+
+            $users = $this->getChatbotNotificationUsers();
+            
+            \Log::info('Users to notify for chatbot', [
+                'total_users_found' => $users->count(),
+                'user_ids' => $users->pluck('id')->toArray(),
+                'user_names' => $users->pluck('name')->toArray()
+            ]);
+
+            if ($users->isEmpty()) {
+                \Log::warning('No users found with active chatbot notification settings');
+                return;
+            }
+
+            // Create notification for each user
+            foreach ($users as $user) {
+                try {
+                    // Get or find the chatbot module for notification_settings_id
+                    // Try different variations of the chatbot module name
+                    $possibleModuleNames = [
+                        'guest chatbot',
+                        'Guest Chatbot',
+                        'Guest ChatBot',
+                        'chatbot',
+                        'Chatbot',
+                        'ChatBot',
+                        'chat bot',
+                        'Chat Bot'
+                    ];
+                    
+                    $chatbotModule = null;
+                    foreach ($possibleModuleNames as $moduleName) {
+                        $chatbotModule = module::where('module_name', $moduleName)
+                            ->where('status', 'active')
+                            ->first();
+                        
+                        if ($chatbotModule) {
+                            break;
+                        }
+                    }
+
+                    $notificationSettingId = null;
+                    if ($chatbotModule) {
+                        $notificationSetting = notification_settings::where('users_id', $user->id)
+                            ->where('module_id', $chatbotModule->id)
+                            ->where('status', 'active')
+                            ->first();
+                        
+                        if ($notificationSetting) {
+                            $notificationSettingId = $notificationSetting->id;
+                        }
+                    }
+
+                    $notification = Notification::create([
+                        'users_id' => $user->id,
+                        'type' => 'info',
+                        'title' => 'New Chatbot Message',
+                        'message' => "Guest {$guestId} sent a message: " . \Str::limit($guestMessage->message, 100),
+                        'notification_settings_id' => $notificationSettingId,
+                        'read_at' => null
+                    ]);
+
+                    \Log::info('Chatbot notification created', [
+                        'notification_id' => $notification->id,
+                        'user_id' => $user->id,
+                        'user_name' => $user->name,
+                        'notification_settings_id' => $notificationSettingId
+                    ]);
+                } catch (\Exception $e) {
+                    \Log::error('Failed to create notification for user', [
+                        'user_id' => $user->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
+            \Log::info('Chatbot notifications sent successfully', [
+                'total_notifications_sent' => $users->count()
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error sending chatbot notifications: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+        }
     }
 }

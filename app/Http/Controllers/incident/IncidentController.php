@@ -45,6 +45,7 @@ class IncidentController extends Controller
         try {
             $validated = $request->validate([
                 'person_involved_name' => 'required|string|max:255',
+                'street' => 'required|string|max:255',
                 'address' => 'required|string|max:500',
                 'designation' => 'required|string|max:255',
                 'datetime_of_incident' => 'required|date',
@@ -55,6 +56,7 @@ class IncidentController extends Controller
             $incident = new tbl_incident_report();
             $incident->user_id = Auth::id();
             $incident->person_involved_name = $validated['person_involved_name'];
+            $incident->street = $validated['street'];
             $incident->address = $validated['address'];
             $incident->designation = $validated['designation'];
             $incident->datetime_of_incident = $validated['datetime_of_incident'];
@@ -107,6 +109,7 @@ class IncidentController extends Controller
 
             $validated = $request->validate([
                 'person_involved_name' => 'required|string|max:255',
+                'street' => 'required|string|max:255',
                 'address' => 'required|string|max:500',
                 'designation' => 'required|string|max:255',
                 'datetime_of_incident' => 'required|date',
@@ -116,6 +119,7 @@ class IncidentController extends Controller
 
             $incident->update([
                 'person_involved_name' => $validated['person_involved_name'],
+                'street' => $validated['street'],
                 'address' => $validated['address'],
                 'designation' => $validated['designation'],
                 'datetime_of_incident' => $validated['datetime_of_incident'],

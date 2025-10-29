@@ -10,11 +10,36 @@ use Illuminate\Support\Facades\Storage;
 
 class BankAccountController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $bankAccounts = tbl_bank_account_category::with('bankAccountType')
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        // Get per page from request, default to 10
+        $perPage = $request->input('per_page', 10);
+        
+        // Start query
+        $query = tbl_bank_account_category::with('bankAccountType');
+        
+        // Search functionality
+        if ($request->has('search') && !empty($request->search)) {
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('account_name', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('account_number', 'like', '%' . $searchTerm . '%')
+                  ->orWhereHas('bankAccountType', function($typeQuery) use ($searchTerm) {
+                      $typeQuery->where('type', 'like', '%' . $searchTerm . '%');
+                  });
+            });
+        }
+        
+        // Status filter
+        if ($request->has('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+        
+        // Order by created_at desc
+        $query->orderBy('created_at', 'desc');
+        
+        // Paginate results
+        $bankAccounts = $query->paginate($perPage)->appends($request->except('page'));
         
         $bankAccountTypes = tbl_bank_account_type::where('status', 'Active')->get();
 
@@ -32,7 +57,7 @@ class BankAccountController extends Controller
             ]);
 
             $data = $request->only(['bank_account_type_id', 'account_name', 'account_number']);
-            $data['status'] = 'Active'; // Automatically set to Active
+            $data['status'] = 'active'; // Automatically set to active
 
             // Handle QR code image upload
             if ($request->hasFile('qrcode_image')) {
@@ -88,7 +113,7 @@ class BankAccountController extends Controller
             ]);
 
             $data = $request->only(['bank_account_type_id', 'account_name', 'account_number']);
-            $data['status'] = 'Active'; // Automatically set to Active
+            $data['status'] = 'active'; // Automatically set to active
 
             // Handle QR code image upload
             if ($request->hasFile('qrcode_image')) {
@@ -140,6 +165,36 @@ class BankAccountController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error deleting bank account: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function toggleStatus(Request $request, $id)
+    {
+        try {
+            $bankAccount = tbl_bank_account_category::findOrFail($id);
+            
+            $request->validate([
+                'status' => 'required|in:active,inactive,Active,Inactive'
+            ]);
+
+            // Convert to lowercase for database consistency
+            $status = strtolower($request->status);
+
+            $bankAccount->update([
+                'status' => $status
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Status updated to ' . $status . ' successfully',
+                'status' => $status
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating status: ' . $e->getMessage()
             ], 500);
         }
     }

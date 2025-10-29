@@ -12,11 +12,42 @@ use Illuminate\Support\Facades\DB;
 
 class NotificationSettingsController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $notificationSettings = notification_settings::with(['user', 'module'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        // Get per_page from request, default to 10
+        $perPage = $request->input('per_page', 10);
+        
+        // Start with base query
+        $query = notification_settings::with(['user', 'module']);
+        
+        // Apply search filter
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->whereHas('user', function($userQuery) use ($search) {
+                    $userQuery->where('name', 'like', "%{$search}%")
+                             ->orWhere('email', 'like', "%{$search}%");
+                })
+                ->orWhereHas('module', function($moduleQuery) use ($search) {
+                    $moduleQuery->where('module_name', 'like', "%{$search}%");
+                });
+            });
+        }
+        
+        // Apply status filter
+        if ($request->has('status') && $request->status != '' && $request->status != 'all') {
+            $query->where('status', $request->status);
+        }
+        
+        // Apply module filter
+        if ($request->has('module_filter') && $request->module_filter != '' && $request->module_filter != 'all') {
+            $query->where('module_id', $request->module_filter);
+        }
+        
+        // Order and paginate
+        $notificationSettings = $query->orderBy('created_at', 'desc')
+            ->paginate($perPage)
+            ->appends($request->except('page'));
         
         $users = User::where('active', 1)->orderBy('name')->get();
         $modules = module::where('status', 'active')->orderBy('module_name')->get();

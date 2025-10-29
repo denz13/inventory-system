@@ -35,7 +35,7 @@
 <div class="grid grid-cols-12 gap-6 mt-5">
     <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2">
         <div class="hidden md:block mx-auto text-slate-500">
-            Showing <span id="filtered-count">{{ $activityLogs->count() }}</span> of <span id="total-count">{{ $activityLogs->total() }}</span> activity logs
+            Showing {{ $activityLogs->count() }} of {{ $activityLogs->total() }} activity logs
         </div>
         <div class="w-full sm:w-auto mt-3 sm:mt-0 sm:ml-auto md:ml-0">
             <div class="w-56 relative text-slate-500">

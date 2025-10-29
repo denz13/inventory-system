@@ -84,10 +84,14 @@ class ChatController extends Controller
             ->where('status', 'unread')
             ->update(['status' => 'read']);
         
+        // Get the chat user's online status
+        $chatUser = User::select('id', 'name', 'is_online')->find($userId);
+        
         return response()->json([
             'success' => true,
             'messages' => $messages,
-            'currentUserId' => $currentUser->id
+            'currentUserId' => $currentUser->id,
+            'chatUser' => $chatUser
         ]);
     }
     

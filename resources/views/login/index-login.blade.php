@@ -1602,7 +1602,7 @@ A VERTICAL event
                         </div>
                         @endif
                         
-                        <div class="intro-x mt-2 text-slate-400 xl:hidden text-center">A few more clicks to sign in to your account. Manage all your e-commerce accounts in one place</div>
+                        <!-- <div class="intro-x mt-2 text-slate-400 xl:hidden text-center">A few more clicks to sign in to your account. Manage all your e-commerce accounts in one place</div> -->
                         <div class="intro-x mt-8">
                             <input type="text" id="login-email" class="intro-x login__input form-control py-3 px-4 block" placeholder="Email">
                             <div class="mt-4">

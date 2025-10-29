@@ -1,6 +1,42 @@
 @extends('layout._partials.master')
 
 @section('content')
+@php
+// Status configuration mapping
+$statusConfig = [
+    'pending' => [
+        'color' => 'text-warning',
+        'icon' => '<circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path>',
+        'action' => 'pending'
+    ],
+    'approved' => [
+        'color' => 'text-success',
+        'icon' => '<polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>',
+        'action' => 'approve'
+    ],
+    'cancelled' => [
+        'color' => 'text-danger',
+        'icon' => '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>',
+        'action' => 'cancel'
+    ],
+    'completed' => [
+        'color' => 'text-info',
+        'icon' => '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>',
+        'action' => 'complete'
+    ],
+];
+
+// Function to get status config with fallback to default
+function getStatusConfig($status, $statusConfig) {
+    $statusLower = strtolower($status);
+    return $statusConfig[$statusLower] ?? [
+        'color' => 'text-slate-500',
+        'icon' => '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>',
+        'action' => strtolower($status)
+    ];
+}
+@endphp
+
 <!-- Alert Message -->
 <div class="intro-y col-span-12 mt-6 -mb-6">
     <div class="alert alert-dismissible show box bg-primary text-white flex items-center mb-6" role="alert">
@@ -46,17 +82,90 @@
             </style>
         </div>
 
-        <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2">
+        <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2 gap-2">
+            <!-- Date Range Filter -->
+            <input type="text" data-daterange="true" class="datepicker form-control w-56" placeholder="Filter by date range" id="dateRangeFilter">
+            
+            <!-- Status Filter -->
+            <div class="dropdown">
+                <button class="dropdown-toggle btn btn-outline-secondary" aria-expanded="false" data-tw-toggle="dropdown" id="statusFilterBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                    </svg>
+                    Status: All
+                </button>
+                <div class="dropdown-menu w-40">
+                    <ul class="dropdown-content">
+                        <li><a href="javascript:;" class="dropdown-item" data-status-filter="all">All Status</a></li>
+                        @foreach($allStatuses as $status)
+                            <li><a href="javascript:;" class="dropdown-item" data-status-filter="{{ strtolower($status) }}">{{ ucfirst($status) }}</a></li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Category Filter -->
+            <div class="dropdown">
+                <button class="dropdown-toggle btn btn-outline-secondary" aria-expanded="false" data-tw-toggle="dropdown" id="categoryFilterBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="3" y1="9" x2="21" y2="9"></line>
+                        <line x1="9" y1="21" x2="9" y2="9"></line>
+                    </svg>
+                    Category: All
+                </button>
+                <div class="dropdown-menu w-48 max-h-60 overflow-y-auto">
+                    <ul class="dropdown-content">
+                        <li><a href="javascript:;" class="dropdown-item" data-category-filter="all">All Categories</a></li>
+                        @php
+                            $categories = $appointments->pluck('appointmentCategory')->filter()->unique('id');
+                        @endphp
+                        @foreach($categories as $category)
+                            <li><a href="javascript:;" class="dropdown-item" data-category-filter="{{ $category->category_name }}">{{ $category->category_name }}</a></li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Time Filter -->
+            <div class="dropdown">
+                <button class="dropdown-toggle btn btn-outline-secondary" aria-expanded="false" data-tw-toggle="dropdown" id="timeFilterBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    Time: All
+                </button>
+                <div class="dropdown-menu w-48 max-h-60 overflow-y-auto">
+                    <ul class="dropdown-content">
+                        <li><a href="javascript:;" class="dropdown-item" data-time-filter="all" data-time-display="All Times">All Times</a></li>
+                        @foreach($allTimes as $timeObj)
+                            <li><a href="javascript:;" class="dropdown-item" data-time-filter="{{ $timeObj['raw'] }}" data-time-display="{{ $timeObj['display'] }}">{{ $timeObj['display'] }}</a></li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Clear Filters Button -->
+            <button type="button" class="btn btn-outline-secondary" id="clearFilterBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <polyline points="1 20 1 14 7 14"></polyline>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+                Show All
+            </button>
+            
+            <!-- Entry Count -->
             <div class="hidden md:block mx-auto text-slate-500">
                 Showing <span id="filtered-count">{{ $appointments->count() }}</span> of <span id="total-count">{{ $appointments->total() }}</span> entries
             </div>
+            
+            <!-- Search Input -->
             <div class="w-full sm:w-auto mt-3 sm:mt-0 sm:ml-auto md:ml-0">
                 <div class="w-56 relative text-slate-500">
-                    <input type="text" class="form-control w-56 box pr-10" placeholder="Search appointments..." id="searchInput">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round" icon-name="search"
-                        class="lucide lucide-search w-4 h-4 absolute my-auto inset-y-0 mr-3 right-0" data-lucide="search">
+                    <input type="text" class="form-control w-56 box pr-10" placeholder="Search appointments..." id="searchInput" autocomplete="off">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="search" class="lucide lucide-search w-4 h-4 absolute my-auto inset-y-0 mr-3 right-0" data-lucide="search">
                         <circle cx="11" cy="11" r="8"></circle>
                         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
@@ -68,7 +177,8 @@
                 <thead>
                 <tr>
                     <th class="whitespace-nowrap">TRACKING NUMBER</th>
-                    <th class="whitespace-nowrap">DESCRIPTION</th>
+                    <!-- <th class="whitespace-nowrap">DESCRIPTION</th> -->
+                    <th class="whitespace-nowrap">CATEGORY</th>
                     <th class="whitespace-nowrap">APPOINTMENT DATE</th>
                     <th class="whitespace-nowrap">TIME</th>
                     <th class="text-center whitespace-nowrap">STATUS</th>
@@ -79,33 +189,44 @@
                 </thead>
                 <tbody>
                     @foreach ($appointments as $appointment)
-                        <tr class="intro-x" data-tracking="{{ $appointment->tracking_number }}" data-description="{{ $appointment->description }}" data-status="{{ $appointment->status }}">
+                        @php
+                            // Format appointment date for JavaScript filtering
+                            $appointmentDateForFilter = $appointment->appointment_date;
+                            try {
+                                $formattedAppointmentDate = $appointment->appointment_date ? \Carbon\Carbon::parse($appointment->appointment_date)->format('Y-m-d') : '';
+                            } catch (\Exception $e) {
+                                $formattedAppointmentDate = '';
+                            }
+                            
+                            // Get category name
+                            $categoryName = $appointment->appointmentCategory->category_name ?? '';
+                        @endphp
+                        <tr class="intro-x" 
+                            data-tracking="{{ $appointment->tracking_number }}" 
+                            data-description="{{ $appointment->description }}" 
+                            data-status="{{ $appointment->status }}" 
+                            data-appointment-date="{{ $formattedAppointmentDate }}"
+                            data-category="{{ $categoryName }}"
+                            data-time="{{ $appointment->time ?? '' }}">
                             <td><a href="javascript:;" class="font-medium whitespace-nowrap">{{ $appointment->tracking_number }}</a></td>
-                            <td class="whitespace-nowrap">{{ Str::limit($appointment->description, 50) }}</td>
+                            <!-- <td class="whitespace-nowrap">{{ Str::limit($appointment->description, 50) }}</td> -->
+                            <td class="whitespace-nowrap">{{ $categoryName }}</td>
                             <td class="whitespace-nowrap">{{ $appointment->appointment_date ? \Carbon\Carbon::parse($appointment->appointment_date)->format('M d, Y') : 'N/A' }}</td>
                             <td class="whitespace-nowrap">
-                                <span class="font-medium text-primary">{{ $appointment->time ?? 'N/A' }}</span>
+                                <span class="font-medium text-primary">
+                                    {{ $appointment->time ?? 'N/A' }}
+                                </span>
                             </td>
                             <td class="w-40">
                                 @php 
-                                    $statusClass = match($appointment->status) {
-                                        'approved' => 'text-success',
-                                        'cancelled' => 'text-danger',
-                                        'pending' => 'text-warning',
-                                        'completed' => 'text-info',
-                                        default => 'text-slate-500'
-                                    };
+                                    $currentStatusConfig = getStatusConfig($appointment->status, $statusConfig);
                                     $statusText = ucfirst($appointment->status);
                                 @endphp
-                                <div class="flex items-center justify-center {{ $statusClass }}">
+                                <div class="flex items-center justify-center {{ $currentStatusConfig['color'] }}">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" stroke-linejoin="round" icon-name="calendar"
-                                        data-lucide="calendar" class="lucide lucide-calendar w-4 h-4 mr-2">
-                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                                        <line x1="16" y1="2" x2="16" y2="6"></line>
-                                        <line x1="8" y1="2" x2="8" y2="6"></line>
-                                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                                        stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                                        {!! $currentStatusConfig['icon'] !!}
                                     </svg>
                                     {{ $statusText }}
                                 </div>
@@ -138,43 +259,29 @@
                                         </button>
                                         <div class="dropdown-menu w-40">
                                             <ul class="dropdown-content">
-                                                <li>
-                                                    <a href="javascript:;" class="dropdown-item" data-action="approve" data-appointment-id="{{ $appointment->id }}">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2 text-success">
-                                                            <polyline points="9 11 12 14 22 4"></polyline>
-                                                            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
-                                                        </svg>
-                                                        Approve
-                                                    </a>
-                                                </li>
-                                                <li>
-                                                    <a href="javascript:;" class="dropdown-item" data-action="cancel" data-appointment-id="{{ $appointment->id }}" data-tw-toggle="modal" data-tw-target="#cancel-reason-modal">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2 text-danger">
-                                                            <circle cx="12" cy="12" r="10"></circle>
-                                                            <line x1="15" y1="9" x2="9" y2="15"></line>
-                                                            <line x1="9" y1="9" x2="15" y2="15"></line>
-                                                        </svg>
-                                                        Cancel
-                                                    </a>
-                                                </li>
-                                                <li>
-                                                    <a href="javascript:;" class="dropdown-item" data-action="complete" data-appointment-id="{{ $appointment->id }}">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2 text-info">
-                                                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                                                        </svg>
-                                                        Complete
-                                                    </a>
-                                                </li>
-                                                <li>
-                                                    <a href="javascript:;" class="dropdown-item" data-action="pending" data-appointment-id="{{ $appointment->id }}">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2 text-warning">
-                                                            <circle cx="12" cy="12" r="10"></circle>
-                                                            <path d="M12 6v6l4 2"></path>
-                                                        </svg>
-                                                        Set to Pending
-                                                    </a>
-                                                </li>
+                                                @php
+                                                    // Define all available status actions
+                                                    $availableActions = ['approved', 'cancelled', 'completed', 'pending'];
+                                                @endphp
+                                                @foreach($availableActions as $status)
+                                                    @php
+                                                        $config = getStatusConfig($status, $statusConfig);
+                                                        $statusLower = strtolower($status);
+                                                        $displayName = $statusLower === 'pending' ? 'Set to Pending' : ucfirst($status);
+                                                        $extraAttrs = '';
+                                                        if ($statusLower === 'cancelled') {
+                                                            $extraAttrs = ' data-tw-toggle="modal" data-tw-target="#cancel-reason-modal"';
+                                                        }
+                                                    @endphp
+                                                    <li>
+                                                        <a href="javascript:;" class="dropdown-item" data-action="{{ $config['action'] }}" data-appointment-id="{{ $appointment->id }}"{!! $extraAttrs !!}>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2 {{ $config['color'] }}">
+                                                                {!! $config['icon'] !!}
+                                                            </svg>
+                                                            {{ $displayName }}
+                                                        </a>
+                                                    </li>
+                                                @endforeach
                                             </ul>
                                         </div>
                                     </div>
@@ -196,16 +303,16 @@
                             </td>
                         </tr>
                     @endforeach
-                    <!-- No results message (for search) -->
+                    <!-- No results message (for search/filter) -->
                     <tr class="intro-x hidden" id="no-results-row">
-                        <td colspan="8" class="text-center py-8">
+                        <td colspan="7" class="text-center py-8">
                             <div class="text-slate-500">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
                                     <circle cx="11" cy="11" r="8"></circle>
                                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                                 </svg>
                                 <div class="font-medium">No appointments found</div>
-                                <div class="text-sm">Try adjusting your search criteria</div>
+                                <div class="text-sm">Try adjusting your search or filter criteria</div>
                             </div>
                         </td>
                     </tr>
@@ -401,5 +508,5 @@
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('js/appointment-management/appointment-management.js') }}"></script>
+    <script src="{{ asset('js/appointment-management/appointment-management.js?v=' . time()) }}"></script>
 @endpush

@@ -50,6 +50,12 @@
             color: #6b7280 !important;
             font-size: 0.875rem !important;
         }
+        
+        /* Remove TomSelect red highlighting */
+        .ts-dropdown .highlight {
+            background: transparent !important;
+            color: inherit !important;
+        }
     </style>
 </div>
 
@@ -81,14 +87,14 @@
                 <ul class="dropdown-content"> 
                     <li> <a href="javascript:;" class="dropdown-item" data-module-filter="all">All Modules</a> </li> 
                     @foreach($modules as $module)
-                        <li> <a href="javascript:;" class="dropdown-item" data-module-filter="{{ $module->id }}">{{ $module->module_name }}</a> </li> 
+                        <li> <a href="javascript:;" class="dropdown-item" data-module-filter="{{ $module->id }}">{{ ucwords(str_replace('_', ' ', $module->module_name)) }}</a> </li> 
                     @endforeach
                 </ul> 
             </div> 
         </div>
         
         <div class="hidden md:block mx-auto text-slate-500">
-            Showing <span id="filtered-count">{{ $notificationSettings->count() }}</span> of <span id="total-count">{{ $notificationSettings->total() }}</span> entries
+            Showing {{ $notificationSettings->count() }} of {{ $notificationSettings->total() }} entries
         </div>
         <div class="w-full sm:w-auto mt-3 sm:mt-0 sm:ml-auto md:ml-0">
             <div class="w-56 relative text-slate-500">
@@ -102,7 +108,7 @@
     </div>
 
     <!-- BEGIN: Data List -->
-    <div class="intro-y col-span-12 overflow-auto lg:overflow-visible">
+    <div class="intro-y col-span-12 overflow-auto">
         <table class="table table-report -mt-2">
             <thead>
                 <tr>
@@ -127,7 +133,7 @@
                         <div class="text-center">
                             @if($setting->module)
                                 <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full font-medium">
-                                    {{ $setting->module->module_name }}
+                                    {{ ucwords(str_replace('_', ' ', $setting->module->module_name)) }}
                                 </span>
                             @else
                                 <span class="text-slate-500 text-sm">No module</span>
@@ -258,7 +264,7 @@
                             @foreach($modules as $module)
                                 <label class="flex items-center mb-2">
                                     <input type="checkbox" name="modules[]" value="{{ $module->id }}" class="form-check-input mr-3">
-                                    <span class="text-slate-700">{{ $module->module_name }}</span>
+                                    <span class="text-slate-700">{{ ucwords(str_replace('_', ' ', $module->module_name)) }}</span>
                                 </label>
                             @endforeach
                         </div>
@@ -357,7 +363,7 @@
                             @foreach($modules as $module)
                                 <label class="flex items-center mb-2">
                                     <input type="checkbox" name="modules[]" value="{{ $module->id }}" class="form-check-input mr-3">
-                                    <span class="text-slate-700">{{ $module->module_name }}</span>
+                                    <span class="text-slate-700">{{ ucwords(str_replace('_', ' ', $module->module_name)) }}</span>
                                 </label>
                             @endforeach
                         </div>
@@ -424,11 +430,11 @@
     <script src="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.min.js"></script>
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.css">
     
-    <script src="{{ asset('js/notification_settings/notification_settings.js') }}"></script>
+    <script src="{{ asset('js/notification_settings/notification_settings.js?v=' . time()) }}"></script>
     <script src="{{ asset('js/tom-select.js') }}"></script>
     
     <script>
-        // Initialize Tom Select and Role Filtering (following billing-management pattern)
+        // Initialize role filters (TomSelect auto-initializes via tom-select class)
         document.addEventListener('DOMContentLoaded', function() {
             initializeCreateRoleFilter();
             initializeEditRoleFilter();

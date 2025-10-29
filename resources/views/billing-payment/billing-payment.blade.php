@@ -13,8 +13,18 @@
     </div>
 </div>
 
-<h2 class="intro-y text-lg font-medium mt-10">
+<h2 class="intro-y text-lg font-medium mt-10 flex items-center">
     My Bills
+    @if($hasOverdueBills)
+        <button type="button" class="ml-3 btn btn-danger btn-sm" id="overdueWarningBtn" data-overdue-count="{{ $overdueCount }}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            {{ $overdueCount }} Overdue {{ $overdueCount === 1 ? 'Bill' : 'Bills' }}
+        </button>
+    @endif
 </h2>
 
 <!-- Notifications -->
@@ -702,6 +712,126 @@
 </div>
 <!-- END: Receipt Modal -->
 
+<!-- BEGIN: Overdue Bills Alert Modal -->
+<div id="overdue-bills-modal" class="modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-body p-0">
+                <div class="p-8 text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-20 h-20 text-red-500 mx-auto mt-3">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    <div class="text-3xl mt-5 font-bold text-red-600">Overdue Bills Alert</div>
+                    <div class="text-slate-600 mt-4">
+                        <div class="font-semibold text-2xl mb-2">
+                            You have <span class="text-red-600">{{ $overdueCount }}</span> overdue {{ $overdueCount === 1 ? 'bill' : 'bills' }}
+                        </div>
+                        <div class="mt-5 p-5 bg-red-50 border-2 border-red-200 rounded-xl">
+                            <div class="text-red-800 font-semibold text-lg mb-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-2 w-5 h-5">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                </svg>
+                                These bills require immediate attention!
+                            </div>
+                            <div class="text-red-600 text-base">Please pay your overdue bills to avoid penalties and service interruption.</div>
+                        </div>
+                        
+                        <!-- Overdue Bills List -->
+                        <div class="mt-6 max-h-96 overflow-y-auto">
+                            <div class="text-left">
+                                <h4 class="font-semibold text-lg text-slate-800 mb-4">Your Overdue Bills:</h4>
+                                <div class="space-y-3">
+                                    @if(isset($overdueBills))
+                                        @foreach($overdueBills as $billing)
+                                            @php
+                                                $billingDateRange = $billing->billing_date;
+                                                $overdueText = '';
+                                                
+                                                if (strpos($billingDateRange, ' - ') !== false) {
+                                                    $dateParts = explode(' - ', $billingDateRange);
+                                                    if (count($dateParts) >= 2) {
+                                                        $endDate = trim($dateParts[1]);
+                                                        try {
+                                                            $billingEndDate = \Carbon\Carbon::parse($endDate);
+                                                            $now = \Carbon\Carbon::now();
+                                                            $daysOverdue = $now->diffInDays($billingEndDate);
+                                                            $monthsOverdue = $now->diffInMonths($billingEndDate);
+                                                            
+                                                            if ($monthsOverdue >= 1) {
+                                                                $overdueText = "Overdue by {$monthsOverdue} month" . ($monthsOverdue > 1 ? 's' : '');
+                                                            } else {
+                                                                $overdueText = "Overdue by {$daysOverdue} day" . ($daysOverdue > 1 ? 's' : '');
+                                                            }
+                                                        } catch (\Exception $e) {
+                                                            $overdueText = 'Overdue';
+                                                        }
+                                                    }
+                                                }
+                                            @endphp
+                                            <div class="bg-white border-2 border-red-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                                <div class="flex justify-between items-start">
+                                                    <div class="flex-1">
+                                                        <div class="font-semibold text-slate-800">Bill #{{ str_pad($billing->id, 6, '0', STR_PAD_LEFT) }}</div>
+                                                        <div class="text-sm text-slate-600 mt-1">{{ $billing->billing_date }}</div>
+                                                        <div class="text-red-600 font-medium mt-1">{{ $overdueText }}</div>
+                                                    </div>
+                                                    <div class="text-right">
+                                                        <div class="text-lg font-bold text-primary">₱{{ number_format($billing->amount_due, 2) }}</div>
+                                                        <div class="text-xs text-slate-500 mt-1">
+                                                            @if($billing->status === 'sent to owners')
+                                                                <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full">Unpaid</span>
+                                                            @elseif($billing->status === 'under review')
+                                                                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full">Under Review</span>
+                                                            @elseif($billing->status === 'rejected')
+                                                                <span class="px-2 py-1 bg-red-100 text-red-800 rounded-full">Rejected</span>
+                                                            @else
+                                                                <span class="px-2 py-1 bg-slate-100 text-slate-800 rounded-full">{{ ucfirst($billing->status) }}</span>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="mt-3 flex gap-2">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary flex-1 view-overdue-bill" data-billing-id="{{ $billing->id }}">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1">
+                                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                                            <circle cx="12" cy="12" r="3"></circle>
+                                                        </svg>
+                                                        View
+                                                    </button>
+                                                    @if($billing->status === 'sent to owners' || $billing->status === 'rejected')
+                                                        <button type="button" class="btn btn-sm btn-success flex-1 pay-overdue-bill" data-billing-id="{{ $billing->id }}" data-amount="{{ $billing->amount_due }}">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1">
+                                                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                                                                <line x1="1" y1="10" x2="23" y2="10"></line>
+                                                            </svg>
+                                                            Pay Now
+                                                        </button>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer px-8 py-4 bg-slate-50">
+                <div class="flex justify-end gap-3">
+                    <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary px-6 py-2.5">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- END: Overdue Bills Alert Modal -->
+
 @endsection
 
 @push('scripts')
@@ -931,5 +1061,5 @@
         window.bankAccountCategories = @json($bankAccountCategories ?? []);
     </script>
     
-    <script src="{{ asset('js/billing-payment/billing-payment.js') }}"></script>
+    <script src="{{ asset('js/billing-payment/billing-payment.js?v=' . time()) }}"></script>
 @endpush

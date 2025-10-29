@@ -49,7 +49,160 @@ class BillingManagementController extends Controller
             ->orderBy('role')
             ->pluck('role');
         
-        return view('billing-management.billing-management', compact('billings', 'users', 'roles'));
+        // Check for overdue bills (not approved and past due date)
+        $overdueBills = tbl_billing_management::with(['user'])
+            ->where('status', '!=', 'approved')
+            ->get()
+            ->filter(function($billing) {
+                // Extract end date from billing_date range
+                if (strpos($billing->billing_date, ' - ') !== false) {
+                    $dateParts = explode(' - ', $billing->billing_date);
+                    if (count($dateParts) >= 2) {
+                        $endDate = trim($dateParts[1]);
+                        try {
+                            $billingEndDate = Carbon::parse($endDate);
+                            return $billingEndDate->isPast();
+                        } catch (\Exception $e) {
+                            return false;
+                        }
+                    }
+                }
+                return false;
+            });
+
+        $hasOverdueBills = $overdueBills->count() > 0;
+        $overdueCount = $overdueBills->count();
+        
+        return view('billing-management.billing-management', compact('billings', 'users', 'roles', 'hasOverdueBills', 'overdueCount', 'overdueBills'));
+    }
+
+    /**
+     * Send notifications to users with overdue bills
+     */
+    public function sendOverdueNotifications(Request $request)
+    {
+        try {
+            // Get all overdue bills
+            $overdueBills = tbl_billing_management::with(['user'])
+                ->where('status', '!=', 'approved')
+                ->get()
+                ->filter(function($billing) {
+                    // Extract end date from billing_date range
+                    if (strpos($billing->billing_date, ' - ') !== false) {
+                        $dateParts = explode(' - ', $billing->billing_date);
+                        if (count($dateParts) >= 2) {
+                            $endDate = trim($dateParts[1]);
+                            try {
+                                $billingEndDate = Carbon::parse($endDate);
+                                return $billingEndDate->isPast();
+                            } catch (\Exception $e) {
+                                return false;
+                            }
+                        }
+                    }
+                    return false;
+                });
+
+            if ($overdueBills->count() === 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No overdue bills found'
+                ]);
+            }
+
+            // Get billing management module for notification
+            $billingModule = module::where('module_name', 'billing management')->first();
+            $moduleId = $billingModule ? $billingModule->id : null;
+
+            $notificationsSent = 0;
+            $usersNotified = [];
+
+            // Group overdue bills by user
+            $userBills = [];
+            foreach ($overdueBills as $billing) {
+                $userId = $billing->user_id;
+                if (!isset($userBills[$userId])) {
+                    $userBills[$userId] = [
+                        'user' => $billing->user,
+                        'bills' => []
+                    ];
+                }
+                $userBills[$userId]['bills'][] = $billing;
+            }
+
+            // Send notification to each user with overdue bills
+            foreach ($userBills as $userId => $data) {
+                $user = $data['user'];
+                $bills = $data['bills'];
+                
+                if (!$user) continue;
+
+                // Calculate total overdue amount
+                $totalOverdue = 0;
+                $billNumbers = [];
+                foreach ($bills as $bill) {
+                    $totalOverdue += $bill->amount_due;
+                    $billNumbers[] = '#' . str_pad($bill->id, 6, '0', STR_PAD_LEFT);
+                }
+
+                // Create notification message
+                $billCount = count($bills);
+                $billText = $billCount === 1 ? 'bill' : 'bills';
+                $message = "You have {$billCount} overdue {$billText} with a total amount of ₱" . number_format($totalOverdue, 2) . ". ";
+                $message .= "Bill numbers: " . implode(', ', $billNumbers) . ". ";
+                $message .= "Please settle your payment as soon as possible to avoid penalties.";
+
+                try {
+                    // Send notification to user
+                    $user->notifyWarning(
+                        'Overdue Bills Reminder',
+                        $message,
+                        $moduleId
+                    );
+
+                    $notificationsSent++;
+                    $usersNotified[] = $user->name;
+
+                    \Log::info('Overdue notification sent', [
+                        'user_id' => $user->id,
+                        'user_name' => $user->name,
+                        'bill_count' => $billCount,
+                        'total_amount' => $totalOverdue
+                    ]);
+                } catch (\Exception $e) {
+                    \Log::error('Error sending overdue notification', [
+                        'user_id' => $user->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
+            // Log the activity
+            Auth::user()->logCustom(
+                "Sent overdue bill notifications to {$notificationsSent} user(s). Total overdue bills: " . $overdueBills->count()
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully sent overdue notifications to {$notificationsSent} user(s)",
+                'data' => [
+                    'notifications_sent' => $notificationsSent,
+                    'users_notified' => $usersNotified,
+                    'total_overdue_bills' => $overdueBills->count()
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error in sendOverdueNotifications', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error sending overdue notifications: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

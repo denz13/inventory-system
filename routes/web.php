@@ -109,6 +109,147 @@ Route::get('/', function () {
 Route::post('chatbot/message', [\App\Http\Controllers\chatbot\ChatbotController::class, 'message'])->name('chatbot.message');
 Route::get('chatbot/guest-conversation', [\App\Http\Controllers\chatbot\ChatbotController::class, 'getGuestConversation'])->name('chatbot.getGuestConversation');
 
+// Test route for chatbot notification setup (remove after testing)
+Route::get('test-chatbot-setup', function() {
+    $output = [];
+    
+    // 1. Check if Chatbot module exists
+    $output[] = "=== CHECKING CHATBOT MODULE ===";
+    $modules = \App\Models\module::all();
+    $output[] = "All modules in database:";
+    foreach ($modules as $module) {
+        $output[] = "  - ID: {$module->id}, Name: '{$module->module_name}', Status: {$module->status}";
+    }
+    
+    // Try different variations of the chatbot module name
+    $possibleModuleNames = [
+        'guest chatbot',
+        'Guest Chatbot',
+        'Guest ChatBot',
+        'chatbot',
+        'Chatbot',
+        'ChatBot'
+    ];
+    
+    $chatbotModule = null;
+    foreach ($possibleModuleNames as $moduleName) {
+        $chatbotModule = \App\Models\module::where('module_name', $moduleName)
+            ->where('status', 'active')
+            ->first();
+        
+        if ($chatbotModule) {
+            break;
+        }
+    }
+    
+    if ($chatbotModule) {
+        $output[] = "";
+        $output[] = "✅ Chatbot module found!";
+        $output[] = "   ID: {$chatbotModule->id}";
+        $output[] = "   Name: {$chatbotModule->module_name}";
+        $output[] = "   Status: {$chatbotModule->status}";
+    } else {
+        $output[] = "";
+        $output[] = "❌ Chatbot module NOT found!";
+        $output[] = "   Please create it with this SQL:";
+        $output[] = "   INSERT INTO module (module_name, status, created_at, updated_at) VALUES ('Guest Chatbot', 'active', NOW(), NOW());";
+    }
+    
+    // 2. Check notification settings
+    $output[] = "";
+    $output[] = "=== CHECKING NOTIFICATION SETTINGS ===";
+    if ($chatbotModule) {
+        $settings = \App\Models\notification_settings::with('user')
+            ->where('module_id', $chatbotModule->id)
+            ->where('status', 'active')
+            ->get();
+        
+        $output[] = "Found {$settings->count()} active notification settings for Chatbot module:";
+        foreach ($settings as $setting) {
+            $userName = $setting->user ? $setting->user->name : 'User not found';
+            $userEmail = $setting->user ? $setting->user->email : 'N/A';
+            $output[] = "  - Setting ID: {$setting->id}, User: {$userName} ({$userEmail}), Status: {$setting->status}";
+        }
+        
+        if ($settings->isEmpty()) {
+            $output[] = "";
+            $output[] = "❌ No users have chatbot notification settings!";
+            $output[] = "   Please add notification settings via Notification Settings page";
+            $output[] = "   Or use this SQL (replace 1 with actual user ID):";
+            $output[] = "   INSERT INTO notification_settings (users_id, module_id, status, created_at, updated_at)";
+            $output[] = "   VALUES (1, {$chatbotModule->id}, 'active', NOW(), NOW());";
+        }
+    } else {
+        $output[] = "Cannot check notification settings - Chatbot module not found.";
+    }
+    
+    // 3. Check active users
+    $output[] = "";
+    $output[] = "=== CHECKING ACTIVE USERS ===";
+    $activeUsers = \App\Models\User::where('active', 1)->get();
+    $output[] = "Total active users: {$activeUsers->count()}";
+    foreach ($activeUsers->take(5) as $user) {
+        $output[] = "  - ID: {$user->id}, Name: {$user->name}, Email: {$user->email}, Role: {$user->role}";
+    }
+    if ($activeUsers->count() > 5) {
+        $output[] = "  ... and " . ($activeUsers->count() - 5) . " more users";
+    }
+    
+    // 4. Test notification creation
+    $output[] = "";
+    $output[] = "=== TESTING NOTIFICATION CREATION ===";
+    if ($chatbotModule) {
+        $settings = \App\Models\notification_settings::with('user')
+            ->where('module_id', $chatbotModule->id)
+            ->where('status', 'active')
+            ->get();
+        
+        if ($settings->isNotEmpty()) {
+            $testUser = $settings->first()->user;
+            if ($testUser) {
+                $output[] = "Attempting to create test notification for user: {$testUser->name}";
+                try {
+                    $testNotification = \App\Models\Notification::create([
+                        'users_id' => $testUser->id,
+                        'type' => 'info',
+                        'title' => 'Test Chatbot Notification',
+                        'message' => 'This is a test notification from chatbot',
+                        'notification_settings_id' => $settings->first()->id,
+                        'read_at' => null
+                    ]);
+                    
+                    $output[] = "✅ Test notification created successfully!";
+                    $output[] = "   Notification ID: {$testNotification->id}";
+                    $output[] = "   User: {$testUser->name}";
+                    $output[] = "   Title: {$testNotification->title}";
+                    
+                    // Clean up test notification
+                    $output[] = "";
+                    $output[] = "Cleaning up test notification...";
+                    $testNotification->delete();
+                    $output[] = "✅ Test notification deleted";
+                } catch (\Exception $e) {
+                    $output[] = "❌ Failed to create test notification!";
+                    $output[] = "   Error: {$e->getMessage()}";
+                    $output[] = "   File: {$e->getFile()}";
+                    $output[] = "   Line: {$e->getLine()}";
+                }
+            } else {
+                $output[] = "❌ Cannot find user for notification setting";
+            }
+        } else {
+            $output[] = "❌ No notification settings to test with";
+        }
+    } else {
+        $output[] = "❌ Cannot test - Chatbot module not found";
+    }
+    
+    $output[] = "";
+    $output[] = "=== TEST COMPLETE ===";
+    
+    return response('<pre>' . implode("\n", $output) . '</pre>');
+});
+
 // Protected routes
 Route::middleware('auth')->group(function() {
     Route::match(['get', 'post'], 'logout', [AuthController::class, 'logout'])->name('logout');
@@ -260,6 +401,7 @@ Route::post('vehicle-management/sticker/{id}/valid-until', [VehicleManagementCon
     // Billing Management Routes
     Route::get('billing-management', [BillingManagementController::class, 'index'])->name('billing-management.index');
     Route::get('billing-management/user/{userId}/date-range', [BillingManagementController::class, 'getUserBillingDateRange'])->name('billing-management.user-date-range');
+    Route::post('billing-management/send-overdue-notifications', [BillingManagementController::class, 'sendOverdueNotifications'])->name('billing-management.send-overdue-notifications');
     Route::post('/billing', [BillingManagementController::class, 'store'])->name('billing.store');
     Route::get('/billing/{id}', [BillingManagementController::class, 'show'])->name('billing.show');
     Route::put('/billing/{id}', [BillingManagementController::class, 'update'])->name('billing.update');
@@ -352,6 +494,7 @@ Route::post('vehicle-management/sticker/{id}/valid-until', [VehicleManagementCon
     Route::get('bank-account/{id}', [BankAccountController::class, 'show'])->name('bank-account.show');
     Route::put('bank-account/{id}', [BankAccountController::class, 'update'])->name('bank-account.update');
     Route::delete('bank-account/{id}', [BankAccountController::class, 'destroy'])->name('bank-account.destroy');
+    Route::post('bank-account/{id}/toggle-status', [BankAccountController::class, 'toggleStatus'])->name('bank-account.toggle-status');
     
     // Incident routes
     Route::get('incident', [IncidentController::class, 'index'])->name('incident.index');

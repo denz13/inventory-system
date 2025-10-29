@@ -1,14 +1,18 @@
 <!-- BEGIN: Mobile Menu -->
 <div class="mobile-menu md:hidden">
     <div class="mobile-menu-bar">
-        <a href="" class="flex mr-auto">
-            <img alt="Midone - HTML Admin Template" class="w-6" src="dist/images/logo.svg">
+        <a href="{{ route('dashboard') }}" class="flex mr-auto">
+        @if($topbarTopLogo && $topbarTopLogo->value)
+        <img alt="Topbar Logo" class="w-6" src="{{ asset('storage/' . $topbarTopLogo->value) }}">
+            @else
+                <img alt="Midone - HTML Admin Template" class="w-6" src="dist/images/logo.png">
+            @endif
         </a>
         <a href="javascript:;" class="mobile-menu-toggler"> <i data-lucide="bar-chart-2" class="w-8 h-8 text-white transform -rotate-90"></i> </a>
     </div>
-    <div class="scrollable">
+    <div class="scrollable" style="max-height: calc(120vh - 100px); overflow-y: auto; overflow-x: hidden;">
         <a href="javascript:;" class="mobile-menu-toggler"> <i data-lucide="x-circle" class="w-8 h-8 text-white transform -rotate-90"></i> </a>
-        <ul class="scrollable__content py-2">
+        <ul class="scrollable__content py-2" style="padding-bottom: 50px;">
             <li>
                 <a href="{{ url('dashboard') }}" class="menu">
                     <div class="menu__icon"> <i data-lucide="home"></i> </div>

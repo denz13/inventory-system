@@ -117,7 +117,7 @@
         </button>
         
         <div class="hidden md:block mx-auto text-slate-500">
-            Showing <span id="filtered-count">{{ $categories->count() }}</span> of <span id="total-count">{{ $categories->total() }}</span> entries
+            Showing {{ $categories->count() }} of {{ $categories->total() }} entries
         </div>
         <div class="w-full sm:w-auto mt-3 sm:mt-0 sm:ml-auto md:ml-0">
             <div class="w-56 relative text-slate-500">
@@ -136,6 +136,7 @@
             <thead>
                 <tr>
                     <th class="whitespace-nowrap">CATEGORY NAME</th>
+                    <th class="text-center whitespace-nowrap">FOR ROLE</th>
                     <th class="text-center whitespace-nowrap">STATUS</th>
                     <th class="text-center whitespace-nowrap">CREATED DATE</th>
                     <th class="text-center whitespace-nowrap">ACTIONS</th>
@@ -149,6 +150,23 @@
                         <!-- <div class="text-slate-500 text-xs mt-0.5">
                             ID: {{ $category->id }}
                         </div> -->
+                    </td>
+                    <td class="text-center">
+                        @if($category->for_role)
+                            <div class="flex flex-wrap gap-1 justify-center">
+                                @foreach(explode(',', $category->for_role) as $role)
+                                    <span class="px-2 py-1 text-xs rounded-full 
+                                        @if($role === 'home owners') bg-blue-100 text-blue-800
+                                        @elseif($role === 'non home owners') bg-purple-100 text-purple-800
+                                        @else bg-slate-100 text-slate-800
+                                        @endif">
+                                        {{ ucwords($role) }}
+                                    </span>
+                                @endforeach
+                            </div>
+                        @else
+                            <span class="text-slate-400 text-xs">Not set</span>
+                        @endif
                     </td>
                     <td class="w-40">
                         <div class="flex items-center justify-center 
@@ -195,7 +213,7 @@
                 </tr>
                 @empty
                 <tr class="intro-x" id="no-categories-row">
-                    <td colspan="4" class="text-center py-8">
+                    <td colspan="5" class="text-center py-8">
                         <div class="text-slate-500">
                             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
                                 <path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3"></path>
@@ -208,7 +226,7 @@
                 @endforelse
                 <!-- No results message (for filtering/search) -->
                 <tr class="intro-x hidden" id="no-results-row">
-                    <td colspan="4" class="text-center py-8">
+                    <td colspan="5" class="text-center py-8">
                         <div class="text-slate-500">
                             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
                                 <circle cx="11" cy="11" r="8"></circle>
@@ -249,6 +267,21 @@
                     <div class="mb-6">
                         <label class="form-label text-base font-semibold text-slate-700">Category Name</label>
                         <input type="text" name="category_name" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" placeholder="e.g., Medical, Dental, Consultation" required>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="form-label text-base font-semibold text-slate-700">For Role</label>
+                        <div class="flex flex-wrap gap-6 mt-2">
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" name="for_role[]" value="home owners" class="form-check-input"> 
+                                <span>Home Owners</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" name="for_role[]" value="non home owners" class="form-check-input"> 
+                                <span>Non Home Owners</span>
+                            </label>
+                        </div>
+                        <small class="text-slate-500 mt-1">Select which roles can use this category</small>
                     </div>
                     
                     <div class="mb-6">
@@ -299,6 +332,21 @@
                     <div class="mb-6">
                         <label class="form-label text-base font-semibold text-slate-700">Category Name</label>
                         <input type="text" name="category_name" id="editCategoryName" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" required>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="form-label text-base font-semibold text-slate-700">For Role</label>
+                        <div class="flex flex-wrap gap-6 mt-2">
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" name="for_role[]" value="home owners" class="form-check-input" id="editForRoleHomeowner"> 
+                                <span>Home Owners</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" name="for_role[]" value="non home owners" class="form-check-input" id="editForRoleNonHomeowner"> 
+                                <span>Non Home Owners</span>
+                            </label>
+                        </div>
+                        <small class="text-slate-500 mt-1">Select which roles can use this category</small>
                     </div>
                     
                     <div class="mb-6">
@@ -367,5 +415,5 @@
     <script src="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.min.js"></script>
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.css">
     
-    <script src="{{ asset('js/appointment_category/appointment_category.js') }}"></script>
+    <script src="{{ asset('js/appointment_category/appointment_category.js?v=' . time()) }}"></script>
 @endpush

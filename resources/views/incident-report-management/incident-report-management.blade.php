@@ -138,22 +138,22 @@
             </div> 
         </div>
 
-        <!-- Location Filter -->
+        <!-- Street Filter -->
         <div class="dropdown"> 
             <button class="dropdown-toggle btn btn-outline-secondary" aria-expanded="false" data-tw-toggle="dropdown" id="locationFilterBtn">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                    <circle cx="12" cy="10" r="3"></circle>
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
                 </svg>
                 Filter by Location
             </button> 
-            <div class="dropdown-menu w-56" style="max-height: 300px; overflow-y: auto;"> 
+            <div class="dropdown-menu w-64" style="max-height: 300px; overflow-y: auto;"> 
                 <ul class="dropdown-content"> 
-                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="location" data-filter-value="all">All Locations</a> </li>
-                    @forelse($locations as $location)
-                        <li> <a href="javascript:;" class="dropdown-item" data-filter-type="location" data-filter-value="{{ $location }}">{{ $location }}</a> </li>
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter-type="location" data-filter-value="all">All Location</a> </li>
+                    @forelse($streets as $street)
+                        <li> <a href="javascript:;" class="dropdown-item text-sm" data-filter-type="location" data-filter-value="{{ $street }}">{{ $street }}</a> </li>
                     @empty
-                        <li class="dropdown-item text-slate-500 text-sm">No locations available</li>
+                        <li class="dropdown-item text-slate-500 text-sm">No streets available</li>
                     @endforelse
                 </ul> 
             </div> 
@@ -218,7 +218,8 @@
                     <th class="whitespace-nowrap">REPORTER</th>
                     <th class="whitespace-nowrap">PERSON INVOLVED</th>
                     <th class="whitespace-nowrap">INCIDENT DATE/TIME</th>
-                    <th class="whitespace-nowrap">LOCATION</th>
+                    <th class="whitespace-nowrap">DESCRIPTION OF INCIDENT</th>
+                    <th class="whitespace-nowrap">STREET</th>
                     <th class="whitespace-nowrap">ASSIGNED GUARD</th>
                     <th class="text-center whitespace-nowrap">STATUS</th>
                     <th class="text-center whitespace-nowrap">DATE REPORTED</th>
@@ -247,6 +248,7 @@
                         {{ $report->datetime_of_incident ? \Carbon\Carbon::parse($report->datetime_of_incident)->format('M d, Y g:i A') : 'N/A' }}
                     </td>
                     <td class="whitespace-nowrap">{{ $report->location_of_incident ?? 'N/A' }}</td>
+                    <td class="whitespace-nowrap">{{ $report->street ?? 'N/A' }}</td>
                     <td class="w-40">
                         @if($report->assignedGuard)
                             <div class="flex items-center">

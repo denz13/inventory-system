@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeModals();
     initializeFilters();
     initializeSearch();
+    updateFilterButtonTexts();
 });
 
 function initializeModals() {
@@ -42,52 +43,39 @@ function initializeModals() {
 }
 
 function initializeFilters() {
-    // Status filter (if enabled)
-    document.querySelectorAll('[data-filter]').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const filter = this.getAttribute('data-filter');
-            filterTableByStatus(filter);
-        });
-    });
-    
-    // Rating filter
+    // Rating filter - Server-side
     document.querySelectorAll('[data-rating-filter]').forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
             const rating = this.getAttribute('data-rating-filter');
-            filterTableByRating(rating);
-            updateRatingDropdownText(rating);
+            applyFilter('rating', rating);
         });
     });
 
-    // Status filter (new)
+    // Status filter - Server-side
     document.querySelectorAll('[data-status-filter]').forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
             const status = this.getAttribute('data-status-filter');
-            filterTableByStatus(status);
-            updateStatusDropdownText(status);
+            applyFilter('status', status);
         });
     });
 
-    // User filter
+    // User filter - Server-side
     document.querySelectorAll('[data-user-filter]').forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
-            const user = this.getAttribute('data-user-filter');
-            filterTableByUser(user);
-            updateUserDropdownText(user);
+            const userId = this.getAttribute('data-user-filter');
+            applyFilter('user_id', userId);
         });
     });
 
-    // Date filter
+    // Date filter - Server-side
     document.querySelectorAll('[data-date-filter]').forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
             const dateFilter = this.getAttribute('data-date-filter');
-            filterTableByDate(dateFilter);
-            updateDateDropdownText(dateFilter);
+            applyFilter('date_filter', dateFilter);
         });
     });
 
@@ -96,27 +84,71 @@ function initializeFilters() {
     if (clearAllFiltersBtn) {
         clearAllFiltersBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            clearAllFilters();
+            window.location.href = window.location.pathname;
         });
     }
 }
 
+function applyFilter(filterType, filterValue) {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (filterValue === 'all') {
+        urlParams.delete(filterType);
+    } else {
+        urlParams.set(filterType, filterValue);
+    }
+    
+    // Reset to page 1 when filtering
+    urlParams.delete('page');
+    
+    // Reload page with filter
+    window.location.href = window.location.pathname + '?' + urlParams.toString();
+}
+
 function initializeSearch() {
+    // Get URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Search functionality - Server-side (Enter key or icon click)
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
-        let timeout;
-        searchInput.addEventListener('input', function(e) {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => {
-                try {
-                    const searchTerm = (this.value || '').toLowerCase();
-            filterTableRowsBySearch(searchTerm);
-                } catch (error) {
-                    console.error('Search error:', error);
-                    filterTableRowsBySearch('');
-                }
-            }, 300);
+        // Get search term from URL if it exists
+        const searchTerm = urlParams.get('search') || '';
+        searchInput.value = searchTerm;
+        
+        // Search only when Enter key is pressed
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                e.preventDefault();
+                performServerSideSearch();
+            }
         });
+        
+        // Also allow clicking the search icon to trigger search
+        const searchIcon = searchInput.parentElement.querySelector('svg');
+        if (searchIcon) {
+            searchIcon.style.cursor = 'pointer';
+            searchIcon.addEventListener('click', function() {
+                performServerSideSearch();
+            });
+        }
+    }
+    
+    function performServerSideSearch() {
+        const searchValue = searchInput.value.trim();
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        if (searchValue) {
+            urlParams.set('search', searchValue);
+        } else {
+            urlParams.delete('search');
+        }
+        
+        // Reset to page 1 when searching
+        urlParams.delete('page');
+        
+        // Reload page with search parameter
+        window.location.href = window.location.pathname + '?' + urlParams.toString();
     }
 }
 
@@ -394,109 +426,26 @@ function handleDeleteFeedback() {
     });
 }
 
-function filterTableByStatus(status) {
-    const rows = document.querySelectorAll('tbody tr[data-status]');
-    let visibleCount = 0;
+// Update filter button texts based on URL parameters
+function updateFilterButtonTexts() {
+    const urlParams = new URLSearchParams(window.location.search);
     
-    rows.forEach(row => {
-        const rowStatus = row.getAttribute('data-status');
-        if (status === 'all' || rowStatus === status) {
-            row.style.display = '';
-            visibleCount++;
-        } else {
-            row.style.display = 'none';
-        }
-    });
-    
-    updateFilteredCount(visibleCount);
-    toggleNoResultsMessage(visibleCount);
-}
-
-function filterTableByRating(rating) {
-    const rows = document.querySelectorAll('tbody tr[data-rating]');
-    let visibleCount = 0;
-    
-    rows.forEach(row => {
-        const rowRating = row.getAttribute('data-rating');
-        if (rating === 'all' || rowRating === rating) {
-            row.style.display = '';
-            visibleCount++;
-        } else {
-            row.style.display = 'none';
-        }
-    });
-    
-    updateFilteredCount(visibleCount);
-    toggleNoResultsMessage(visibleCount);
-}
-
-function filterTableRowsBySearch(searchTerm) {
-    const rows = document.querySelectorAll('tbody tr[data-status]');
-    let visibleCount = 0;
-    
-    rows.forEach(row => {
-        if (!searchTerm) {
-            // If no search term, show all rows
-            row.style.display = '';
-            visibleCount++;
-            return;
-        }
-        
-        // Get all text content from the row
-        const rowText = row.textContent || '';
-        const lowerRowText = rowText.toLowerCase();
-        
-        // Check if search term is found anywhere in the row
-        if (lowerRowText.includes(searchTerm)) {
-            row.style.display = '';
-            visibleCount++;
-        } else {
-            row.style.display = 'none';
-        }
-    });
-    
-    updateFilteredCount(visibleCount);
-    toggleNoResultsMessage(visibleCount);
-}
-
-function updateFilteredCount(count) {
-    const filteredCountElement = document.getElementById('filtered-count');
-    if (filteredCountElement) {
-        filteredCountElement.textContent = count;
+    // Update rating filter button
+    const rating = urlParams.get('rating');
+    if (rating && rating !== 'all') {
+        updateRatingDropdownText(rating);
     }
-}
-
-function toggleNoResultsMessage(visibleCount) {
-    const noResultsRow = document.getElementById('no-results-row');
-    const noFeedbackRow = document.getElementById('no-feedback-row');
-    const dataRows = document.querySelectorAll('tbody tr[data-status]');
     
-    // If there are data rows (feedback exists)
-    if (dataRows.length > 0) {
-        // Hide the "No feedback found" message
-        if (noFeedbackRow) {
-            noFeedbackRow.style.display = 'none';
-        }
-        
-        // Show/hide "No results found" based on visible count
-        if (noResultsRow) {
-            if (visibleCount === 0) {
-                noResultsRow.classList.remove('hidden');
-                noResultsRow.style.display = '';
-            } else {
-                noResultsRow.classList.add('hidden');
-                noResultsRow.style.display = 'none';
-            }
-        }
-    } else {
-        // No data rows exist, show "No feedback found"
-        if (noFeedbackRow) {
-            noFeedbackRow.style.display = '';
-        }
-        if (noResultsRow) {
-            noResultsRow.classList.add('hidden');
-            noResultsRow.style.display = 'none';
-        }
+    // Update status filter button
+    const status = urlParams.get('status');
+    if (status && status !== 'all') {
+        updateStatusDropdownText(status);
+    }
+    
+    // Update date filter button
+    const dateFilter = urlParams.get('date_filter');
+    if (dateFilter && dateFilter !== 'all') {
+        updateDateDropdownText(dateFilter);
     }
 }
 
@@ -523,118 +472,6 @@ function showToast(message, type = 'success') {
     }
 }
 
-// Filter by User
-function filterTableByUser(userFilter) {
-    const rows = document.querySelectorAll('tbody tr[data-status]');
-    let visibleCount = 0;
-    
-    rows.forEach(row => {
-        if (userFilter === 'all') {
-            row.style.display = '';
-            visibleCount++;
-        } else {
-            const userNameCell = row.querySelector('td:nth-child(2)');
-            const userName = (userNameCell?.textContent || '').trim();
-            
-            if (userName === userFilter) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
-            }
-        }
-    });
-    
-    updateFilteredCount(visibleCount);
-    toggleNoResultsMessage(visibleCount);
-}
-
-// Filter by Date
-function filterTableByDate(dateFilter) {
-    const rows = document.querySelectorAll('tbody tr[data-status]');
-    let visibleCount = 0;
-    
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay());
-    
-    const startOfLastWeek = new Date(startOfWeek);
-    startOfLastWeek.setDate(startOfWeek.getDate() - 7);
-    
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
-    
-    rows.forEach(row => {
-        if (dateFilter === 'all') {
-            row.style.display = '';
-            visibleCount++;
-        } else {
-            const dateCell = row.querySelector('td:nth-child(6)'); // Date column
-            const dateText = (dateCell?.textContent || '').trim();
-            
-            // Parse the date from the cell text (assuming format like "Oct 11, 2025")
-            const rowDate = parseDateFromText(dateText);
-            
-            let shouldShow = false;
-            
-            switch (dateFilter) {
-                case 'today':
-                    shouldShow = rowDate && rowDate >= today;
-                    break;
-                case 'yesterday':
-                    shouldShow = rowDate && rowDate >= yesterday && rowDate < today;
-                    break;
-                case 'this-week':
-                    shouldShow = rowDate && rowDate >= startOfWeek;
-                    break;
-                case 'last-week':
-                    shouldShow = rowDate && rowDate >= startOfLastWeek && rowDate < startOfWeek;
-                    break;
-                case 'this-month':
-                    shouldShow = rowDate && rowDate >= startOfMonth;
-                    break;
-                case 'last-month':
-                    shouldShow = rowDate && rowDate >= startOfLastMonth && rowDate < startOfMonth;
-                    break;
-                case 'this-year':
-                    shouldShow = rowDate && rowDate >= startOfYear;
-                    break;
-            }
-            
-            if (shouldShow) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
-            }
-        }
-    });
-    
-    updateFilteredCount(visibleCount);
-    toggleNoResultsMessage(visibleCount);
-}
-
-// Helper function to parse date from text
-function parseDateFromText(dateText) {
-    try {
-        // Handle formats like "Oct 11, 2025 6:31 PM"
-        const parts = dateText.split(' ');
-        if (parts.length >= 3) {
-            const month = parts[0];
-            const day = parts[1].replace(',', '');
-            const year = parts[2];
-            return new Date(`${month} ${day}, ${year}`);
-        }
-    } catch (error) {
-        console.error('Error parsing date:', error);
-    }
-    return null;
-}
 
 // Update dropdown button texts
 function updateRatingDropdownText(rating) {
@@ -702,44 +539,6 @@ function updateDateDropdownText(dateFilter) {
     });
 }
 
-// Clear all filters
-function clearAllFilters() {
-    // Reset all dropdowns to "All"
-    document.querySelectorAll('[data-rating-filter="all"]').forEach(btn => {
-        btn.click();
-    });
-    document.querySelectorAll('[data-status-filter="all"]').forEach(btn => {
-        btn.click();
-    });
-    document.querySelectorAll('[data-user-filter="all"]').forEach(btn => {
-        btn.click();
-    });
-    document.querySelectorAll('[data-date-filter="all"]').forEach(btn => {
-        btn.click();
-    });
-    
-    // Reset dropdown button texts
-    updateRatingDropdownText('all');
-    updateStatusDropdownText('all');
-    updateUserDropdownText('all');
-    updateDateDropdownText('all');
-    
-    // Clear search
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.value = '';
-        filterTableRowsBySearch('');
-    }
-    
-    // Show all rows
-    const rows = document.querySelectorAll('tbody tr[data-status]');
-    rows.forEach(row => {
-        row.style.display = '';
-    });
-    
-    updateFilteredCount(rows.length);
-    toggleNoResultsMessage(rows.length);
-}
 
 // Load feedback details for viewing
 function loadFeedbackDetails(feedbackId) {

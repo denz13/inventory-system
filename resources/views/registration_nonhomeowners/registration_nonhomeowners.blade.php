@@ -152,7 +152,7 @@
                     <h2 class="intro-x font-bold text-2xl xl:text-3xl text-center xl:text-left">
                         Sign Up
                     </h2>
-                    <div class="intro-x mt-2 text-slate-400 xl:hidden text-center">A few more clicks to sign up to your account. Join our community today!</div>
+                    <!-- <div class="intro-x mt-2 text-slate-400 xl:hidden text-center">A few more clicks to sign up to your account. Join our community today!</div> -->
                     
                     <div class="intro-x mt-8">
                         <form id="registrationForm" enctype="multipart/form-data">

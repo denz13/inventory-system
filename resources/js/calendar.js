@@ -63,7 +63,10 @@ import listPlugin from "@fullcalendar/list";
                     tracking_number: appointment.tracking_number,
                     remarks: appointment.remarks,
                     status: appointment.status,
-                    is_expired: appointment.is_expired
+                    is_expired: appointment.is_expired,
+                    user_name: appointment.user_name,
+                    category_name: appointment.category_name,
+                    time: appointment.time
                 }
             };
         }).filter(event => event !== null); // Remove null entries
@@ -103,6 +106,10 @@ import listPlugin from "@fullcalendar/list";
             dayMaxEvents: true,
             events: events,
             eventClick: function(info) {
+                // Prevent event from propagating to backdrop
+                info.jsEvent.preventDefault();
+                info.jsEvent.stopPropagation();
+                
                 // Show appointment details in modal
                 const event = info.event;
                 console.log('Appointment clicked:', event);
@@ -112,8 +119,10 @@ import listPlugin from "@fullcalendar/list";
                 // Load appointment details
                 loadAppointmentDetails(event);
                 
-                // Show the modal
-                showAppointmentModal();
+                // Show the modal with a small delay to prevent immediate backdrop click
+                setTimeout(() => {
+                    showAppointmentModal();
+                }, 100);
             },
             eventDidMount: function(info) {
                 // Add tooltip
@@ -142,12 +151,17 @@ import listPlugin from "@fullcalendar/list";
         console.log('Calendar rendered successfully');
         console.log('Calendar events after render:', calendar.getEvents());
         
-        // Handle view button clicks in sidebar
-        document.querySelectorAll('[data-appointment-id]').forEach(button => {
-            button.addEventListener('click', function(e) {
+        // Handle view button clicks in sidebar using event delegation
+        document.addEventListener('click', function(e) {
+            // Check if clicked element or its parent has data-appointment-id
+            const appointmentButton = e.target.closest('[data-appointment-id]');
+            
+            if (appointmentButton) {
                 e.preventDefault();
-                const appointmentId = this.getAttribute('data-appointment-id');
-                console.log('View appointment:', appointmentId);
+                e.stopPropagation();
+                
+                const appointmentId = appointmentButton.getAttribute('data-appointment-id');
+                console.log('Sidebar eye icon clicked - View appointment:', appointmentId);
                 
                 // Find the appointment data
                 const appointment = appointments.find(a => a.id == appointmentId);
@@ -162,21 +176,26 @@ import listPlugin from "@fullcalendar/list";
                             tracking_number: appointment.tracking_number,
                             remarks: appointment.remarks,
                             status: appointment.status,
-                            is_expired: appointment.is_expired
+                            is_expired: appointment.is_expired,
+                            user_name: appointment.user_name,
+                            category_name: appointment.category_name,
+                            time: appointment.time
                         }
                     };
                     
-                    console.log('Created mock event:', mockEvent);
+                    console.log('Created mock event for sidebar click:', mockEvent);
                     
                     // Load appointment details
                     loadAppointmentDetails(mockEvent);
                     
-                    // Show the modal
-                    showAppointmentModal();
+                    // Show the modal with a small delay to prevent immediate backdrop click
+                    setTimeout(() => {
+                        showAppointmentModal();
+                    }, 100);
                 } else {
                     console.error('Appointment not found with ID:', appointmentId);
                 }
-            });
+            }
         });
         
         console.log('Calendar initialized with', events.length, 'appointments');
@@ -188,12 +207,28 @@ import listPlugin from "@fullcalendar/list";
     }
 })();
 
+// Track if handlers have been initialized
+let handlersInitialized = false;
+
 // Initialize modal handlers
 function initializeModalHandlers() {
+    // Prevent multiple initializations
+    if (handlersInitialized) {
+        console.log('Modal handlers already initialized, skipping...');
+        return;
+    }
+    
     console.log('Initializing modal handlers...');
     
     // Use event delegation for close buttons (works even if modal is dynamically shown)
     document.addEventListener('click', function(e) {
+        const modal = document.getElementById('appointmentModal');
+        
+        // Only process if modal exists and is shown
+        if (!modal || !modal.classList.contains('show')) {
+            return;
+        }
+        
         // Check if clicked element has data-tw-dismiss="modal" attribute
         if (e.target.hasAttribute('data-tw-dismiss') && e.target.getAttribute('data-tw-dismiss') === 'modal') {
             e.preventDefault();
@@ -213,18 +248,28 @@ function initializeModalHandlers() {
             return;
         }
         
-        // Close modal when clicking backdrop
-        const modal = document.getElementById('appointmentModal');
-        const backdrop = document.getElementById('modal-backdrop');
+        // Check if click is inside the modal content
+        const modalContent = modal.querySelector('.modal-content');
+        const modalDialog = modal.querySelector('.modal-dialog');
         
-        if (modal && modal.classList.contains('show')) {
-            // Check if click is on modal backdrop or backdrop element
-            if (e.target === modal || e.target === backdrop) {
-                console.log('Backdrop clicked');
-                closeAppointmentModal();
-            }
+        if (modalContent && modalContent.contains(e.target)) {
+            // Click is inside modal content, do nothing
+            console.log('Click inside modal content - not closing');
+            return;
         }
-    });
+        
+        if (modalDialog && modalDialog.contains(e.target)) {
+            // Click is inside modal dialog but outside content - don't close
+            console.log('Click inside modal dialog - not closing');
+            return;
+        }
+        
+        // Close modal when clicking backdrop (but not if modal was just opened)
+        if (!modalJustOpened && e.target === modal) {
+            console.log('Backdrop clicked - closing modal');
+            closeAppointmentModal();
+        }
+    }, true); // Use capture phase to catch events early
     
     // Close modal with Escape key
     document.addEventListener('keydown', function(e) {
@@ -237,8 +282,12 @@ function initializeModalHandlers() {
         }
     });
     
+    handlersInitialized = true;
     console.log('Modal handlers initialized');
 }
+
+// Flag to prevent immediate backdrop clicks
+let modalJustOpened = false;
 
 // Function to show modal
 function showAppointmentModal() {
@@ -247,29 +296,36 @@ function showAppointmentModal() {
     if (modal) {
         console.log('Showing appointment modal...');
         
-        // Force remove any conflicting styles
-        modal.style.display = 'flex';
-        modal.style.visibility = 'visible';
-        modal.style.opacity = '1';
+        // Set flag to prevent immediate backdrop clicks
+        modalJustOpened = true;
+        
+        // Add show class and set attributes
         modal.classList.add('show');
         modal.classList.remove('fade');
         modal.setAttribute('aria-hidden', 'false');
+        modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('role', 'dialog');
+        
+        // Add modal-open class to body to prevent scrolling
         document.body.classList.add('modal-open');
         
-        // Add backdrop if it doesn't exist
-        let backdrop = document.getElementById('modal-backdrop');
-        if (!backdrop) {
-            backdrop = document.createElement('div');
-            backdrop.className = 'modal-backdrop fade show';
-            backdrop.id = 'modal-backdrop';
-            backdrop.style.zIndex = '1040';
-            document.body.appendChild(backdrop);
-        }
+        // Force display with inline styles to override any conflicting CSS
+        modal.style.setProperty('display', 'flex', 'important');
+        modal.style.setProperty('visibility', 'visible', 'important');
+        modal.style.setProperty('opacity', '1', 'important');
+        modal.style.setProperty('z-index', '99999', 'important');
         
-        // Force modal to be visible
-        modal.style.zIndex = '1055';
+        // Reset flag after a short delay
+        setTimeout(() => {
+            modalJustOpened = false;
+            console.log('Modal protection period ended - modal should be visible');
+        }, 300);
         
-        console.log('Modal displayed successfully');
+        console.log('Modal displayed successfully - check if visible on screen');
+        console.log('Modal element:', modal);
+        console.log('Modal display:', window.getComputedStyle(modal).display);
+        console.log('Modal z-index:', window.getComputedStyle(modal).zIndex);
+        console.log('Modal visibility:', window.getComputedStyle(modal).visibility);
     } else {
         console.error('Modal element not found!');
     }
@@ -278,37 +334,32 @@ function showAppointmentModal() {
 // Function to close modal
 function closeAppointmentModal() {
     const modal = document.getElementById('appointmentModal');
-    const backdrop = document.getElementById('modal-backdrop');
     
     console.log('Closing modal...');
     
     if (modal) {
-        // Remove show class and add fade class
+        // Remove show class
         modal.classList.remove('show');
-        modal.classList.add('fade');
-        modal.style.display = 'none';
-        modal.style.visibility = 'hidden';
-        modal.style.opacity = '0';
         modal.setAttribute('aria-hidden', 'true');
+        modal.removeAttribute('aria-modal');
+        modal.removeAttribute('role');
+        
+        // Hide modal with inline styles
+        modal.style.setProperty('display', 'none', 'important');
+        modal.style.setProperty('visibility', 'hidden', 'important');
+        modal.style.setProperty('opacity', '0', 'important');
         
         // Remove modal-open class from body
         document.body.classList.remove('modal-open');
         
-        // Remove any inline styles that might prevent closing
-        modal.style.zIndex = '';
-        
         console.log('Modal closed successfully');
     }
     
-    if (backdrop) {
-        backdrop.remove();
-        console.log('Backdrop removed');
-    }
-    
-    // Also remove any other potential backdrops
-    const allBackdrops = document.querySelectorAll('.modal-backdrop');
+    // Remove any separate backdrops if they exist
+    const allBackdrops = document.querySelectorAll('.modal-backdrop, #modal-backdrop');
     allBackdrops.forEach(backdrop => {
         backdrop.remove();
+        console.log('Backdrop removed');
     });
 }
 
@@ -350,6 +401,22 @@ function displayAppointmentDetails(event) {
     
     detailsContainer.innerHTML = `
         <div class="text-left">
+            <!-- User Name -->
+            <div class="mb-4">
+                <label class="form-label text-sm font-semibold text-slate-700">User</label>
+                <div class="form-control mt-1 p-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700">
+                    ${event.extendedProps.user_name || 'N/A'}
+                </div>
+            </div>
+            
+            <!-- Category Name -->
+            <div class="mb-4">
+                <label class="form-label text-sm font-semibold text-slate-700">Category</label>
+                <div class="form-control mt-1 p-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700">
+                    ${event.extendedProps.category_name || 'N/A'}
+                </div>
+            </div>
+            
             <!-- Appointment Description -->
             <div class="mb-4">
                 <label class="form-label text-sm font-semibold text-slate-700">Description</label>
@@ -368,6 +435,17 @@ function displayAppointmentDetails(event) {
                     </div>
                 </div>
                 
+                <!-- Time -->
+                <div>
+                    <label class="form-label text-sm font-semibold text-slate-700">Appointment Time</label>
+                    <div class="form-control mt-1 p-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700">
+                        ${event.extendedProps.time || 'N/A'}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Two Column Layout -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <!-- Status -->
                 <div>
                     <label class="form-label text-sm font-semibold text-slate-700">Status</label>
@@ -377,25 +455,12 @@ function displayAppointmentDetails(event) {
                         </span>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Two Column Layout -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                
                 <!-- Tracking Number -->
                 <div>
                     <label class="form-label text-sm font-semibold text-slate-700">Tracking Number</label>
                     <div class="form-control mt-1 p-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700">
                         ${event.extendedProps.tracking_number || 'N/A'}
-                    </div>
-                </div>
-                
-                <!-- Is Expired -->
-                <div>
-                    <label class="form-label text-sm font-semibold text-slate-700">Is Expired</label>
-                    <div class="form-control mt-1 p-3 border border-slate-300 rounded-lg bg-slate-50">
-                        <span class="px-3 py-1 rounded-full text-sm font-medium ${event.extendedProps.is_expired === '1' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">
-                            ${event.extendedProps.is_expired === '1' ? 'Yes' : 'No'}
-                        </span>
                     </div>
                 </div>
             </div>

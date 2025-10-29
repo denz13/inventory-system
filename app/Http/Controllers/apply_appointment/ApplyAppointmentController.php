@@ -17,8 +17,23 @@ class ApplyAppointmentController extends Controller
 {
     public function index(Request $request)
     {
-        // Get active appointment categories
+        // Get current user's role
+        $userRole = auth()->user()->role;
+        
+        // Get active appointment categories filtered by user's role
         $categories = appointment_category::where('status', 'Active')
+            ->where(function($query) use ($userRole) {
+                if ($userRole) {
+                    // Check if user's role is in the comma-separated for_role field
+                    $query->whereRaw("FIND_IN_SET(?, REPLACE(for_role, ', ', ','))", [$userRole])
+                          ->orWhereNull('for_role')
+                          ->orWhere('for_role', '');
+                } else {
+                    // If user has no role, show categories with no role restriction
+                    $query->whereNull('for_role')
+                          ->orWhere('for_role', '');
+                }
+            })
             ->orderBy('category_name', 'asc')
             ->get();
         

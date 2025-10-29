@@ -102,7 +102,7 @@
                     <li> <a href="javascript:;" class="dropdown-item" data-user-filter="all">All Users</a> </li> 
                     @foreach($feedbacks->unique('user_id') as $feedback)
                         @if($feedback->user)
-                        <li> <a href="javascript:;" class="dropdown-item" data-user-filter="{{ $feedback->user->name }}">{{ $feedback->user->name }}</a> </li> 
+                        <li> <a href="javascript:;" class="dropdown-item" data-user-filter="{{ $feedback->user->id }}">{{ $feedback->user->name }}</a> </li> 
                         @endif
                     @endforeach
                 </ul> 
@@ -399,5 +399,5 @@
     <script src="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.min.js"></script>
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.css">
     
-    <script src="{{ asset('js/feedback-management/feedback-management.js') }}"></script>
+    <script src="{{ asset('js/feedback-management/feedback-management.js?v=' . time()) }}"></script>
 @endpush

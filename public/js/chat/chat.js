@@ -33,7 +33,11 @@
                 const userName = this.dataset.userName;
                 const userPhoto = this.dataset.userPhoto;
                 
-                openChat(userId, userName, userPhoto);
+                // Get is_online status from the user item
+                const userItem = document.querySelector(`.user-item[data-user-id="${userId}"]`);
+                const isOnline = userItem ? (userItem.querySelector('.bg-success') ? 1 : 0) : 0;
+                
+                openChat(userId, userName, userPhoto, isOnline);
             });
         });
         
@@ -44,7 +48,10 @@
                 const userName = this.dataset.userName;
                 const userPhoto = this.dataset.userPhoto;
                 
-                openChat(userId, userName, userPhoto);
+                // Get is_online status from the quick chat user
+                const isOnline = this.querySelector('.bg-success') ? 1 : 0;
+                
+                openChat(userId, userName, userPhoto, isOnline);
             });
         });
         
@@ -88,7 +95,7 @@
     }
     
     // Open chat with user
-    function openChat(userId, userName, userPhoto) {
+    function openChat(userId, userName, userPhoto, isOnline) {
         currentChatUserId = userId;
         currentChatUserName = userName;
         currentChatUserPhoto = userPhoto;
@@ -96,6 +103,9 @@
         // Update active user info
         document.getElementById('activeUserName').textContent = userName;
         document.getElementById('activeUserPhoto').src = userPhoto;
+        
+        // Update online status
+        updateUserStatus(isOnline);
         
         // Show chat active, hide default
         document.getElementById('chatActive').classList.remove('hidden');
@@ -120,6 +130,22 @@
         document.querySelector(`.user-item[data-user-id="${userId}"]`)?.classList.add('bg-slate-200', 'dark:bg-darkmode-400');
     }
     
+    // Update user online status
+    function updateUserStatus(isOnline) {
+        const statusElement = document.getElementById('activeUserStatus');
+        if (statusElement) {
+            if (isOnline == 1 || isOnline === true) {
+                statusElement.textContent = 'Online';
+                statusElement.classList.remove('text-slate-500');
+                statusElement.classList.add('text-success');
+            } else {
+                statusElement.textContent = 'Offline';
+                statusElement.classList.remove('text-success');
+                statusElement.classList.add('text-slate-500');
+            }
+        }
+    }
+    
     // Load messages
     function loadMessages(userId, silent = false) {
         if (!silent) {
@@ -138,6 +164,11 @@
         .then(data => {
             if (data.success) {
                 displayMessages(data.messages, data.currentUserId);
+                
+                // Update online status if available
+                if (data.chatUser && data.chatUser.is_online !== undefined) {
+                    updateUserStatus(data.chatUser.is_online);
+                }
             } else {
                 showError('Failed to load messages');
             }

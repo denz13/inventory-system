@@ -12,5 +12,5 @@ class appointment_category extends Model
     use HasFactory, SoftDeletes, ActivityLogTrait;
     protected $table = 'appointment_category';
     protected $primaryKey = 'id';
-    protected $fillable = ['category_name', 'status'];
+    protected $fillable = ['category_name','for_role', 'status'];
 }

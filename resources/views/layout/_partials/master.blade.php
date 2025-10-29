@@ -288,14 +288,27 @@ License: You must have a valid license purchased only from themeforest(the above
         
         @if($unreadNotifications->count() > 0)
             @foreach($unreadNotifications as $index => $notification)
+                @php
+                    // Check if this is a chatbot notification
+                    $isChatbotNotification = stripos($notification->title, 'chatbot') !== false 
+                                          || stripos($notification->title, 'guest message') !== false
+                                          || stripos($notification->message, 'chatbot') !== false;
+                    
+                    // Use appropriate type and duration for chatbot notifications
+                    $notificationType = $isChatbotNotification ? 'info' : $notification->type;
+                    $notificationDuration = $isChatbotNotification ? 8000 : 6000;
+                @endphp
+                
                 <x-notification-toast 
                     :id="'notification_' . $notification->id"
-                    :type="$notification->type"
+                    :type="$notificationType"
                     :title="$notification->title"
                     :message="$notification->message"
-                    :showButton="false"
+                    :showButton="$isChatbotNotification"
+                    :buttonText="$isChatbotNotification ? 'View Messages' : ''"
+                    :buttonAction="$isChatbotNotification ? 'viewChatbotMessages()' : ''"
                     :autoHide="true"
-                    :duration="6000"
+                    :duration="$notificationDuration"
                     position="right"
                     gravity="top"
                 />
@@ -470,10 +483,21 @@ License: You must have a valid license purchased only from themeforest(the above
                         console.log('Showing notification:', notification.title);
                         showFunction();
                         
-                        // Mark notification as read after showing
+                        // Check if this is a chatbot notification
+                        const isChatbotNotification = notification.title.toLowerCase().includes('chatbot') 
+                                                   || notification.title.toLowerCase().includes('guest message')
+                                                   || notification.message.toLowerCase().includes('chatbot');
+                        
+                        // Mark notification as read after showing (longer delay for chatbot notifications)
+                        const readDelay = isChatbotNotification ? 2000 : 1000;
                         setTimeout(() => {
                             markNotificationAsRead(notification.id);
-                        }, 1000);
+                        }, readDelay);
+                        
+                        // For chatbot notifications, also show notification badge on chatbot icon
+                        if (isChatbotNotification) {
+                            showChatbotNotificationBadge();
+                        }
                     } else {
                         console.error('Function not found:', functionName);
                     }
@@ -497,7 +521,32 @@ License: You must have a valid license purchased only from themeforest(the above
                     console.error('Error marking notification as read:', error);
                 });
             }
+            
+            // Function to show chatbot notification badge
+            function showChatbotNotificationBadge() {
+                const chatbotNotification = document.getElementById('chatbot-notification');
+                if (chatbotNotification) {
+                    chatbotNotification.style.display = 'flex';
+                    console.log('Chatbot notification badge shown');
+                }
+            }
         });
+        
+        // Function to view chatbot messages (called from notification button)
+        function viewChatbotMessages() {
+            console.log('View chatbot messages clicked');
+            // Open the chatbot modal
+            if (!chatbotOpen) {
+                toggleChatbot();
+            }
+            // Scroll to top of chatbot messages to see latest
+            setTimeout(() => {
+                const messagesContainer = document.getElementById('chatbot-messages');
+                if (messagesContainer) {
+                    messagesContainer.scrollTop = 0;
+                }
+            }, 300);
+        }
         </script>
         @endif
         <!-- END: Database Notifications Auto-Display Script -->

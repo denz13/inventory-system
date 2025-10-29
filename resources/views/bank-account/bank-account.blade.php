@@ -3,7 +3,7 @@
 @section('content')
 <div class="col-span-12 mt-6 -mb-6 intro-y">
     <div class="alert alert-dismissible show box bg-primary text-white flex items-center mb-6" role="alert">
-        <span>Bank Account Management: Manage bank accounts, QR codes, and payment methods. Set account types and configure payment options.</span>
+        <span>Payment Account Management: Manage bank accounts, QR codes, and payment methods. Set account types and configure payment options.</span>
         <button type="button" class="btn-close text-white" data-tw-dismiss="alert" aria-label="Close"> 
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="x" data-lucide="x" class="lucide lucide-x w-4 h-4">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -14,7 +14,7 @@
 </div>
 
 <h2 class="intro-y text-lg font-medium mt-10">
-    Bank Account Management
+  Payment Account Management
 </h2>
 
 <!-- Notifications -->
@@ -69,8 +69,8 @@
             <div class="dropdown-menu w-40"> 
                 <ul class="dropdown-content"> 
                     <li> <a href="javascript:;" class="dropdown-item" data-filter="all">All Accounts</a> </li> 
-                    <li> <a href="javascript:;" class="dropdown-item" data-filter="Active">Active</a> </li> 
-                    <li> <a href="javascript:;" class="dropdown-item" data-filter="Inactive">Inactive</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter="active">Active</a> </li> 
+                    <li> <a href="javascript:;" class="dropdown-item" data-filter="inactive">Inactive</a> </li> 
                 </ul> 
             </div> 
         </div>
@@ -125,24 +125,19 @@
                         @endif
                     </td>
                     <td class="w-40">
-                        <div class="flex items-center justify-center 
-                            @if($bankAccount->status === 'Active') text-success
-                            @elseif($bankAccount->status === 'Inactive') text-slate-500
-                            @else text-slate-500
-                            @endif">
-                            @if($bankAccount->status === 'Active')
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
-                                    <polyline points="9 11 12 14 22 4"></polyline>
-                                    <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
-                                </svg>
-                            @else
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <line x1="15" y1="9" x2="9" y2="15"></line>
-                                    <line x1="9" y1="9" x2="15" y2="15"></line>
-                                </svg>
-                            @endif
-                            {{ $bankAccount->status }}
+                        <div class="flex items-center justify-center">
+                            <div class="form-switch">
+                                <input 
+                                    type="checkbox" 
+                                    class="form-check-input status-toggle" 
+                                    data-bank-account-id="{{ $bankAccount->id }}"
+                                    {{ strtolower($bankAccount->status) === 'active' ? 'checked' : '' }}
+                                >
+                            </div>
+                            <span class="ml-2 text-sm font-medium status-label-{{ $bankAccount->id }} 
+                                {{ strtolower($bankAccount->status) === 'active' ? 'text-success' : 'text-slate-500' }}">
+                                {{ ucfirst(strtolower($bankAccount->status)) }}
+                            </span>
                         </div>
                     </td>
                     <td class="table-report__action w-56">
@@ -357,5 +352,5 @@
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('js/bank-account/bank-account.js') }}"></script>
+    <script src="{{ asset('js/bank-account/bank-account.js?v=' . time()) }}"></script>
 @endpush

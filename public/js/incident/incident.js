@@ -80,9 +80,13 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <label class="form-label">Designation</label>
                                 <input type="text" class="form-control" value="${incident.designation || 'N/A'}" readonly>
                             </div>
-                            <div class="col-span-12">
-                                <label class="form-label">Address</label>
-                                <textarea class="form-control" rows="2" readonly>${incident.address || 'N/A'}</textarea>
+                            <div class="col-span-12 md:col-span-6">
+                                <label class="form-label">Street</label>
+                                <input type="text" class="form-control" value="${incident.street || 'N/A'}" readonly>
+                            </div>
+                            <div class="col-span-12 md:col-span-6">
+                                <label class="form-label">House/Block/Lot No.</label>
+                                <input type="text" class="form-control" value="${incident.address || 'N/A'}" readonly>
                             </div>
                             <div class="col-span-12 md:col-span-6">
                                 <label class="form-label">Date & Time of Incident</label>
@@ -104,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <input type="text" class="form-control" value="${incident.assigned_guard?.name || 'Not assigned'}" readonly>
                             </div>
                             <div class="col-span-12">
-                                <label class="form-label">Location of Incident</label>
+                                <label class="form-label">Description of Incident</label>
                                 <textarea class="form-control" rows="3" readonly>${incident.location_of_incident || 'N/A'}</textarea>
                             </div>
                         </div>
@@ -125,6 +129,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('edit-incident-id').value = incident.id;
                 document.getElementById('edit_person_involved_name').value = incident.person_involved_name || '';
                 document.getElementById('edit_designation').value = incident.designation || '';
+                document.getElementById('edit_street').value = incident.street || '';
                 document.getElementById('edit_address').value = incident.address || '';
                 document.getElementById('edit_datetime_of_incident').value = formatDateTimeForInput(incident.datetime_of_incident);
                 document.getElementById('edit_guard_id').value = incident.guard_id || '';

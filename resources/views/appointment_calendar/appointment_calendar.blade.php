@@ -70,9 +70,17 @@
                 </div>
 
         <!-- Appointment Details Modal -->
-        <div id="appointmentModal" class="modal" tabindex="-1" aria-hidden="true" style="display: none;">
+        <div id="appointmentModal" class="modal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg">
-                <div class="modal-content">
+                <div class="modal-content" style="background: white; border-radius: 0.5rem;">
+                    <!-- Close button -->
+                    <button type="button" data-tw-dismiss="modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600" style="z-index: 10;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                    
                     <div class="modal-body px-8 py-10">
                         <div class="text-center mb-6">
                             <h2 class="font-medium text-xl mb-4">Appointment Details</h2>
@@ -95,6 +103,7 @@
 
 @push('styles')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
 <style>
     /* Custom FullCalendar Event Styles */
     .fc-event {
@@ -105,11 +114,22 @@
         font-weight: 500 !important;
         cursor: pointer !important;
         transition: all 0.2s ease !important;
+        pointer-events: auto !important;
     }
     
     .fc-event:hover {
         transform: translateY(-1px) !important;
         box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+        cursor: pointer !important;
+    }
+    
+    .fc-event-past {
+        opacity: 0.6;
+        cursor: pointer !important;
+    }
+    
+    .fc-event-future {
+        cursor: pointer !important;
     }
     
     .fc-event-main {
@@ -133,53 +153,83 @@
     }
     
     /* Modal Styles */
-    .modal {
-        z-index: 1055 !important;
+    #appointmentModal.show {
+        display: block !important;
+    }
+    
+    #appointmentModal .modal-dialog {
+        max-width: 900px;
+        margin: 1.75rem auto;
+    }
+    
+    #appointmentModal .modal-content {
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        background-color: white;
+    }
+    
+    #appointmentModal .modal-body {
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+    
+    /* Ensure modal appears above everything */
+    #appointmentModal {
+        display: none;
         position: fixed !important;
         top: 0 !important;
         left: 0 !important;
         width: 100% !important;
         height: 100% !important;
+        overflow-x: hidden;
+        overflow-y: auto;
+        outline: 0;
+        z-index: 99999 !important;
+        background-color: rgba(0, 0, 0, 0.5) !important;
+    }
+    
+    #appointmentModal.show {
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-    }
-    
-    .modal.show {
-        display: flex !important;
         visibility: visible !important;
         opacity: 1 !important;
     }
     
     .modal-backdrop {
-        z-index: 1040 !important;
+        z-index: 99998 !important;
         position: fixed !important;
         top: 0 !important;
         left: 0 !important;
         width: 100% !important;
         height: 100% !important;
-        background-color: rgba(0,0,0,0.5) !important;
+        background-color: rgba(0, 0, 0, 0.5) !important;
     }
     
-    .modal-dialog {
-        margin: 0 !important;
-        max-width: 90% !important;
-        width: auto !important;
+    .modal-open {
+        overflow: hidden !important;
+    }
+    
+    /* Center modal dialog */
+    #appointmentModal .modal-dialog {
         position: relative !important;
-        z-index: 1056 !important;
-        max-height: 90vh !important;
+        width: 100% !important;
+        max-width: 900px !important;
+        margin: 1.75rem auto !important;
+        pointer-events: auto !important;
+        z-index: 100000 !important;
     }
     
-    .modal-content {
-        max-height: 90vh !important;
-        overflow-y: auto !important;
-        border-radius: 8px !important;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.2) !important;
-    }
-    
-    .modal-body {
-        max-height: 70vh !important;
-        overflow-y: auto !important;
+    #appointmentModal .modal-content {
+        position: relative !important;
+        display: flex !important;
+        flex-direction: column !important;
+        pointer-events: auto !important;
+        background-color: white !important;
+        background-clip: padding-box;
+        outline: 0;
+        border-radius: 0.5rem !important;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.4) !important;
     }
 </style>
 @endpush

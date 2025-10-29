@@ -50,6 +50,12 @@
             color: #6b7280 !important;
             font-size: 0.875rem !important;
         }
+        
+        /* Remove TomSelect red highlighting */
+        .ts-dropdown .highlight {
+            background: transparent !important;
+            color: inherit !important;
+        }
     </style>
 </div>
 
@@ -78,7 +84,7 @@
         <div class="dropdown ml-2"> 
             <button class="dropdown-toggle btn btn-outline-secondary" aria-expanded="false" data-tw-toggle="dropdown">Filter by Module</button> 
             <div class="dropdown-menu w-40"> 
-                <ul class="dropdown-content"> 
+                <ul class="dropdown-content overflow-y-auto" style="max-height: 300px;"> 
                     <li> <a href="javascript:;" class="dropdown-item" data-module-filter="all">All Modules</a> </li> 
                     @foreach($modules as $module)
                         <li> <a href="javascript:;" class="dropdown-item" data-module-filter="{{ $module->id }}">{{ ucwords($module->module_name) }}</a> </li> 
@@ -88,7 +94,7 @@
         </div>
         
         <div class="hidden md:block mx-auto text-slate-500">
-            Showing <span id="filtered-count">{{ $permissionSettings->count() }}</span> of <span id="total-count">{{ $permissionSettings->total() }}</span> entries
+            Showing {{ $permissionSettings->count() }} of {{ $permissionSettings->total() }} entries
         </div>
         <div class="w-full sm:w-auto mt-3 sm:mt-0 sm:ml-auto md:ml-0">
             <div class="w-56 relative text-slate-500">
@@ -400,5 +406,5 @@
     <!-- Tom Select for searchable dropdowns -->
     <script src="{{ asset('js/tom-select.js') }}"></script>
     
-    <script src="{{ asset('js/permission_settings/permission_settings.js') }}"></script>
+    <script src="{{ asset('js/permission_settings/permission_settings.js?v=' . time()) }}"></script>
 @endpush
