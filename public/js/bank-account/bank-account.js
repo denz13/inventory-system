@@ -4,13 +4,52 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeEventListeners() {
-    // Search functionality
+    // Get URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Search functionality - Server-side (Enter key or icon click)
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
-        searchInput.addEventListener('input', debounce(handleSearch, 300));
+        // Get search term from URL if it exists
+        const searchTerm = urlParams.get('search') || '';
+        searchInput.value = searchTerm;
+        
+        // Search only when Enter key is pressed
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                e.preventDefault();
+                performServerSideSearch();
+            }
+        });
+        
+        // Also allow clicking the search icon to trigger search
+        const searchIcon = searchInput.parentElement.querySelector('svg');
+        if (searchIcon) {
+            searchIcon.style.cursor = 'pointer';
+            searchIcon.addEventListener('click', function() {
+                performServerSideSearch();
+            });
+        }
+    }
+    
+    function performServerSideSearch() {
+        const searchValue = searchInput.value.trim();
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        if (searchValue) {
+            urlParams.set('search', searchValue);
+        } else {
+            urlParams.delete('search');
+        }
+        
+        // Reset to page 1 when searching
+        urlParams.delete('page');
+        
+        // Reload page with search parameter
+        window.location.href = window.location.pathname + '?' + urlParams.toString();
     }
 
-    // Filter functionality
+    // Filter functionality - Server-side
     document.querySelectorAll('[data-filter]').forEach(filterBtn => {
         filterBtn.addEventListener('click', function(e) {
             e.preventDefault();
@@ -18,6 +57,22 @@ function initializeEventListeners() {
             handleFilter(filter);
         });
     });
+    
+    function handleFilter(filter) {
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        if (filter === 'all') {
+            urlParams.delete('status');
+        } else {
+            urlParams.set('status', filter);
+        }
+        
+        // Reset to page 1 when filtering
+        urlParams.delete('page');
+        
+        // Reload page with filter
+        window.location.href = window.location.pathname + '?' + urlParams.toString();
+    }
 
     // Create form submission
     const createForm = document.getElementById('createBankAccountForm');
@@ -67,54 +122,15 @@ function initializeEventListeners() {
             handleDeleteBankAccount(bankAccountId);
         });
     }
-}
 
-function handleSearch() {
-    const searchValue = document.getElementById('searchInput').value.toLowerCase();
-    const tableRows = document.querySelectorAll('tbody tr.intro-x');
-    
-    tableRows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        if (text.includes(searchValue) || searchValue === '') {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
+    // Status toggle functionality
+    document.querySelectorAll('.status-toggle').forEach(toggle => {
+        toggle.addEventListener('change', function() {
+            const bankAccountId = this.getAttribute('data-bank-account-id');
+            const newStatus = this.checked ? 'active' : 'inactive';
+            handleStatusToggle(bankAccountId, newStatus, this);
+        });
     });
-    
-    updateFilteredCount();
-}
-
-function handleFilter(filter) {
-    const tableRows = document.querySelectorAll('tbody tr.intro-x');
-    
-    tableRows.forEach(row => {
-        const status = row.getAttribute('data-status');
-        
-        if (filter === 'all' || status === filter) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
-    });
-    
-    updateFilteredCount();
-}
-
-function updateFilteredCount() {
-    const allRows = document.querySelectorAll('tbody tr.intro-x');
-    let visibleCount = 0;
-    
-    allRows.forEach(row => {
-        if (row.style.display !== 'none') {
-            visibleCount++;
-        }
-    });
-    
-    const filteredCount = document.getElementById('filtered-count');
-    if (filteredCount) {
-        filteredCount.textContent = visibleCount;
-    }
 }
 
 function handleCreateBankAccount() {
@@ -430,6 +446,63 @@ function handleDeleteBankAccount(bankAccountId) {
             submitBtn.disabled = false;
             submitBtn.textContent = 'Delete';
         }
+    });
+}
+
+function handleStatusToggle(bankAccountId, newStatus, toggleElement) {
+    // Disable toggle while processing
+    toggleElement.disabled = true;
+
+    fetch(`/bank-account/${bankAccountId}/toggle-status`, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || document.querySelector('input[name="_token"]').value
+        },
+        body: JSON.stringify({
+            status: newStatus
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            
+            // Update status label
+            const statusLabel = document.querySelector(`.status-label-${bankAccountId}`);
+            if (statusLabel) {
+                // Capitalize first letter for display
+                const displayStatus = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+                statusLabel.textContent = displayStatus;
+                
+                // Update label color
+                if (newStatus === 'active') {
+                    statusLabel.classList.remove('text-slate-500');
+                    statusLabel.classList.add('text-success');
+                } else {
+                    statusLabel.classList.remove('text-success');
+                    statusLabel.classList.add('text-slate-500');
+                }
+            }
+            
+            // Re-enable toggle
+            toggleElement.disabled = false;
+        } else {
+            showToast(data.message || 'Error updating status', 'error');
+            
+            // Revert toggle state
+            toggleElement.checked = !toggleElement.checked;
+            toggleElement.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Error updating status', 'error');
+        
+        // Revert toggle state
+        toggleElement.checked = !toggleElement.checked;
+        toggleElement.disabled = false;
     });
 }
 

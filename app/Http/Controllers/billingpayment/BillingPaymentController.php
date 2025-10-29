@@ -48,13 +48,37 @@ class BillingPaymentController extends Controller
         $perPage = $request->input('per_page', 10);
         $userBillings = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
+        // Check for overdue bills (not approved and past due date)
+        $overdueBills = tbl_billing_management::where('user_id', Auth::id())
+            ->where('status', '!=', 'approved')
+            ->get()
+            ->filter(function($billing) {
+                // Extract end date from billing_date range
+                if (strpos($billing->billing_date, ' - ') !== false) {
+                    $dateParts = explode(' - ', $billing->billing_date);
+                    if (count($dateParts) >= 2) {
+                        $endDate = trim($dateParts[1]);
+                        try {
+                            $billingEndDate = Carbon::parse($endDate);
+                            return $billingEndDate->isPast();
+                        } catch (\Exception $e) {
+                            return false;
+                        }
+                    }
+                }
+                return false;
+            });
+
+        $hasOverdueBills = $overdueBills->count() > 0;
+        $overdueCount = $overdueBills->count();
+
         // Get bank account types and categories for payment modal
         $bankAccountTypes = tbl_bank_account_type::where('status', 'Active')->get();
         $bankAccountCategories = tbl_bank_account_category::with('bankAccountType')
             ->where('status', 'Active')
             ->get();
 
-        return view('billing-payment.billing-payment', compact('userBillings', 'bankAccountTypes', 'bankAccountCategories'));
+        return view('billing-payment.billing-payment', compact('userBillings', 'bankAccountTypes', 'bankAccountCategories', 'hasOverdueBills', 'overdueCount', 'overdueBills'));
     }
 
     /**

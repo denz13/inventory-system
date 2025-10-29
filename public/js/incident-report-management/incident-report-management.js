@@ -53,7 +53,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     updateFilterButton('statusFilterBtn', filterValue === 'all' ? 'Status: All' : `Status: ${filterValue}`);
                 } else if (filterType === 'location') {
                     currentLocationFilter = filterValue;
-                    const btnText = filterValue === 'all' ? 'Filter by Location' : `Location: ${filterValue.substring(0, 20)}${filterValue.length > 20 ? '...' : ''}`;
+                    // Extract just the street name (before the first comma)
+                    const streetName = filterValue === 'all' ? 'all' : filterValue.split(',')[0].trim();
+                    const btnText = filterValue === 'all' ? 'Filter by Street' : `Street: ${streetName}`;
                     updateFilterButton('locationFilterBtn', btnText);
                 } else if (filterType === 'date') {
                     currentDateFilter = filterValue;
@@ -151,7 +153,9 @@ document.addEventListener('DOMContentLoaded', function() {
         updateFilterButton('statusFilterBtn', `Status: ${currentStatusFilter}`);
     }
     if (currentLocationFilter && currentLocationFilter !== 'all') {
-        const btnText = `Location: ${currentLocationFilter.substring(0, 20)}${currentLocationFilter.length > 20 ? '...' : ''}`;
+        // Extract just the street name (before the first comma)
+        const streetName = currentLocationFilter.split(',')[0].trim();
+        const btnText = `Street: ${streetName}`;
         updateFilterButton('locationFilterBtn', btnText);
     }
     if (currentDateFilter && currentDateFilter !== 'all') {
@@ -312,7 +316,11 @@ function displayReportDetails(report) {
                             <input type="text" class="form-control mt-1" value="${report.designation || 'N/A'}" readonly>
                         </div>
                         <div>
-                            <label class="form-label text-sm font-semibold text-slate-700">Address</label>
+                            <label class="form-label text-sm font-semibold text-slate-700">Street</label>
+                            <input type="text" class="form-control mt-1" value="${report.street || 'N/A'}" readonly>
+                        </div>
+                        <div>
+                            <label class="form-label text-sm font-semibold text-slate-700">House/Block/Lot No.</label>
                             <input type="text" class="form-control mt-1" value="${report.address || 'N/A'}" readonly>
                         </div>
                         <div>
@@ -328,15 +336,18 @@ function displayReportDetails(report) {
                 <div class="bg-green-50 p-6 rounded-lg border border-green-200">
                     <h3 class="font-semibold text-lg mb-6 text-green-800 flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2">
-                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                            <circle cx="12" cy="10" r="3"></circle>
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
                         </svg>
-                        Location Information
+                        Description of Incident
                     </h3>
                     <div>
-                        <label class="form-label text-sm font-semibold text-slate-700">Incident Location</label>
-                        <input type="text" class="form-control mt-1" value="${report.location_of_incident || 'N/A'}" readonly>
-                        <div class="form-help mt-1">Exact location where the incident occurred</div>
+                        <label class="form-label text-sm font-semibold text-slate-700">Incident Description</label>
+                        <textarea class="form-control mt-1" rows="4" readonly>${report.location_of_incident || 'N/A'}</textarea>
+                        <div class="form-help mt-1">Detailed description of what happened</div>
                     </div>
                 </div>
                 

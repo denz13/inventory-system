@@ -95,7 +95,7 @@
                 <tr>
                     <th class="whitespace-nowrap">PERSON INVOLVED</th>
                     <th class="whitespace-nowrap">DESIGNATION</th>
-                    <th class="whitespace-nowrap">INCIDENT LOCATION</th>
+                    <th class="whitespace-nowrap">DESCRIPTION OF INCIDENT</th>
                     <th class="text-center whitespace-nowrap">STATUS</th>
                     <th class="text-center whitespace-nowrap">INCIDENT DATE</th>
                     <th class="text-center whitespace-nowrap">ACTIONS</th>
@@ -237,11 +237,41 @@
                         </div>
                         <div class="col-span-12 sm:col-span-6">
                             <label for="designation" class="form-label">Designation *</label>
-                            <input id="designation" name="designation" type="text" class="form-control" placeholder="Enter designation" required>
+                            <select id="designation" name="designation" class="form-select" required>
+                                <option value="">Select Designation</option>
+                                <option value="admin">Admin</option>
+                                <option value="home owners">Home Owners</option>
+                                <option value="non home owners">Non Home Owners</option>
+                                <option value="guard">Guard</option>
+                                <option value="operational manager">Operational Manager</option>
+                                <option value="service manager">Service Manager</option>
+                                <option value="financial manager">Financial Manager</option>
+                                <option value="appointment coordinator">Appointment Coordinator</option>
+                                <option value="occupancy manager">Occupancy Manager</option>
+                            </select>
                         </div>
-                        <div class="col-span-12">
-                            <label for="address" class="form-label">Address *</label>
-                            <textarea id="address" name="address" class="form-control" rows="3" placeholder="Enter complete address" required></textarea>
+                        <div class="col-span-12 sm:col-span-6">
+                            <label for="street" class="form-label">Street *</label>
+                            <select id="street" name="street" class="form-select" required>
+                                <option value="">Select Street</option>
+                                <option value="Neptune Street, Golden Country Homes, Alangilan, Batangas City">Neptune Street, Golden Country Homes, Alangilan, Batangas City</option>
+                                <option value="Mercury Street, Golden Country Homes, Alangilan, Batangas City">Mercury Street, Golden Country Homes, Alangilan, Batangas City</option>
+                                <option value="Saturn Street, Golden Country Homes, Alangilan, Batangas City">Saturn Street, Golden Country Homes, Alangilan, Batangas City</option>
+                                <option value="Venus Street, Golden Country Homes, Alangilan, Batangas City">Venus Street, Golden Country Homes, Alangilan, Batangas City</option>
+                                <option value="Earth Street, Golden Country Homes, Alangilan, Batangas City">Earth Street, Golden Country Homes, Alangilan, Batangas City</option>
+                                <option value="Mars Street, Golden Country Homes, Alangilan, Batangas City">Mars Street, Golden Country Homes, Alangilan, Batangas City</option>
+                                <option value="Galaxy Street, Golden Country Homes, Alangilan, Batangas City">Galaxy Street, Golden Country Homes, Alangilan, Batangas City</option>
+                                <option value="Comet Street, Golden Country Homes, Alangilan, Batangas City">Comet Street, Golden Country Homes, Alangilan, Batangas City</option>
+                                <option value="Pluto Street, Golden Country Homes, Alangilan, Batangas City">Pluto Street, Golden Country Homes, Alangilan, Batangas City</option>
+                                <option value="Uranus Street, Golden Country Homes, Alangilan, Batangas City">Uranus Street, Golden Country Homes, Alangilan, Batangas City</option>
+                                <option value="Star Street, Golden Country Homes, Alangilan, Batangas City">Star Street, Golden Country Homes, Alangilan, Batangas City</option>
+                                <option value="Universe 1 Street, Golden Country Homes, Alangilan, Batangas City">Universe 1 Street, Golden Country Homes, Alangilan, Batangas City</option>
+                                <option value="Universe 2 Street, Golden Country Homes, Alangilan, Batangas City">Universe 2 Street, Golden Country Homes, Alangilan, Batangas City</option>
+                            </select>
+                        </div>
+                        <div class="col-span-12 sm:col-span-6">
+                            <label for="address" class="form-label">House/Block/Lot No. *</label>
+                            <input id="address" name="address" type="text" class="form-control" placeholder="Enter house/block/lot number" required>
                         </div>
                         <div class="col-span-12 sm:col-span-6">
                             <label for="datetime_of_incident" class="form-label">Date & Time of Incident *</label>
@@ -257,7 +287,7 @@
                             </select>
                         </div>
                         <div class="col-span-12">
-                            <label for="location_of_incident" class="form-label">Location of Incident *</label>
+                            <label for="location_of_incident" class="form-label">Description of Incident *</label>
                             <textarea id="location_of_incident" name="location_of_incident" class="form-control" rows="3" placeholder="Describe the exact location where the incident occurred" required></textarea>
                         </div>
                     </div>
@@ -324,11 +354,41 @@
                         </div>
                         <div class="col-span-12 md:col-span-6">
                             <label class="form-label">Designation *</label>
-                            <input type="text" name="designation" id="edit_designation" class="form-control" required>
+                            <select name="designation" id="edit_designation" class="form-select" required>
+                                <option value="">Select Designation</option>
+                                <option value="admin">Admin</option>
+                                <option value="home owners">Home Owners</option>
+                                <option value="non home owners">Non Home Owners</option>
+                                <option value="guard">Guard</option>
+                                <option value="operational manager">Operational Manager</option>
+                                <option value="service manager">Service Manager</option>
+                                <option value="financial manager">Financial Manager</option>
+                                <option value="appointment coordinator">Appointment Coordinator</option>
+                                <option value="occupancy manager">Occupancy Manager</option>
+                            </select>
                         </div>
-                        <div class="col-span-12">
-                            <label class="form-label">Address *</label>
-                            <textarea name="address" id="edit_address" class="form-control" rows="3" required></textarea>
+                        <div class="col-span-12 md:col-span-6">
+                            <label class="form-label">Street *</label>
+                            <select name="street" id="edit_street" class="form-select" required>
+                                <option value="">Select Street</option>
+                                <option value="Neptune Street, Golden Country Homes, Alangilan, Batangas City">Neptune Street, Golden Country Homes, Alangilan, Batangas City</option>
+                                <option value="Mercury Street, Golden Country Homes, Alangilan, Batangas City">Mercury Street, Golden Country Homes, Alangilan, Batangas City</option>
+                                <option value="Saturn Street, Golden Country Homes, Alangilan, Batangas City">Saturn Street, Golden Country Homes, Alangilan, Batangas City</option>
+                                <option value="Venus Street, Golden Country Homes, Alangilan, Batangas City">Venus Street, Golden Country Homes, Alangilan, Batangas City</option>
+                                <option value="Earth Street, Golden Country Homes, Alangilan, Batangas City">Earth Street, Golden Country Homes, Alangilan, Batangas City</option>
+                                <option value="Mars Street, Golden Country Homes, Alangilan, Batangas City">Mars Street, Golden Country Homes, Alangilan, Batangas City</option>
+                                <option value="Galaxy Street, Golden Country Homes, Alangilan, Batangas City">Galaxy Street, Golden Country Homes, Alangilan, Batangas City</option>
+                                <option value="Comet Street, Golden Country Homes, Alangilan, Batangas City">Comet Street, Golden Country Homes, Alangilan, Batangas City</option>
+                                <option value="Pluto Street, Golden Country Homes, Alangilan, Batangas City">Pluto Street, Golden Country Homes, Alangilan, Batangas City</option>
+                                <option value="Uranus Street, Golden Country Homes, Alangilan, Batangas City">Uranus Street, Golden Country Homes, Alangilan, Batangas City</option>
+                                <option value="Star Street, Golden Country Homes, Alangilan, Batangas City">Star Street, Golden Country Homes, Alangilan, Batangas City</option>
+                                <option value="Universe 1 Street, Golden Country Homes, Alangilan, Batangas City">Universe 1 Street, Golden Country Homes, Alangilan, Batangas City</option>
+                                <option value="Universe 2 Street, Golden Country Homes, Alangilan, Batangas City">Universe 2 Street, Golden Country Homes, Alangilan, Batangas City</option>
+                            </select>
+                        </div>
+                        <div class="col-span-12 md:col-span-6">
+                            <label class="form-label">House/Block/Lot No. *</label>
+                            <input type="text" name="address" id="edit_address" class="form-control" required>
                         </div>
                         <div class="col-span-12 md:col-span-6">
                             <label class="form-label">Date & Time of Incident *</label>
@@ -344,7 +404,7 @@
                             </select>
                         </div>
                         <div class="col-span-12">
-                            <label class="form-label">Location of Incident *</label>
+                            <label class="form-label">Description of Incident *</label>
                             <textarea name="location_of_incident" id="edit_location_of_incident" class="form-control" rows="3" required></textarea>
                         </div>
                     </div>

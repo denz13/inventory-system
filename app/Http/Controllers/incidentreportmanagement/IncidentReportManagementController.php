@@ -36,9 +36,9 @@ class IncidentReportManagementController extends Controller
             $query->where('status', $request->status);
         }
         
-        // Apply location filter
+        // Apply street filter
         if ($request->has('location') && $request->location != 'all') {
-            $query->where('location_of_incident', $request->location);
+            $query->where('street', $request->location);
         }
         
         // Apply date filter
@@ -76,15 +76,15 @@ class IncidentReportManagementController extends Controller
 
         $guards = User::where('role', 'security personnel')->where('active', true)->get();
         
-        // Get unique locations from incident reports
-        $locations = tbl_incident_report::whereNotNull('location_of_incident')
-            ->where('location_of_incident', '!=', '')
+        // Get unique streets from incident reports
+        $streets = tbl_incident_report::whereNotNull('street')
+            ->where('street', '!=', '')
             ->distinct()
-            ->pluck('location_of_incident')
+            ->pluck('street')
             ->sort()
             ->values();
 
-        return view('incident-report-management.incident-report-management', compact('incidentReports', 'guards', 'locations'));
+        return view('incident-report-management.incident-report-management', compact('incidentReports', 'guards', 'streets'));
     }
 
     public function show($id): JsonResponse

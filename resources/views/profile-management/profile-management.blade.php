@@ -22,23 +22,23 @@
             background: transparent !important;
             box-shadow: none !important;
         }
-        
+
         /* Ensure notification toast content is visible */
         .toastify-content {
             color: #000 !important;
             background: #fff !important;
             padding: 1rem !important;
             border-radius: 0.5rem !important;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
         }
-        
+
         .toastify-content .font-medium {
             font-weight: 600 !important;
             font-size: 1rem !important;
             margin-bottom: 0.5rem !important;
             color: #1f2937 !important;
         }
-        
+
         .toastify-content .text-slate-500 {
             color: #6b7280 !important;
             font-size: 0.875rem !important;
@@ -62,7 +62,7 @@
                 </div>
                 <!-- Hidden File Input -->
                 <input type="file" id="profile-photo-input" accept="image/*" class="hidden" onchange="handleProfilePhotoUpload(this)">
-                
+
                 <!-- Hidden Modal Trigger -->
                 <a href="javascript:;" id="photo-modal-trigger" data-tw-toggle="modal" data-tw-target="#photo-upload-modal" class="hidden"></a>
             </div>
@@ -74,18 +74,26 @@
         <div class="mt-6 lg:mt-0 flex-1 px-5 border-l border-r border-slate-200/60 dark:border-darkmode-400 border-t lg:border-t-0 pt-5 lg:pt-0">
             <div class="font-medium text-center lg:text-left lg:mt-3">Contact Details</div>
             <div class="flex flex-col justify-center items-center lg:items-start mt-4">
-                <div class="truncate sm:whitespace-normal flex items-center"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="mail" data-lucide="mail" class="lucide lucide-mail w-4 h-4 mr-2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg> {{ $user->email }} </div>
-                <div class="truncate sm:whitespace-normal flex items-center mt-3"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="phone" data-lucide="phone" class="lucide lucide-phone w-4 h-4 mr-2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg> {{ $user->contact_number ?? 'Not provided' }} </div>
-                <div class="truncate sm:whitespace-normal flex items-center mt-3"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="map-pin" data-lucide="map-pin" class="lucide lucide-map-pin w-4 h-4 mr-2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> 
-                @if($user->street || $user->lot || $user->block)
+                <div class="truncate sm:whitespace-normal flex items-center"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="mail" data-lucide="mail" class="lucide lucide-mail w-4 h-4 mr-2">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg> {{ $user->email }} </div>
+                <div class="truncate sm:whitespace-normal flex items-center mt-3"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="phone" data-lucide="phone" class="lucide lucide-phone w-4 h-4 mr-2">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                    </svg> {{ $user->contact_number ?? 'Not provided' }} </div>
+                <div class="truncate sm:whitespace-normal flex items-center mt-3"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="map-pin" data-lucide="map-pin" class="lucide lucide-map-pin w-4 h-4 mr-2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    @if($user->street || $user->lot || $user->block)
                     {{ trim(($user->lot ? 'Lot ' . $user->lot : '') . ($user->block ? ' Block ' . $user->block : '') . ($user->street ? ' ' . $user->street : '')) }}
-                @else
+                    @else
                     Address not provided
-                @endif
+                    @endif
                 </div>
             </div>
         </div>
-        <div class="mt-6 lg:mt-0 flex-1 flex items-center justify-center px-5 border-t lg:border-0 border-slate-200/60 dark:border-darkmode-400 pt-5 lg:pt-0">
+        <!-- <div class="mt-6 lg:mt-0 flex-1 flex items-center justify-center px-5 border-t lg:border-0 border-slate-200/60 dark:border-darkmode-400 pt-5 lg:pt-0">
             <div class="text-center rounded-md w-20 py-3">
                 <div class="font-medium text-primary text-xl">{{ $stats['orders'] }}</div>
                 <div class="text-slate-500">With Title</div>
@@ -98,18 +106,26 @@
                 <div class="font-medium text-primary text-xl">{{ $stats['reviews'] }}</div>
                 <div class="text-slate-500">Gender</div>
             </div>
-        </div>
+        </div> -->
     </div>
     <ul class="nav nav-link-tabs flex-col sm:flex-row justify-center lg:justify-start text-center" role="tablist">
         <li id="profile-tab" class="nav-item" role="presentation">
-            <a href="javascript:;" class="nav-link py-4 flex items-center active" data-tw-target="#profile" aria-controls="profile" aria-selected="true" role="tab"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="user" class="lucide lucide-user w-4 h-4 mr-2" data-lucide="user"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> Profile </a>
+            <a href="javascript:;" class="nav-link py-4 flex items-center active" data-tw-target="#profile" aria-controls="profile" aria-selected="true" role="tab"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="user" class="lucide lucide-user w-4 h-4 mr-2" data-lucide="user">
+                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg> Profile </a>
         </li>
         <!-- <li id="add-business-tab" class="nav-item" role="presentation">
             <a href="javascript:;" class="nav-link py-4 flex items-center" data-tw-target="#add-business" aria-selected="false" role="tab"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="shield" class="lucide lucide-shield w-4 h-4 mr-2" data-lucide="shield"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> Add Business </a>
         </li> -->
         @if($user->hasLandlordTenantAccess())
         <li id="add-tenant-tab" class="nav-item" role="presentation">
-            <a href="javascript:;" class="nav-link py-4 flex items-center" data-tw-target="#add-tenant" aria-selected="false" role="tab"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="users" class="lucide lucide-users w-4 h-4 mr-2" data-lucide="users"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 00-3-3.87"></path><path d="M16 3.13a4 4 0 010 7.75"></path></svg> Add Tenant </a>
+            <a href="javascript:;" class="nav-link py-4 flex items-center" data-tw-target="#add-tenant" aria-selected="false" role="tab"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="users" class="lucide lucide-users w-4 h-4 mr-2" data-lucide="users">
+                    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 00-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 010 7.75"></path>
+                </svg> Add Tenant </a>
         </li>
         @endif
         <!-- <li id="settings-tab" class="nav-item" role="presentation">
@@ -225,15 +241,15 @@
                                 <label class="form-label font-medium">Signature Image</label>
                                 <div class="flex items-center space-x-3">
                                     @if($user->signature_image)
-                                        <div class="w-20 h-20 border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-400 transition-colors signature-image-clickable" data-signature-src="{{ asset('storage/signatures/' . $user->signature_image) }}">
-                                            <img src="{{ asset('storage/signatures/' . $user->signature_image) }}" alt="Current Signature" class="w-16 h-16 object-contain">
-                                        </div>
+                                    <div class="w-20 h-20 border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-400 transition-colors signature-image-clickable" data-signature-src="{{ asset('storage/signatures/' . $user->signature_image) }}">
+                                        <img src="{{ asset('storage/signatures/' . $user->signature_image) }}" alt="Current Signature" class="w-16 h-16 object-contain">
+                                    </div>
                                     @else
-                                        <div class="w-20 h-20 border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center">
-                                            <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                            </svg>
-                                        </div>
+                                    <div class="w-20 h-20 border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center">
+                                        <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                    </div>
                                     @endif
                                     <div class="flex-1">
                                         <input type="file" name="signature_image" class="form-control" accept="image/*" id="signatureImageInput">
@@ -259,7 +275,7 @@
                             </div>
                         </div>
                     </form>
-                    
+
                     <div id="profileDisplay">
                         <div class="space-y-5">
                             <!-- Name -->
@@ -376,17 +392,17 @@
                                 <label class="form-label font-medium">Signature Image</label>
                                 <div class="mt-1 text-slate-600" data-field="signature_image">
                                     @if($user->signature_image)
-                                        <img src="{{ asset('storage/signatures/' . $user->signature_image) }}" 
-                                             alt="Signature" 
-                                             class="w-16 h-16 object-contain rounded-full border-2 border-slate-200 cursor-pointer hover:border-blue-400 transition-colors signature-image-clickable"
-                                             data-signature-src="{{ asset('storage/signatures/' . $user->signature_image) }}"
-                                             title="Click to view larger image">
+                                    <img src="{{ asset('storage/signatures/' . $user->signature_image) }}"
+                                        alt="Signature"
+                                        class="w-16 h-16 object-contain rounded-full border-2 border-slate-200 cursor-pointer hover:border-blue-400 transition-colors signature-image-clickable"
+                                        data-signature-src="{{ asset('storage/signatures/' . $user->signature_image) }}"
+                                        title="Click to view larger image">
                                     @else
-                                        <div class="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center border-2 border-dashed border-slate-300">
-                                            <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                            </svg>
-                                        </div>
+                                    <div class="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center border-2 border-dashed border-slate-300">
+                                        <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                    </div>
                                     @endif
                                 </div>
                             </div>
@@ -404,8 +420,8 @@
                                     </span>
                                 </div>
                             </div>
-                                </div>
-                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <!-- END: Personal Information -->
@@ -423,15 +439,48 @@
                         <div class="space-y-5">
                             <div class="mb-5">
                                 <label class="form-label font-medium">Current Password *</label>
-                                <input type="password" class="form-control" name="current_password" placeholder="Enter current password" required>
+                                <div class="relative">
+                                    <input type="password" class="form-control pr-10" id="currentPasswordInput" name="current_password" placeholder="Enter current password" required>
+                                    <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600" onclick="togglePasswordVisibility('currentPasswordInput', this)">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="eye-icon h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="eye-slash-icon h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                             <div class="mb-5">
                                 <label class="form-label font-medium">New Password *</label>
-                                <input type="password" class="form-control" name="new_password" placeholder="Enter new password" required>
+                                <div class="relative">
+                                    <input type="password" class="form-control pr-10" id="newPasswordInput" name="new_password" placeholder="Enter new password" required>
+                                    <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600" onclick="togglePasswordVisibility('newPasswordInput', this)">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="eye-icon h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="eye-slash-icon h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                             <div class="mb-5">
                                 <label class="form-label font-medium">Confirm New Password *</label>
-                                <input type="password" class="form-control" name="new_password_confirmation" placeholder="Confirm new password" required>
+                                <div class="relative">
+                                    <input type="password" class="form-control pr-10" id="confirmPasswordInput" name="new_password_confirmation" placeholder="Confirm new password" required>
+                                    <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600" onclick="togglePasswordVisibility('confirmPasswordInput', this)">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="eye-icon h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="eye-slash-icon h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                             <div class="flex justify-end">
                                 <button type="submit" class="btn btn-primary">Change Password</button>
@@ -444,7 +493,7 @@
         </div>
     </div>
     <!-- END: Profile Tab -->
-    
+
     <!-- Signature Image Modal -->
     <div id="signature-modal" class="modal" data-tw-backdrop="static" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -469,7 +518,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- BEGIN: Account Tab -->
     <div id="account" class="tab-pane" role="tabpanel" aria-labelledby="account-tab">
         <div class="intro-y box">
@@ -645,7 +694,7 @@
             </div>
         </div>
     </div> -->
-    
+
     <!-- BEGIN: Settings Tab -->
     <!-- <div id="settings" class="tab-pane" role="tabpanel" aria-labelledby="settings-tab">
         <div class="intro-y box">
@@ -768,7 +817,7 @@
                 </div>
             </div>
             <!-- END: Add Tenant Form -->
-            
+
             <!-- BEGIN: Tenant List -->
             <div class="intro-y box col-span-12 lg:col-span-6">
                 <div class="flex items-center px-5 py-5 sm:py-3 border-b border-slate-200/60 dark:border-darkmode-400">
@@ -777,85 +826,108 @@
                     </h2>
                     <div class="w-56 relative text-slate-500">
                         <input type="text" id="tenantSearch" class="form-control w-56 box pr-10" placeholder="Search tenants...">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="search" class="lucide lucide-search w-4 h-4 absolute my-auto inset-y-0 mr-3 right-0" data-lucide="search"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg> 
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="search" class="lucide lucide-search w-4 h-4 absolute my-auto inset-y-0 mr-3 right-0" data-lucide="search">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
                     </div>
                 </div>
                 <div class="p-5" style="max-height: 600px; overflow-y: auto;">
                     <div id="tenantsList">
                         @if(isset($tenants) && $tenants->count() > 0)
-                            @foreach($tenants as $tenant)
-                                <div class="tenant-item border-b border-slate-200/60 py-4 last:border-b-0" data-tenant-id="{{ $tenant->id }}">
-                                    <div class="flex items-center">
-                                        <div class="w-12 h-12 flex-none image-fit">
-                                            @if($tenant->photo)
-                                                <img alt="{{ $tenant->full_name }}" class="rounded-full w-full h-full object-cover" src="{{ Storage::url('public/tenants/' . $tenant->photo) }}">
-                                            @else
-                                                <div class="rounded-full w-full h-full bg-slate-200 flex items-center justify-center">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-slate-400"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                                                </div>
-                                            @endif
-                                        </div>
-                                        <div class="ml-4 flex-1">
-                                            <div class="font-medium">{{ $tenant->full_name }}</div>
-                                            <div class="text-slate-500 text-xs mt-0.5">
-                                                {{ $tenant->relationship ? ucfirst($tenant->relationship) : 'No relationship set' }}
-                                            </div>
-                                            @if($tenant->contact_number || $tenant->email)
-                                                <div class="text-slate-500 text-xs mt-1">
-                                                    @if($tenant->contact_number)
-                                                        <span>{{ $tenant->contact_number }}</span>
-                                                    @endif
-                                                    @if($tenant->email)
-                                                        <span class="ml-2">{{ $tenant->email }}</span>
-                                                    @endif
-                                                </div>
-                                            @endif
-                                        </div>
-                                        <div class="flex items-center">
-                                            <span class="px-2 py-1 rounded-full text-xs {{ $tenant->status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                                {{ ucfirst($tenant->status) }}
-                                            </span>
-                                            <div class="dropdown ml-3">
-                                                <button class="dropdown-toggle btn px-2 py-1 box" aria-expanded="false" data-tw-toggle="dropdown">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
-                            </button>
-                            <div class="dropdown-menu w-40">
-                                <ul class="dropdown-content">
-                                    <li>
-                                                            <a href="javascript:;" class="dropdown-item edit-tenant" data-tenant-id="{{ $tenant->id }}">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                                                                Edit
-                                                            </a>
-                                    </li>
-                                                                                            <li>
-                                                            <a href="javascript:;" class="dropdown-item delete-tenant text-danger" data-tw-toggle="modal" data-tw-target="#delete-tenant-modal" data-tenant-id="{{ $tenant->id }}">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                                                                Delete
-                                                            </a>
-                                                        </li>
-                                </ul>
-                            </div>
-                        </div>
+                        @foreach($tenants as $tenant)
+                        <div class="tenant-item border-b border-slate-200/60 py-4 last:border-b-0" data-tenant-id="{{ $tenant->id }}">
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 flex-none image-fit">
+                                    @if($tenant->photo)
+                                    <img alt="{{ $tenant->full_name }}" class="rounded-full w-full h-full object-cover" src="{{ Storage::url('public/tenants/' . $tenant->photo) }}">
+                                    @else
+                                    <div class="rounded-full w-full h-full bg-slate-200 flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-slate-400">
+                                            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path>
+                                            <circle cx="12" cy="7" r="4"></circle>
+                                        </svg>
+                                    </div>
+                                    @endif
+                                </div>
+                                <div class="ml-4 flex-1">
+                                    <div class="font-medium">{{ $tenant->full_name }}</div>
+                                    <div class="text-slate-500 text-xs mt-0.5">
+                                        {{ $tenant->relationship ? ucfirst($tenant->relationship) : 'No relationship set' }}
+                                    </div>
+                                    @if($tenant->contact_number || $tenant->email)
+                                    <div class="text-slate-500 text-xs mt-1">
+                                        @if($tenant->contact_number)
+                                        <span>{{ $tenant->contact_number }}</span>
+                                        @endif
+                                        @if($tenant->email)
+                                        <span class="ml-2">{{ $tenant->email }}</span>
+                                        @endif
+                                    </div>
+                                    @endif
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="px-2 py-1 rounded-full text-xs {{ $tenant->status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                        {{ ucfirst($tenant->status) }}
+                                    </span>
+                                    <div class="dropdown ml-3">
+                                        <button class="dropdown-toggle btn px-2 py-1 box" aria-expanded="false" data-tw-toggle="dropdown">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+                                                <circle cx="12" cy="12" r="1"></circle>
+                                                <circle cx="19" cy="12" r="1"></circle>
+                                                <circle cx="5" cy="12" r="1"></circle>
+                                            </svg>
+                                        </button>
+                                        <div class="dropdown-menu w-40">
+                                            <ul class="dropdown-content">
+                                                <li>
+                                                    <a href="javascript:;" class="dropdown-item edit-tenant" data-tenant-id="{{ $tenant->id }}">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                                                            <path d="M12 20h9"></path>
+                                                            <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                                                        </svg>
+                                                        Edit
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="javascript:;" class="dropdown-item delete-tenant text-danger" data-tw-toggle="modal" data-tw-target="#delete-tenant-modal" data-tenant-id="{{ $tenant->id }}">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
+                                                            <polyline points="3 6 5 6 21 6"></polyline>
+                                                            <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+                                                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                                                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                                                        </svg>
+                                                        Delete
+                                                    </a>
+                                                </li>
+                                            </ul>
                                         </div>
                                     </div>
                                 </div>
-                            @endforeach
-                        @else
-                            <div class="text-center py-8">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-16 h-16 mx-auto text-slate-300 mb-4"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 00-3-3.87"></path><path d="M16 3.13a4 4 0 010 7.75"></path></svg>
-                                <p class="text-slate-500">No tenants added yet</p>
-                                <p class="text-slate-400 text-sm">Use the form on the left to add your first tenant</p>
                             </div>
+                        </div>
+                        @endforeach
+                        @else
+                        <div class="text-center py-8">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-16 h-16 mx-auto text-slate-300 mb-4">
+                                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 00-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 010 7.75"></path>
+                            </svg>
+                            <p class="text-slate-500">No tenants added yet</p>
+                            <p class="text-slate-400 text-sm">Use the form on the left to add your first tenant</p>
+                        </div>
                         @endif
                     </div>
                 </div>
-                                            </div>
+            </div>
             <!-- END: Tenant List -->
-                                            </div>
-                                            </div>
-                                        </div>
-    @endif
-    <!-- END: Add Tenant Tab -->
+        </div>
+    </div>
+</div>
+@endif
+<!-- END: Add Tenant Tab -->
 
 
 <!-- Delete Tenant Confirmation Modal -->
@@ -882,9 +954,12 @@
             <div class="modal-header">
                 <h2 class="font-medium text-base mr-auto">Edit Tenant</h2>
                 <button type="button" class="btn btn-outline-secondary w-8 h-8 mr-1" data-tw-dismiss="modal">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x w-4 h-4"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x w-4 h-4">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
                 </button>
-                                        </div>
+            </div>
             <div class="modal-body px-5 py-5">
                 <form id="editTenantForm">
                     @csrf
@@ -893,7 +968,7 @@
                         <div>
                             <label for="editTenantFullName" class="form-label">Full Name *</label>
                             <input id="editTenantFullName" name="full_name" type="text" class="form-control" required>
-                    </div>
+                        </div>
                         <div>
                             <label for="editTenantRelationship" class="form-label">Relationship</label>
                             <select id="editTenantRelationship" name="relationship" class="form-select">
@@ -906,7 +981,7 @@
                                 <option value="friend">Friend</option>
                                 <option value="boarder">Boarder</option>
                                 <option value="other">Other</option>
-                        </select>
+                            </select>
                         </div>
                         <div>
                             <label for="editTenantContact" class="form-label">Contact Number</label>
@@ -935,7 +1010,7 @@
                 <button type="button" class="btn btn-primary w-20" id="updateTenantBtn">Update</button>
             </div>
         </div>
-                </div>
+    </div>
 </div>
 
 <!-- Photo Upload Confirmation Modal -->
@@ -945,7 +1020,10 @@
             <div class="modal-header">
                 <h2 class="font-medium text-base mr-auto">Change Profile Photo</h2>
                 <button type="button" class="btn btn-outline-secondary w-8 h-8 mr-1" data-tw-dismiss="modal">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x w-4 h-4"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x w-4 h-4">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
                 </button>
             </div>
             <div class="modal-body px-5 py-10">
@@ -971,7 +1049,10 @@
             <div class="modal-header">
                 <h2 class="font-medium text-base mr-auto">Edit Business</h2>
                 <button type="button" class="btn btn-outline-secondary w-8 h-8 mr-1" data-tw-dismiss="modal">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x w-4 h-4"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x w-4 h-4">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
                 </button>
             </div>
             <div class="modal-body px-5 py-5">
@@ -1012,7 +1093,7 @@
                             <textarea id="editBusinessAddress" name="address" class="form-control" rows="3"></textarea>
                         </div>
                     </div>
-                    
+
                     <!-- Form buttons inside the form -->
                     <div class="modal-footer mt-5">
                         <button type="button" class="btn btn-outline-secondary w-20 mr-1" data-tw-dismiss="modal">Cancel</button>
@@ -1044,9 +1125,9 @@
 @endsection
 
 @push('scripts')
-    <!-- Toastify for notifications -->
-    <script src="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.css">
-    
-    <script src="{{ asset('js/profile-management/profile-management.js') }}"></script>
+<!-- Toastify for notifications -->
+<script src="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.min.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.css">
+
+<script src="{{ asset('js/profile-management/profile-management.js') }}"></script>
 @endpush

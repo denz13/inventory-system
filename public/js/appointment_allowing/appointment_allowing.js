@@ -3,6 +3,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize schedule management
     initializeScheduleManagement();
+    initializeSearchFromURL();
 });
 
 function initializeScheduleManagement() {
@@ -53,30 +54,94 @@ function initializeScheduleManagement() {
         });
     }
 
-    // Search functionality
+    // Search functionality - server-side
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            filterSchedules();
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                performServerSideSearch();
+            }
         });
+        
+        // Also trigger on input with debounce
+        searchInput.addEventListener('input', debounce(performServerSideSearch, 500));
     }
 
-    // Status filter
+    // Status filter - server-side
     document.querySelectorAll('[data-filter-type="status"]').forEach(button => {
         button.addEventListener('click', function() {
             const status = this.getAttribute('data-filter-value');
-            filterByStatus(status);
-            updateStatusFilterButton(status);
+            applyServerSideStatusFilter(status);
         });
     });
 
-    // Reset filters
+    // Reset filters - server-side
     const resetBtn = document.getElementById('resetFiltersBtn');
     if (resetBtn) {
         resetBtn.addEventListener('click', function() {
-            resetFilters();
+            window.location.href = window.location.pathname;
         });
     }
+}
+
+// Initialize search input from URL parameter
+function initializeSearchFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchValue = urlParams.get('search');
+    const searchInput = document.getElementById('searchInput');
+    
+    if (searchInput && searchValue) {
+        searchInput.value = searchValue;
+    }
+}
+
+// Server-side search function
+function performServerSideSearch() {
+    const searchValue = document.getElementById('searchInput').value;
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (searchValue) {
+        urlParams.set('search', searchValue);
+    } else {
+        urlParams.delete('search');
+    }
+    
+    // Reset to page 1 when searching
+    urlParams.delete('page');
+    
+    // Redirect with new search parameter
+    window.location.search = urlParams.toString();
+}
+
+// Server-side status filter
+function applyServerSideStatusFilter(status) {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (status === 'all') {
+        urlParams.delete('status');
+    } else {
+        urlParams.set('status', status);
+    }
+    
+    // Reset to page 1 when filtering
+    urlParams.delete('page');
+    
+    // Redirect with new filter
+    window.location.search = urlParams.toString();
+}
+
+// Debounce function
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
 }
 
 function createSchedule() {
@@ -355,138 +420,6 @@ function deleteSchedule(scheduleId) {
     });
 }
 
-function filterSchedules() {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const rows = document.querySelectorAll('#scheduleTable tbody tr');
-    
-    let visibleCount = 0;
-    
-    rows.forEach(row => {
-        // Check if row has data-status attribute (actual data row, not empty state)
-        if (!row.hasAttribute('data-status')) {
-            return; // Skip empty/no-results rows
-        }
-        
-        const allowNumberElement = row.querySelector('td:first-child .font-medium');
-        
-        // Safety check - if element doesn't exist, skip this row
-        if (!allowNumberElement) {
-            return;
-        }
-        
-        const allowNumber = allowNumberElement.textContent.toLowerCase();
-        
-        if (allowNumber.includes(searchTerm)) {
-            row.style.display = '';
-            visibleCount++;
-        } else {
-            row.style.display = 'none';
-        }
-    });
-    
-    updateFilteredCount(visibleCount);
-    toggleNoResultsMessage(visibleCount);
-}
-
-function filterByStatus(status) {
-    const rows = document.querySelectorAll('#scheduleTable tbody tr');
-    let visibleCount = 0;
-    
-    rows.forEach(row => {
-        // Check if row has data-status attribute (actual data row, not empty state)
-        if (!row.hasAttribute('data-status')) {
-            return; // Skip empty/no-results rows
-        }
-        
-        const rowStatus = row.getAttribute('data-status');
-        
-        if (status === 'all' || rowStatus === status) {
-            row.style.display = '';
-            visibleCount++;
-        } else {
-            row.style.display = 'none';
-        }
-    });
-    
-    updateFilteredCount(visibleCount);
-    toggleNoResultsMessage(visibleCount);
-}
-
-function updateStatusFilterButton(status) {
-    const button = document.getElementById('statusFilterBtn');
-    const statusText = status === 'all' ? 'All' : status;
-    button.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
-            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-        </svg>
-        Status: ${statusText}
-    `;
-}
-
-function updateFilteredCount(count) {
-    const filteredCountElement = document.getElementById('filtered-count');
-    if (filteredCountElement) {
-        filteredCountElement.textContent = count;
-    }
-}
-
-function toggleNoResultsMessage(visibleCount) {
-    const noResultsRow = document.getElementById('no-results-row');
-    const noSchedulesRow = document.getElementById('no-schedules-row');
-    const dataRows = document.querySelectorAll('#scheduleTable tbody tr[data-status]');
-    
-    // If there are data rows (schedules exist)
-    if (dataRows.length > 0) {
-        // Hide the "No schedules found" message
-        if (noSchedulesRow) {
-            noSchedulesRow.style.display = 'none';
-        }
-        
-        // Show/hide "No results found" based on visible count
-        if (noResultsRow) {
-            if (visibleCount === 0) {
-                noResultsRow.classList.remove('hidden');
-                noResultsRow.style.display = '';
-            } else {
-                noResultsRow.classList.add('hidden');
-                noResultsRow.style.display = 'none';
-            }
-        }
-    } else {
-        // No data rows exist, show "No schedules found"
-        if (noSchedulesRow) {
-            noSchedulesRow.style.display = '';
-        }
-        if (noResultsRow) {
-            noResultsRow.classList.add('hidden');
-            noResultsRow.style.display = 'none';
-        }
-    }
-}
-
-function resetFilters() {
-    // Reset search input
-    document.getElementById('searchInput').value = '';
-    
-    // Reset status filter
-    updateStatusFilterButton('all');
-    
-    // Show all data rows
-    const rows = document.querySelectorAll('#scheduleTable tbody tr[data-status]');
-    rows.forEach(row => {
-        row.style.display = '';
-    });
-    
-    // Hide no results message
-    const noResultsRow = document.getElementById('no-results-row');
-    if (noResultsRow) {
-        noResultsRow.classList.add('hidden');
-        noResultsRow.style.display = 'none';
-    }
-    
-    // Update count
-    updateFilteredCount(rows.length);
-}
 
 function showSuccessToast(message) {
     // Use the same pattern as feedback system

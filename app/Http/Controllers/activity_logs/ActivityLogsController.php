@@ -8,15 +8,32 @@ use App\Models\ActivityLog;
 
 class ActivityLogsController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         // Get per_page from request, default to 10
-        $perPage = request('per_page', 10);
+        $perPage = $request->input('per_page', 10);
         
-        // Get all activity logs with user relationship, ordered by most recent
-        $activityLogs = ActivityLog::with('user')
-            ->orderBy('created_at', 'desc')
-            ->paginate($perPage);
+        // Start with base query
+        $query = ActivityLog::with('user');
+        
+        // Apply search filter
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                // Search in activity log description
+                $q->where('description', 'like', "%{$search}%")
+                  // Search in user name and email
+                  ->orWhereHas('user', function($userQuery) use ($search) {
+                      $userQuery->where('name', 'like', "%{$search}%")
+                                ->orWhere('email', 'like', "%{$search}%");
+                  });
+            });
+        }
+        
+        // Order and paginate
+        $activityLogs = $query->orderBy('created_at', 'desc')
+            ->paginate($perPage)
+            ->appends($request->except('page'));
 
         return view('activity_logs.activity_logs', compact('activityLogs'));
     }

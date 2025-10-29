@@ -10,15 +10,40 @@ use Illuminate\Support\Facades\Log;
 
 class LandlordManagementController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         // Get per_page from request, default to 10
-        $perPage = request('per_page', 10);
+        $perPage = $request->input('per_page', 10);
         
-        // Get all landlord applications with user relationship
-        $landlords = applied_landlord::with('user')
-            ->orderBy('created_at', 'desc')
-            ->paginate($perPage);
+        // Start query with user relationship
+        $query = applied_landlord::with('user');
+        
+        // Search functionality
+        if ($request->has('search') && $request->search !== '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('first_name', 'LIKE', "%{$search}%")
+                  ->orWhere('last_name', 'LIKE', "%{$search}%")
+                  ->orWhere('middle_initial', 'LIKE', "%{$search}%")
+                  ->orWhere('email', 'LIKE', "%{$search}%")
+                  ->orWhere('phone_number', 'LIKE', "%{$search}%")
+                  ->orWhere('property_name', 'LIKE', "%{$search}%")
+                  ->orWhere('unit_number', 'LIKE', "%{$search}%")
+                  ->orWhere('unit_type', 'LIKE', "%{$search}%")
+                  ->orWhere('nationality', 'LIKE', "%{$search}%");
+            });
+        }
+        
+        // Status filter
+        if ($request->has('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+        
+        // Order by creation date
+        $query->orderBy('created_at', 'desc');
+        
+        // Paginate results and append query parameters
+        $landlords = $query->paginate($perPage)->appends($request->except('page'));
 
         return view('landlord-management.landlord-management', compact('landlords'));
     }

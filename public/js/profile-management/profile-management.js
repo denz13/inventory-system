@@ -8,6 +8,30 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeBusinessManagement();
 });
 
+// Toggle Password Visibility Function
+window.togglePasswordVisibility = function(inputId, buttonElement) {
+    const input = document.getElementById(inputId);
+    const eyeIcon = buttonElement.querySelector('.eye-icon');
+    const eyeSlashIcon = buttonElement.querySelector('.eye-slash-icon');
+    
+    if (!input || !eyeIcon || !eyeSlashIcon) {
+        console.error('Password toggle elements not found');
+        return;
+    }
+    
+    if (input.type === 'password') {
+        // Show password
+        input.type = 'text';
+        eyeIcon.classList.add('hidden');
+        eyeSlashIcon.classList.remove('hidden');
+    } else {
+        // Hide password
+        input.type = 'password';
+        eyeIcon.classList.remove('hidden');
+        eyeSlashIcon.classList.add('hidden');
+    }
+};
+
 // Global variable to store selected file
 let selectedPhotoFile = null;
 

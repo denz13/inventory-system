@@ -12,11 +12,42 @@ use Illuminate\Support\Facades\DB;
 
 class PermissionSettingsController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $permissionSettings = permission_settings::with(['user', 'permissionSettingsList.module'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        // Get per_page from request, default to 10
+        $perPage = $request->input('per_page', 10);
+        
+        // Start with base query
+        $query = permission_settings::with(['user', 'permissionSettingsList.module']);
+        
+        // Apply search filter - searches user name, email
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->whereHas('user', function($userQuery) use ($search) {
+                    $userQuery->where('name', 'like', "%{$search}%")
+                             ->orWhere('email', 'like', "%{$search}%");
+                });
+            });
+        }
+        
+        // Apply status filter
+        if ($request->has('status') && $request->status != '' && $request->status != 'all') {
+            $query->where('status', $request->status);
+        }
+        
+        // Apply module filter
+        if ($request->has('module_filter') && $request->module_filter != '' && $request->module_filter != 'all') {
+            $query->whereHas('permissionSettingsList', function($permQuery) use ($request) {
+                $permQuery->where('module_id', $request->module_filter);
+            });
+        }
+        
+        // Order and paginate
+        $permissionSettings = $query->orderBy('created_at', 'desc')
+            ->paginate($perPage)
+            ->appends($request->except('page'));
+        
         $users = User::where('active', 1)->orderBy('name')->get();
         $modules = module::where('status', 'active')->orderBy('module_name')->get();
         

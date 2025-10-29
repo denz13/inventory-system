@@ -11,10 +11,37 @@ use Carbon\Carbon;
 
 class AppointmentAllowingController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // Get appointment schedule settings with pagination
-        $schedules = appointment_schedule_daily::orderBy('created_at', 'desc')->paginate(10);
+        // Get per_page from request, default to 10
+        $perPage = $request->input('per_page', 10);
+        
+        // Start with base query
+        $query = appointment_schedule_daily::query();
+        
+        // Apply search filter - search by allow_number_of_appointment and date range
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                // Search in allow_number_of_appointment
+                $q->where('allow_number_of_appointment', 'like', "%{$search}%")
+                  // Search in related schedule dates
+                  ->orWhereHas('scheduleDates', function($dateQuery) use ($search) {
+                      $dateQuery->where('dates', 'like', "%{$search}%")
+                                ->orWhere('day', 'like', "%{$search}%");
+                  });
+            });
+        }
+        
+        // Apply status filter
+        if ($request->has('status') && $request->status != '' && $request->status != 'all') {
+            $query->where('status', $request->status);
+        }
+        
+        // Order and paginate
+        $schedules = $query->orderBy('created_at', 'desc')
+            ->paginate($perPage)
+            ->appends($request->except('page'));
         
         // Get distinct statuses
         $statuses = appointment_schedule_daily::select('status')->distinct()->pluck('status')->toArray();

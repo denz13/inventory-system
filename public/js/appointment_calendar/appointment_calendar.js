@@ -1,12 +1,31 @@
-import "@fullcalendar/core/vdom";
-import { Calendar } from "@fullcalendar/core";
-import interactionPlugin, { Draggable } from "@fullcalendar/interaction";
-import dayGridPlugin from "@fullcalendar/daygrid";
-import timeGridPlugin from "@fullcalendar/timegrid";
-import listPlugin from "@fullcalendar/list";
-
-(function () {
-    if ($("#calendar").length) {
+// Using global FullCalendar from CDN
+// Wait for jQuery and FullCalendar to be available
+(function checkAndInit() {
+    if (typeof jQuery === 'undefined' || typeof $ === 'undefined') {
+        console.log('Waiting for jQuery...');
+        setTimeout(checkAndInit, 100);
+        return;
+    }
+    
+    if (typeof FullCalendar === 'undefined') {
+        console.log('Waiting for FullCalendar...');
+        setTimeout(checkAndInit, 100);
+        return;
+    }
+    
+    // Wait for common.js to be loaded
+    if (typeof modal_show === 'undefined' || typeof modal_hide === 'undefined') {
+        console.log('Waiting for common.js (modal_show, modal_hide functions)...');
+        setTimeout(checkAndInit, 100);
+        return;
+    }
+    
+    console.log('jQuery, FullCalendar, and common.js loaded successfully');
+    console.log('modal_show function available:', typeof modal_show === 'function');
+    console.log('modal_hide function available:', typeof modal_hide === 'function');
+    
+    $(document).ready(function() {
+        if ($("#calendar").length) {
         // Get appointments data from window object (passed from Blade)
         let appointments = window.appointmentsData || [];
         
@@ -64,15 +83,16 @@ import listPlugin from "@fullcalendar/list";
                     remarks: appointment.remarks,
                     status: appointment.status,
                     user_name: appointment.user_name,
-                    category_name: appointment.category_name
+                    category_name: appointment.category_name,
+                    time: appointment.time
                 }
             };
         }).filter(event => event !== null); // Remove null entries
         
        
-        // Initialize draggable for sidebar events
-        if ($("#calendar-events").length) {
-            new Draggable($("#calendar-events")[0], {
+        // Initialize draggable for sidebar events (if FullCalendar.Draggable exists)
+        if ($("#calendar-events").length && typeof FullCalendar !== 'undefined' && FullCalendar.Draggable) {
+            new FullCalendar.Draggable($("#calendar-events")[0], {
                 itemSelector: ".event",
                 eventData: function (eventEl) {
                     return {
@@ -87,13 +107,7 @@ import listPlugin from "@fullcalendar/list";
             });
         }
 
-        let calendar = new Calendar($("#calendar")[0], {
-            plugins: [
-                interactionPlugin,
-                dayGridPlugin,
-                timeGridPlugin,
-                listPlugin,
-            ],
+        let calendar = new FullCalendar.Calendar($("#calendar")[0], {
             droppable: false,
             headerToolbar: {
                 left: "prev,next today",
@@ -105,11 +119,15 @@ import listPlugin from "@fullcalendar/list";
             dayMaxEvents: true,
             events: events,
             eventClick: function(info) {
+                // Prevent default behavior
+                info.jsEvent.preventDefault();
+                
                 // Show appointment details in modal
                 const event = info.event;
                 console.log('Appointment clicked:', event);
                 console.log('Event title:', event.title);
                 console.log('Event extendedProps:', event.extendedProps);
+                console.log('Event ID:', event.id);
                 
                 // Load appointment details
                 loadAppointmentDetails(event);
@@ -143,6 +161,16 @@ import listPlugin from "@fullcalendar/list";
         
         console.log('Calendar rendered successfully');
         console.log('Calendar events after render:', calendar.getEvents());
+        console.log('Total events loaded:', calendar.getEvents().length);
+        
+        // Add click handler to all rendered events
+        setTimeout(() => {
+            const eventElements = document.querySelectorAll('.fc-event');
+            console.log('Found event elements:', eventElements.length);
+            eventElements.forEach((el, index) => {
+                console.log(`Event ${index}:`, el);
+            });
+        }, 1000);
         
         // Handle view button clicks in sidebar
         document.querySelectorAll('[data-appointment-id]').forEach(button => {
@@ -165,7 +193,8 @@ import listPlugin from "@fullcalendar/list";
                             remarks: appointment.remarks,
                             status: appointment.status,
                             user_name: appointment.user_name,
-                            category_name: appointment.category_name
+                            category_name: appointment.category_name,
+                            time: appointment.time
                         }
                     };
                     
@@ -187,6 +216,7 @@ import listPlugin from "@fullcalendar/list";
         // Add modal close handlers
         initializeModalHandlers();
     }
+    });
 })();
 
 
@@ -195,68 +225,59 @@ function initializeModalHandlers() {
     // Close modal when clicking close button
     const closeButtons = document.querySelectorAll('#appointmentModal [data-tw-dismiss="modal"]');
     closeButtons.forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
             closeAppointmentModal();
         });
     });
     
     // Close modal when clicking backdrop
+    const modal = document.getElementById('appointmentModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            // Close only if clicking the modal backdrop, not the modal content
+            if (e.target === modal) {
+                closeAppointmentModal();
+            }
+        });
+        
+        // Listen for modal hidden event
+        modal.addEventListener('hidden.tw.modal', function() {
+            console.log('Modal hidden');
+        });
+    }
+    
+    // Also handle backdrop clicks
     document.addEventListener('click', function(e) {
-        if (e.target.id === 'appointmentModal' || e.target.id === 'modal-backdrop') {
+        if (e.target.id === 'modal-backdrop') {
             closeAppointmentModal();
         }
     });
 }
 
-// Function to show modal
+// Function to show modal using the project's common modal_show function
 function showAppointmentModal() {
-    const modal = document.getElementById('appointmentModal');
+    console.log('Showing appointment modal...');
     
-    if (modal) {
-        console.log('Showing appointment modal...');
-        
-        // Force remove any conflicting styles
-        modal.style.display = 'flex';
-        modal.style.visibility = 'visible';
-        modal.style.opacity = '1';
-        modal.classList.add('show');
-        modal.classList.remove('fade');
-        modal.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('modal-open');
-        
-        // Add backdrop if it doesn't exist
-        let backdrop = document.getElementById('modal-backdrop');
-        if (!backdrop) {
-            backdrop = document.createElement('div');
-            backdrop.className = 'modal-backdrop fade show';
-            backdrop.id = 'modal-backdrop';
-            backdrop.style.zIndex = '1040';
-            document.body.appendChild(backdrop);
-        }
-        
-        // Force modal to be visible
-        modal.style.zIndex = '1055';
-        
-        console.log('Modal displayed successfully');
+    // Use the project's common modal_show function from common.js
+    if (typeof modal_show === 'function') {
+        modal_show('appointmentModal');
+        console.log('Modal displayed successfully via modal_show()');
     } else {
-        console.error('Modal element not found!');
+        console.error('modal_show function not found! Make sure common.js is loaded.');
     }
 }
 
-// Function to close modal
+// Function to close modal using the project's common modal_hide function
 function closeAppointmentModal() {
-    const modal = document.getElementById('appointmentModal');
-    const backdrop = document.getElementById('modal-backdrop');
+    console.log('Closing appointment modal...');
     
-    if (modal) {
-        modal.style.display = 'none';
-        modal.classList.remove('show');
-        modal.setAttribute('aria-hidden', 'true');
-        document.body.classList.remove('modal-open');
-    }
-    
-    if (backdrop) {
-        backdrop.remove();
+    // Use the project's common modal_hide function from common.js
+    if (typeof modal_hide === 'function') {
+        modal_hide('appointmentModal');
+        console.log('Modal closed successfully via modal_hide()');
+    } else {
+        console.error('modal_hide function not found! Make sure common.js is loaded.');
     }
 }
 
@@ -327,6 +348,14 @@ function displayAppointmentDetails(event) {
                 <label class="form-label text-base font-semibold text-slate-700">Appointment Date</label>
                 <div class="form-control mt-2 p-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700">
                     ${event.start ? formatAppointmentDate(event.start) : 'N/A'}
+                </div>
+            </div>
+            
+            <!-- Time -->
+            <div class="mb-6">
+                <label class="form-label text-base font-semibold text-slate-700">Appointment Time</label>
+                <div class="form-control mt-2 p-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700">
+                    ${event.extendedProps.time || 'N/A'}
                 </div>
             </div>
             

@@ -1,61 +1,97 @@
 document.addEventListener('DOMContentLoaded', function() {
-    let currentStatusFilter = 'all';
+    // Initialize filter states from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentSearch = urlParams.get('search') || '';
+    const currentStatusFilter = urlParams.get('status') || 'all';
     
-    // Initialize search functionality
+    // Initialize search input value from URL
     const searchInput = document.getElementById('searchInput');
+    if (searchInput && currentSearch) {
+        searchInput.value = currentSearch;
+    }
+    
+    // Update filter button texts from URL parameters
+    updateFilterButtonTexts();
+    
+    // Search functionality - trigger on Enter key or after typing stops
+    let searchTimeout;
     if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                performServerSideSearch();
+            }
+        });
+        
         searchInput.addEventListener('input', function() {
-            applyAllFilters();
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                performServerSideSearch();
+            }, 500);
         });
     }
 
-    // Universal filter handler
+    // Universal filter handler - Server-side filtering
     document.addEventListener('click', function(e) {
         if (e.target.matches('[data-filter-type]')) {
             const filterType = e.target.getAttribute('data-filter-type');
             const filterValue = e.target.getAttribute('data-filter-value');
             
-            const dropdown = e.target.closest('.dropdown');
-            
-            // Update the appropriate filter state and button
-            if (filterType === 'status') {
-                currentStatusFilter = filterValue;
-                updateFilterButton('statusFilterBtn', filterValue === 'all' ? 'Status: All' : `Status: ${filterValue.charAt(0).toUpperCase() + filterValue.slice(1)}`);
-            }
-            
-            // Apply all filters
-            applyAllFilters();
-            
-            // Close dropdown
-            if (dropdown) {
-                const dropdownToggle = dropdown.querySelector('.dropdown-toggle');
-                if (dropdownToggle) {
-                    dropdownToggle.setAttribute('aria-expanded', 'false');
-                    const dropdownMenu = dropdown.querySelector('.dropdown-menu');
-                    if (dropdownMenu) {
-                        dropdownMenu.classList.remove('show');
-                    }
-                }
-            }
+            // Apply server-side filter
+            applyServerSideFilter(filterType, filterValue);
         }
     });
 
-    // Reset filters button
+    // Reset filters button - Server-side reset
     document.getElementById('resetFiltersBtn')?.addEventListener('click', function() {
-        currentStatusFilter = 'all';
+        // Redirect to page without any filters
+        window.location.href = window.location.pathname;
+    });
+    
+    // Perform server-side search
+    function performServerSideSearch() {
+        const searchTerm = searchInput ? searchInput.value.trim() : '';
+        const urlParams = new URLSearchParams(window.location.search);
         
-        if (searchInput) {
-            searchInput.value = '';
+        if (searchTerm) {
+            urlParams.set('search', searchTerm);
+        } else {
+            urlParams.delete('search');
         }
         
-        // Reset button texts
-        updateFilterButton('statusFilterBtn', 'Status: All');
+        // Reset to page 1 when searching
+        urlParams.delete('page');
         
-        // Apply filters (which will show all)
-        applyAllFilters();
+        // Redirect with new search parameter
+        window.location.search = urlParams.toString();
+    }
+    
+    // Apply server-side filter
+    function applyServerSideFilter(filterType, filterValue) {
+        const urlParams = new URLSearchParams(window.location.search);
         
-        showToast('All filters have been reset', 'success');
-    });
+        if (filterValue === 'all') {
+            urlParams.delete(filterType);
+        } else {
+            urlParams.set(filterType, filterValue);
+        }
+        
+        // Reset to page 1 when filtering
+        urlParams.delete('page');
+        
+        // Redirect with new filter parameters
+        window.location.search = urlParams.toString();
+    }
+    
+    // Update filter button texts from URL parameters
+    function updateFilterButtonTexts() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const status = urlParams.get('status') || 'all';
+        
+        // Update status button
+        const statusText = status === 'all' ? 'Status: All' : `Status: ${status.charAt(0).toUpperCase() + status.slice(1)}`;
+        updateFilterButton('statusFilterBtn', statusText);
+    }
 
     // Update filter button text
     function updateFilterButton(buttonId, text) {
@@ -67,76 +103,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (icon) {
                 button.insertBefore(icon, button.firstChild);
             }
-        }
-    }
-
-    // Apply all filters
-    function applyAllFilters() {
-        const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
-        const businessRows = Array.from(document.querySelectorAll('#businessTable tbody tr.intro-x'));
-        
-        if (businessRows.length === 0) return;
-        
-        let visibleCount = 0;
-        
-        businessRows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            const rowStatus = row.getAttribute('data-status');
-            
-            // Check search match
-            const matchesSearch = searchTerm === '' || text.includes(searchTerm);
-            
-            // Check status match
-            const matchesStatus = currentStatusFilter === 'all' || rowStatus === currentStatusFilter;
-            
-            // Show/hide row based on both filters
-            if (matchesSearch && matchesStatus) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
-            }
-        });
-        
-        // Update filtered count
-        const filteredCountElement = document.getElementById('filtered-count');
-        if (filteredCountElement) {
-            filteredCountElement.textContent = visibleCount;
-        }
-        
-        // Show/hide no results message
-        updateNoResultsMessage(searchTerm, currentStatusFilter, visibleCount, businessRows.length);
-    }
-
-    // Update no results message
-    function updateNoResultsMessage(searchTerm, statusFilter, visibleCount, totalRows) {
-        const tbody = document.querySelector('#businessTable tbody');
-        let noDataRow = tbody?.querySelector('tr.no-data-found');
-        
-        // Remove existing no data row if it exists
-        if (noDataRow) {
-            noDataRow.remove();
-        }
-        
-        // Check if we should show "no results" message
-        const hasActiveFilters = searchTerm !== '' || currentStatusFilter !== 'all';
-        
-        if (visibleCount === 0 && hasActiveFilters && totalRows > 0 && tbody) {
-            // Create new no data row
-            noDataRow = document.createElement('tr');
-            noDataRow.className = 'no-data-found';
-            noDataRow.innerHTML = `
-                <td colspan="9" class="text-center py-8">
-                    <div class="text-slate-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
-                            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
-                        <div class="font-medium">No businesses found</div>
-                        <div class="text-sm">No businesses match your current filters. Try adjusting your filters.</div>
-                    </div>
-                </td>
-            `;
-            tbody.appendChild(noDataRow);
         }
     }
 

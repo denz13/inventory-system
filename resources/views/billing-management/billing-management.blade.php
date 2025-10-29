@@ -13,8 +13,17 @@
     </div>
 </div>
 
-<h2 class="intro-y text-lg font-medium mt-10">
+<h2 class="intro-y text-lg font-medium mt-10 flex items-center">
     Billing Management
+    @if($hasOverdueBills)
+        <button type="button" class="ml-3 btn btn-warning btn-sm" id="sendOverdueNotificationsBtn" data-overdue-count="{{ $overdueCount }}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            Send Overdue Notifications ({{ $overdueCount }})
+        </button>
+    @endif
 </h2>
 
 <!-- Notifications -->
@@ -505,6 +514,49 @@
     </div>
 </div>
 <!-- END: Overdue Billing Alert Modal -->
+
+<!-- BEGIN: Send Overdue Notifications Confirmation Modal -->
+<div id="send-overdue-notifications-modal" class="modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body p-0">
+                <div class="p-5 text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bell w-16 h-16 text-warning mx-auto mt-3">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    <div class="text-3xl mt-5">Send Overdue Notifications?</div>
+                    <div class="text-slate-500 mt-2">
+                        Do you want to send overdue payment reminders to <strong id="overdue-user-count">0</strong> user(s)?
+                    </div>
+                    <div class="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                        <div class="text-orange-800 font-medium text-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-1">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                            This will send notifications to all users with overdue bills
+                        </div>
+                    </div>
+                </div>
+                <div class="px-5 pb-8 text-center">
+                    <div class="flex justify-center gap-2">
+                        <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-24 mr-1">Cancel</button>
+                        <button type="button" class="btn btn-warning w-32" id="confirmSendOverdueBtn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1 inline-block">
+                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                            </svg>
+                            Send Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- END: Send Overdue Notifications Confirmation Modal -->
 
 @endsection
 

@@ -10,16 +10,37 @@ use Illuminate\Support\Facades\Log;
 
 class LandlordPermissionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         // Get per_page from request, default to 10
-        $perPage = request('per_page', 10);
+        $perPage = $request->input('per_page', 10);
         
-        // Get only approved landlords with user relationship
-        $approvedLandlords = applied_landlord::with('user')
-            ->where('status', 'approved')
-            ->orderBy('created_at', 'desc')
-            ->paginate($perPage);
+        // Start with base query
+        $query = applied_landlord::with('user')
+            ->where('status', 'approved');
+        
+        // Apply search filter - searches across multiple fields
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone_number', 'like', "%{$search}%")
+                  ->orWhere('property_name', 'like', "%{$search}%")
+                  ->orWhere('unit_number', 'like', "%{$search}%")
+                  ->orWhere('unit_type', 'like', "%{$search}%")
+                  ->orWhere('nationality', 'like', "%{$search}%")
+                  ->orWhereHas('user', function($userQuery) use ($search) {
+                      $userQuery->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+        
+        // Order and paginate
+        $approvedLandlords = $query->orderBy('created_at', 'desc')
+            ->paginate($perPage)
+            ->appends($request->except('page'));
 
         return view('landlord_permission.landlord_permission', compact('approvedLandlords'));
     }

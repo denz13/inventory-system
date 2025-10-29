@@ -1,25 +1,34 @@
 // Notification Settings JavaScript
 document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
+    initializeSearchFromURL();
 });
 
 function initializeEventListeners() {
-    // Search functionality
+    // Search functionality - trigger on Enter key
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
-        searchInput.addEventListener('input', debounce(handleSearch, 300));
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                performServerSideSearch();
+            }
+        });
+        
+        // Also trigger on input with debounce
+        searchInput.addEventListener('input', debounce(performServerSideSearch, 500));
     }
 
-    // Filter functionality
+    // Filter functionality - server-side
     document.addEventListener('click', function(e) {
         if (e.target.closest('[data-filter]')) {
             const filter = e.target.closest('[data-filter]').getAttribute('data-filter');
-            handleStatusFilter(filter);
+            applyServerSideStatusFilter(filter);
         }
         
         if (e.target.closest('[data-module-filter]')) {
             const filter = e.target.closest('[data-module-filter]').getAttribute('data-module-filter');
-            handleModuleFilter(filter);
+            applyServerSideModuleFilter(filter);
         }
     });
 
@@ -74,66 +83,67 @@ function initializeEventListeners() {
     }
 }
 
-function handleSearch() {
-    const searchValue = document.getElementById('searchInput').value.toLowerCase();
-    const tableRows = document.querySelectorAll('tbody tr.intro-x');
+// Initialize search input from URL parameter
+function initializeSearchFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchValue = urlParams.get('search');
+    const searchInput = document.getElementById('searchInput');
     
-    tableRows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        if (text.includes(searchValue) || searchValue === '') {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
-    });
-    
-    updateFilteredCount();
-}
-
-function handleStatusFilter(filter) {
-    const tableRows = document.querySelectorAll('tbody tr.intro-x');
-    
-    tableRows.forEach(row => {
-        const status = row.getAttribute('data-status');
-        if (filter === 'all' || status === filter) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
-    });
-    
-    updateFilteredCount();
-}
-
-function handleModuleFilter(filter) {
-    const tableRows = document.querySelectorAll('tbody tr.intro-x');
-    
-    tableRows.forEach(row => {
-        const moduleId = row.getAttribute('data-module');
-        if (filter === 'all' || moduleId === filter) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
-    });
-    
-    updateFilteredCount();
-}
-
-function updateFilteredCount() {
-    const allRows = document.querySelectorAll('tbody tr.intro-x');
-    let visibleCount = 0;
-    
-    allRows.forEach(row => {
-        if (row.style.display !== 'none') {
-            visibleCount++;
-        }
-    });
-    
-    const filteredCount = document.getElementById('filtered-count');
-    if (filteredCount) {
-        filteredCount.textContent = visibleCount;
+    if (searchInput && searchValue) {
+        searchInput.value = searchValue;
     }
+}
+
+// Server-side search function
+function performServerSideSearch() {
+    const searchValue = document.getElementById('searchInput').value;
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (searchValue) {
+        urlParams.set('search', searchValue);
+    } else {
+        urlParams.delete('search');
+    }
+    
+    // Reset to page 1 when searching
+    urlParams.delete('page');
+    
+    // Redirect with new search parameter
+    window.location.search = urlParams.toString();
+}
+
+// Server-side status filter
+function applyServerSideStatusFilter(filter) {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (filter === 'all') {
+        urlParams.delete('status');
+    } else {
+        urlParams.set('status', filter);
+    }
+    
+    // Reset to page 1 when filtering
+    urlParams.delete('page');
+    
+    // Redirect with new filter
+    window.location.search = urlParams.toString();
+}
+
+// Server-side module filter
+function applyServerSideModuleFilter(filter) {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (filter === 'all') {
+        urlParams.delete('module_filter');
+    } else {
+        urlParams.set('module_filter', filter);
+    }
+    
+    // Reset to page 1 when filtering
+    urlParams.delete('page');
+    
+    // Redirect with new filter
+    window.location.search = urlParams.toString();
 }
 
 function loadNotificationSettingDetails(settingId) {
@@ -177,6 +187,12 @@ function displayNotificationSettingDetails(setting) {
     const updatedDate = setting.updated_at ? 
         new Date(setting.updated_at).toLocaleString() : 'N/A';
     
+    // Format module name to title case
+    const formatModuleName = (name) => {
+        if (!name) return 'N/A';
+        return name.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+    };
+    
     detailsDiv.innerHTML = `
         <div class="p-6">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -206,7 +222,7 @@ function displayNotificationSettingDetails(setting) {
                         <div>
                             <label class="form-label text-sm font-semibold text-slate-700">Module</label>
                             <div class="form-control mt-1 bg-white">
-                                ${setting.module ? `<span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full font-medium">${setting.module.module_name}</span>` : 'N/A'}
+                                ${setting.module ? `<span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full font-medium">${formatModuleName(setting.module.module_name)}</span>` : 'N/A'}
                             </div>
                         </div>
                         <div>

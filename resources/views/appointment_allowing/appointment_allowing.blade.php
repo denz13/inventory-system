@@ -117,7 +117,7 @@
         </button>
         
         <div class="hidden md:block mx-auto text-slate-500">
-            Showing <span id="filtered-count">{{ $schedules->count() }}</span> of <span id="total-count">{{ $schedules->total() }}</span> entries
+            Showing {{ $schedules->count() }} of {{ $schedules->total() }} entries
         </div>
         <div class="w-full sm:w-auto mt-3 sm:mt-0 sm:ml-auto md:ml-0">
             <div class="w-56 relative text-slate-500">
@@ -429,5 +429,5 @@
     <script src="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.min.js"></script>
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.css">
     
-    <script src="{{ asset('js/appointment_allowing/appointment_allowing.js') }}"></script>
+    <script src="{{ asset('js/appointment_allowing/appointment_allowing.js?v=' . time()) }}"></script>
 @endpush

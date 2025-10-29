@@ -239,7 +239,7 @@
             <a href="javascript:;" class="side-menu">
                 <div class="side-menu__icon"> <i data-lucide="trello"></i> </div>
                 <div class="side-menu__title">
-                    Information 
+                    Management 
                     <div class="side-menu__sub-icon "> <i data-lucide="chevron-down"></i> </div>
                 </div>
             </a>
@@ -341,27 +341,30 @@
                     </a>
                 </li>
                 @endif
-                
+                @if(auth()->user()->hasPermission('guest chatbot'))
                 <li>
                     <a href="{{ route('chatbot.index') }}" class="side-menu">
                         <div class="side-menu__icon"> <i data-lucide="message-circle"></i> </div>
                         <div class="side-menu__title"> Guest Chatbot </div>
                     </a>
                 </li>
-
+                @endif
+                @if(auth()->user()->hasPermission('landlord management'))
                 <li>
                     <a href="{{ route('landlord-management.index') }}" class="side-menu">
                         <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
                         <div class="side-menu__title"> Landlord Management </div>
                     </a>
                 </li>
+                @endif
+                @if(auth()->user()->hasPermission('calendar'))
                 <li>
                     <a href="{{ route('calendar.index') }}" class="side-menu">
                         <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
                         <div class="side-menu__title"> Calendar </div>
                     </a>
                 </li>
-               
+                @endif
             </ul>
         </li>
         @endif
@@ -807,6 +810,7 @@
         </li>
         @endif
         <li>
+            @if(auth()->user()->hasPermission('activity logs'))
             <a href="javascript:;" class="side-menu">
                 <div class="side-menu__icon"> <i data-lucide="hard-drive"></i> </div>
                 <div class="side-menu__title">
@@ -823,15 +827,16 @@
                     </a>
                 </li>
                 @endif
-                @if(auth()->user()->hasPermission('user login'))
+                <!-- @if(auth()->user()->hasPermission('user login'))
                 <li>
                     <a href="{{ route('users-login.index') }}" class="side-menu">
                         <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
                         <div class="side-menu__title"> Users Login </div>
                     </a>
                 </li>
-                @endif
+                @endif -->
             </ul>
+            @endif
         </li>
     </ul>
 </nav>

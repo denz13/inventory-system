@@ -18,12 +18,79 @@ class FeedbackManagementController extends Controller
             // Ensure per_page is a valid value
             $perPage = in_array($perPage, [10, 25, 35, 50]) ? $perPage : 10;
             
-            // Get all feedback from all users with user relationship
-            // Include whereHas to ensure user exists
-            $feedbacks = tbl_feedback::with('user')
-                ->whereHas('user')
-                ->orderBy('created_at', 'desc')
-                ->paginate($perPage);
+            // Start query
+            $query = tbl_feedback::with('user')->whereHas('user');
+            
+            // Search functionality
+            if ($request->has('search') && !empty($request->search)) {
+                $searchTerm = $request->search;
+                $query->where(function($q) use ($searchTerm) {
+                    $q->where('description', 'like', '%' . $searchTerm . '%')
+                      ->orWhereHas('user', function($userQuery) use ($searchTerm) {
+                          $userQuery->where('name', 'like', '%' . $searchTerm . '%')
+                                    ->orWhere('email', 'like', '%' . $searchTerm . '%');
+                      });
+                });
+            }
+            
+            // Rating filter
+            if ($request->has('rating') && $request->rating !== 'all') {
+                $query->where('rating', $request->rating);
+            }
+            
+            // Status filter
+            if ($request->has('status') && $request->status !== 'all') {
+                $query->where('status', $request->status);
+            }
+            
+            // User filter
+            if ($request->has('user_id') && $request->user_id !== 'all') {
+                $query->where('user_id', $request->user_id);
+            }
+            
+            // Date filter
+            if ($request->has('date_filter') && $request->date_filter !== 'all') {
+                $dateFilter = $request->date_filter;
+                $now = now();
+                
+                switch ($dateFilter) {
+                    case 'today':
+                        $query->whereDate('created_at', $now->toDateString());
+                        break;
+                    case 'yesterday':
+                        $query->whereDate('created_at', $now->subDay()->toDateString());
+                        break;
+                    case 'this-week':
+                        $query->whereBetween('created_at', [
+                            $now->startOfWeek()->toDateString(),
+                            $now->endOfWeek()->toDateString()
+                        ]);
+                        break;
+                    case 'last-week':
+                        $query->whereBetween('created_at', [
+                            $now->subWeek()->startOfWeek()->toDateString(),
+                            $now->subWeek()->endOfWeek()->toDateString()
+                        ]);
+                        break;
+                    case 'this-month':
+                        $query->whereMonth('created_at', $now->month)
+                              ->whereYear('created_at', $now->year);
+                        break;
+                    case 'last-month':
+                        $query->whereMonth('created_at', $now->subMonth()->month)
+                              ->whereYear('created_at', $now->subMonth()->year);
+                        break;
+                    case 'this-year':
+                        $query->whereYear('created_at', $now->year);
+                        break;
+                }
+            }
+            
+            // Order by created_at desc
+            $query->orderBy('created_at', 'desc');
+            
+            // Paginate results
+            $feedbacks = $query->paginate($perPage)->appends($request->except('page'));
 
             return view('feedback-management.feedback-management', compact('feedbacks'));
         } catch (\Exception $e) {

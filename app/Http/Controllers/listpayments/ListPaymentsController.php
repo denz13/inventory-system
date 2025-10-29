@@ -16,12 +16,57 @@ use Carbon\Carbon;
 
 class ListPaymentsController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // Get all billing records with user relationship only (safe)
-        $payments = tbl_billing_management::with(['user'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        // Get per page from request, default to 10
+        $perPage = $request->input('per_page', 10);
+        
+        // Start query
+        $query = tbl_billing_management::with(['user']);
+        
+        // Search functionality
+        if ($request->has('search') && !empty($request->search)) {
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('id', 'like', '%' . $searchTerm . '%')
+                  ->orWhereHas('user', function($userQuery) use ($searchTerm) {
+                      $userQuery->where('name', 'like', '%' . $searchTerm . '%')
+                                ->orWhere('email', 'like', '%' . $searchTerm . '%');
+                  })
+                  ->orWhere('status', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('amount_due', 'like', '%' . $searchTerm . '%');
+            });
+        }
+        
+        // Status filter
+        if ($request->has('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+        
+        // Date range filter
+        if ($request->has('date_from') && $request->has('date_to')) {
+            $dateFrom = $request->date_from;
+            $dateTo = $request->date_to;
+            
+            $query->whereBetween('created_at', [
+                $dateFrom . ' 00:00:00',
+                $dateTo . ' 23:59:59'
+            ]);
+        }
+        
+        // Name sorting
+        if ($request->has('name_sort') && in_array($request->name_sort, ['a-z', 'z-a'])) {
+            $sortDirection = $request->name_sort === 'a-z' ? 'asc' : 'desc';
+            $query->join('users', 'tbl_billing_management.user_id', '=', 'users.id')
+                  ->orderBy('users.name', $sortDirection)
+                  ->select('tbl_billing_management.*');
+        } else {
+            // Default sorting
+            $query->orderBy('tbl_billing_management.created_at', 'desc');
+        }
+        
+        // Paginate results
+        $payments = $query->paginate($perPage)->appends($request->except('page'));
 
         return view('list-payments.list-of-payments', compact('payments'));
     }

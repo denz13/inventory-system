@@ -19,6 +19,7 @@ class AppointmentCalendarController extends Controller
                     'id' => $appointment->id,
                     'description' => $appointment->description,
                     'appointment_date' => $appointment->appointment_date,
+                    'time' => $appointment->time,
                     'tracking_number' => $appointment->tracking_number,
                     'remarks' => $appointment->remarks,
                     'status' => $appointment->status,

@@ -13,6 +13,56 @@ let uploadedFile = null;
 let filePond = null;
 
 function initializeEventListeners() {
+    // Overdue warning button
+    const overdueWarningBtn = document.getElementById('overdueWarningBtn');
+    if (overdueWarningBtn) {
+        overdueWarningBtn.addEventListener('click', function() {
+            const modal = tailwind.Modal.getOrCreateInstance(document.querySelector('#overdue-bills-modal'));
+            modal.show();
+        });
+    }
+
+    // View overdue bill buttons
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.view-overdue-bill')) {
+            const button = e.target.closest('.view-overdue-bill');
+            const billingId = button.getAttribute('data-billing-id');
+            
+            // Close overdue modal
+            const overdueModal = tailwind.Modal.getInstance(document.querySelector('#overdue-bills-modal'));
+            if (overdueModal) {
+                overdueModal.hide();
+            }
+            
+            // Wait a bit then open billing details modal
+            setTimeout(function() {
+                loadBillingDetails(billingId);
+                const viewModal = tailwind.Modal.getOrCreateInstance(document.querySelector('#view-billing-modal'));
+                viewModal.show();
+            }, 300);
+        }
+    });
+
+    // Pay overdue bill buttons
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.pay-overdue-bill')) {
+            const button = e.target.closest('.pay-overdue-bill');
+            const billingId = button.getAttribute('data-billing-id');
+            const amount = button.getAttribute('data-amount');
+            
+            // Close overdue modal
+            const overdueModal = tailwind.Modal.getInstance(document.querySelector('#overdue-bills-modal'));
+            if (overdueModal) {
+                overdueModal.hide();
+            }
+            
+            // Wait a bit then open payment modal
+            setTimeout(function() {
+                openPaymentModal(billingId, amount);
+            }, 300);
+        }
+    });
+
     // Search functionality - Server-side (Enter key only)
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {

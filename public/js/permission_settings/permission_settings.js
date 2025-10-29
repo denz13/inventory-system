@@ -1,50 +1,36 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Status filter functionality
+    initializeSearchFromURL();
+    
+    // Status filter functionality - server-side
     document.querySelectorAll('[data-filter]').forEach(filterBtn => {
         filterBtn.addEventListener('click', function(e) {
             e.preventDefault();
             const filterValue = this.getAttribute('data-filter');
-            
-            // Update button text for status filter
-            const statusDropdownButton = document.querySelector('.dropdown-toggle');
-            if (filterValue === 'all') {
-                statusDropdownButton.textContent = 'Filter by Status';
-            } else {
-                statusDropdownButton.textContent = this.textContent;
-            }
-            
-            // Filter table rows by status
-            filterTableRowsByStatus(filterValue);
+            applyServerSideStatusFilter(filterValue);
         });
     });
 
-    // Module filter functionality
+    // Module filter functionality - server-side
     document.querySelectorAll('[data-module-filter]').forEach(filterBtn => {
         filterBtn.addEventListener('click', function(e) {
             e.preventDefault();
             const filterValue = this.getAttribute('data-module-filter');
-            
-            // Update button text for module filter
-            const moduleDropdownButtons = document.querySelectorAll('.dropdown-toggle');
-            const moduleDropdownButton = moduleDropdownButtons[1];
-            if (filterValue === 'all') {
-                moduleDropdownButton.textContent = 'Filter by Module';
-            } else {
-                moduleDropdownButton.textContent = this.textContent;
-            }
-            
-            // Filter table rows by module
-            filterTableRowsByModule(filterValue);
+            applyServerSideModuleFilter(filterValue);
         });
     });
     
-    // Search functionality
+    // Search functionality - trigger on Enter key
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            filterTableRowsBySearch(searchTerm);
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                performServerSideSearch();
+            }
         });
+        
+        // Also trigger on input with debounce
+        searchInput.addEventListener('input', debounce(performServerSideSearch, 500));
     }
     
     // View permission setting modal functionality
@@ -221,77 +207,80 @@ function showError(message) {
     `;
 }
 
-function filterTableRowsByStatus(status) {
-    const rows = document.querySelectorAll('tbody tr[data-status]');
-    let visibleCount = 0;
+// Initialize search input from URL parameter
+function initializeSearchFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchValue = urlParams.get('search');
+    const searchInput = document.getElementById('searchInput');
     
-    rows.forEach(row => {
-        const rowStatus = row.getAttribute('data-status');
-        
-        if (status === 'all' || rowStatus === status) {
-            row.style.display = '';
-            visibleCount++;
-        } else {
-            row.style.display = 'none';
-        }
-    });
-    
-    // Update filtered count
-    const filteredCountElement = document.getElementById('filtered-count');
-    if (filteredCountElement) {
-        filteredCountElement.textContent = visibleCount;
+    if (searchInput && searchValue) {
+        searchInput.value = searchValue;
     }
 }
 
-function filterTableRowsByModule(moduleId) {
-    const rows = document.querySelectorAll('tbody tr[data-status]');
-    let visibleCount = 0;
+// Server-side search function
+function performServerSideSearch() {
+    const searchValue = document.getElementById('searchInput').value;
+    const urlParams = new URLSearchParams(window.location.search);
     
-    rows.forEach(row => {
-        if (moduleId === 'all') {
-            row.style.display = '';
-            visibleCount++;
-        } else {
-            // Check if this row has the selected module permission
-            const modulesData = row.getAttribute('data-modules');
-            const hasModule = modulesData && modulesData.split(',').includes(moduleId);
-            
-            if (hasModule) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
-            }
-        }
-    });
-    
-    // Update filtered count
-    const filteredCountElement = document.getElementById('filtered-count');
-    if (filteredCountElement) {
-        filteredCountElement.textContent = visibleCount;
+    if (searchValue) {
+        urlParams.set('search', searchValue);
+    } else {
+        urlParams.delete('search');
     }
+    
+    // Reset to page 1 when searching
+    urlParams.delete('page');
+    
+    // Redirect with new search parameter
+    window.location.search = urlParams.toString();
 }
 
-function filterTableRowsBySearch(searchTerm) {
-    const rows = document.querySelectorAll('tbody tr[data-status]');
-    let visibleCount = 0;
+// Server-side status filter
+function applyServerSideStatusFilter(filter) {
+    const urlParams = new URLSearchParams(window.location.search);
     
-    rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        
-        if (text.includes(searchTerm)) {
-            row.style.display = '';
-            visibleCount++;
-        } else {
-            row.style.display = 'none';
-        }
-    });
-    
-    // Update filtered count
-    const filteredCountElement = document.getElementById('filtered-count');
-    if (filteredCountElement) {
-        filteredCountElement.textContent = visibleCount;
+    if (filter === 'all') {
+        urlParams.delete('status');
+    } else {
+        urlParams.set('status', filter);
     }
+    
+    // Reset to page 1 when filtering
+    urlParams.delete('page');
+    
+    // Redirect with new filter
+    window.location.search = urlParams.toString();
+}
+
+// Server-side module filter
+function applyServerSideModuleFilter(filter) {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (filter === 'all') {
+        urlParams.delete('module_filter');
+    } else {
+        urlParams.set('module_filter', filter);
+    }
+    
+    // Reset to page 1 when filtering
+    urlParams.delete('page');
+    
+    // Redirect with new filter
+    window.location.search = urlParams.toString();
+}
+
+// Debounce function
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
 }
 
 function loadPermissionSettingForEdit(settingId) {
