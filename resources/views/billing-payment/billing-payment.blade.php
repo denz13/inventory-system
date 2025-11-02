@@ -268,7 +268,7 @@
 <div class="grid grid-cols-12 gap-6 mt-5">
     <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2">
         <div class="flex gap-2">
-            <input type="text" data-daterange="true" class="datepicker form-control w-56" placeholder="Filter by date range" id="dateRangeFilter">
+            <input type="text" data-daterange="true" class="datepicker form-control w-56" placeholder="Filter by date range" id="dateRangeFilter" value="{{ request()->get('date_range', '') }}">
             <button type="button" class="btn btn-outline-secondary" id="clearFilterBtn">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1">
                     <polyline points="23 4 23 10 17 10"></polyline>

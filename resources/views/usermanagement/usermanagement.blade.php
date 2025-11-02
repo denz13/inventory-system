@@ -157,18 +157,11 @@
                             <div class="mb-6">
                                 <!-- <h3 class="font-medium text-lg mb-4 text-slate-700 border-b pb-2">Additional Information</h3> -->
                                 <div class="grid grid-cols-12 gap-4">
-                                    <div class="col-span-12 md:col-span-4">
+                                    <div class="col-span-12 md:col-span-6">
                                         <label class="form-label font-medium">Membership Fee</label>
                                         <input type="text" name="membership_fee" class="form-control" placeholder="Enter membership fee">
                                     </div>
-                                    <div class="col-span-12 md:col-span-4">
-                                        <label class="form-label font-medium">With Title</label>
-                                        <select name="is_with_title" class="form-select">
-                                            <option value="0">No</option>
-                                            <option value="1">Yes</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-span-12 md:col-span-4">
+                                    <div class="col-span-12 md:col-span-6">
                                         <label class="form-label font-medium">Profile Photo</label>
                                         <input type="file" name="photo" class="form-control" accept="image/*">
                                         <div class="text-xs text-slate-500 mt-1">Max 5MB - JPG, PNG, GIF</div>
@@ -475,16 +468,9 @@
                         <div class="mb-6">
                             <!-- <h3 class="font-medium text-lg mb-4 text-slate-700 border-b pb-2">Additional Information</h3> -->
                             <div class="grid grid-cols-12 gap-4">
-                                <div class="col-span-12 md:col-span-6">
+                                <div class="col-span-12">
                                     <label class="form-label font-medium">Membership Fee</label>
                                     <input type="text" id="edit_membership_fee" name="membership_fee" class="form-control" placeholder="Enter membership fee">
-                                </div>
-                                <div class="col-span-12 md:col-span-6">
-                                    <label class="form-label font-medium">With Title</label>
-                                    <select id="edit_is_with_title" name="is_with_title" class="form-select">
-                                        <option value="0">No</option>
-                                        <option value="1">Yes</option>
-                                    </select>
                                 </div>
                             </div>
                         </div>

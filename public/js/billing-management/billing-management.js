@@ -422,23 +422,37 @@ function initializeDateRangeWatcher() {
     const dateRangeFilter = document.getElementById('dateRangeFilter');
     if (!dateRangeFilter) return;
 
-    let lastValue = dateRangeFilter.value;
+    // Initialize lastValue with current value from URL to prevent auto-trigger
+    let lastValue = dateRangeFilter.value || '';
+    let initialized = false;
+    
+    // Wait a bit before starting to watch (prevent initial trigger)
+    setTimeout(function() {
+        initialized = true;
+        console.log('Date range watcher initialized with value:', lastValue);
+    }, 1000);
 
-    // Watch for value changes using interval
+    // Watch for value changes using interval (only after initialized)
     setInterval(() => {
+        if (!initialized) return; // Don't check until initialized
+        
         const currentValue = dateRangeFilter.value;
         if (currentValue !== lastValue) {
+            console.log('Date range changed from', lastValue, 'to', currentValue);
             lastValue = currentValue;
             handleDateRangeFilter(currentValue);
         }
     }, 100);
 
-    // Also listen for clicks on the document to catch date picker Apply clicks
+    // Also listen for clicks on the document to catch date picker Apply clicks (only after initialized)
     document.addEventListener('click', function(e) {
+        if (!initialized) return; // Don't check until initialized
+        
         // Add a small delay to ensure the value has been updated
         setTimeout(() => {
             const currentValue = dateRangeFilter.value;
             if (currentValue !== lastValue) {
+                console.log('Date range changed via click from', lastValue, 'to', currentValue);
                 lastValue = currentValue;
                 handleDateRangeFilter(currentValue);
             }
@@ -447,118 +461,25 @@ function initializeDateRangeWatcher() {
 }
 
 function handleDateRangeFilter(dateRange) {
-    console.log('Filtering by date range:', dateRange);
+    console.log('Filtering by date range (server-side):', dateRange);
     
     if (!dateRange || dateRange.trim() === '') {
-        // If no date range selected, show all rows
-        const tableRows = document.querySelectorAll('tbody tr.intro-x');
-        tableRows.forEach(row => {
-            row.style.display = '';
-        });
-        updateFilteredCount();
-        return;
+        // If no date range selected, clear filter and reload
+        console.log('No date range, clearing filter');
+        return; // Let the clear button handle this
     }
 
-    const tableRows = document.querySelectorAll('tbody tr.intro-x');
-
-    // Parse the date range (format: "1 Aug, 2025 - 31 Aug, 2025")
-    const dateParts = dateRange.split(' - ');
-    if (dateParts.length !== 2) {
-        console.error('Invalid date range format:', dateRange);
-        return;
-    }
-
-    try {
-        // Parse dates more robustly
-        const startDateStr = dateParts[0].trim();
-        const endDateStr = dateParts[1].trim();
-        
-        const startDate = new Date(startDateStr);
-        const endDate = new Date(endDateStr);
-        
-        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-            console.error('Invalid date values:', startDateStr, endDateStr);
-            return;
-        }
-
-        // Normalize dates to start of day for proper comparison
-        startDate.setHours(0, 0, 0, 0);
-        endDate.setHours(23, 59, 59, 999);
-
-        console.log('Date range:', startDate, 'to', endDate);
-
-        tableRows.forEach(row => {
-            const billingDateStr = row.getAttribute('data-billing-date');
-            if (!billingDateStr) {
-                console.log('No billing date found for row, hiding');
-                row.style.display = 'none';
-                return;
-            }
-
-            // Parse date - handle YYYY-MM-DD format
-            const billingDate = new Date(billingDateStr);
-            
-            // Check if date is valid
-            if (isNaN(billingDate.getTime())) {
-                console.error('Invalid billing date:', billingDateStr);
-                row.style.display = 'none';
-                return;
-            }
-            
-            // Normalize billing date to start of day
-            billingDate.setHours(0, 0, 0, 0);
-            
-            console.log('Comparing billing date:', billingDate.toDateString(), '(' + billingDateStr + ') with range:', startDate.toDateString(), '-', endDate.toDateString());
-            
-            // Check if billing date is within the selected range
-            if (billingDate >= startDate && billingDate <= endDate) {
-                console.log('✓ Date is in range, showing row');
-                row.style.display = '';
-            } else {
-                console.log('✗ Date is out of range, hiding row');
-                row.style.display = 'none';
-            }
-        });
-
-        updateFilteredCount();
-        
-        // Clear search input when filtering
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) {
-            searchInput.value = '';
-        }
-    } catch (error) {
-        console.error('Error in date range filtering:', error);
-    }
+    // Server-side filtering: reload page with date range parameter
+    const url = new URL(window.location.href);
+    url.searchParams.set('date_range', dateRange);
+    url.searchParams.delete('page'); // Reset to page 1 when filtering
+    url.searchParams.delete('search'); // Clear search when using date filter
+    
+    console.log('Reloading with date range filter:', url.toString());
+    window.location.href = url.toString();
 }
 
-function updateFilteredCount() {
-    const allRows = document.querySelectorAll('tbody tr.intro-x');
-    const noResultsRow = document.getElementById('noResultsRow');
-    let visibleCount = 0;
-    
-    allRows.forEach(row => {
-        if (row.style.display !== 'none') {
-            visibleCount++;
-        }
-    });
-    
-    // Show/hide "no results found" message
-    if (noResultsRow) {
-        if (visibleCount === 0 && allRows.length > 0) {
-            noResultsRow.style.display = '';
-        } else {
-            noResultsRow.style.display = 'none';
-        }
-    }
-    
-    const filteredCount = document.getElementById('filtered-count');
-    if (filteredCount) {
-        filteredCount.textContent = visibleCount;
-    }
-    
-    console.log('Updated filtered count:', visibleCount, 'out of', allRows.length);
-}
+// updateFilteredCount() removed - now using server-side filtering
 
 // showAllData() removed - now using URL redirect to clear filters
 
@@ -601,13 +522,19 @@ function addBillingItem() {
     itemRow.innerHTML = `
         <div class="col-span-12 md:col-span-7">
             <label class="form-label text-sm font-medium text-slate-600">Description</label>
-            <input type="text" name="billing_items[${itemIndex}][description]" class="form-control mt-1 p-2 border border-slate-300 rounded" placeholder="Item description" required>
+            <select class="form-control mt-1 p-2 border border-slate-300 rounded description-select" data-index="${itemIndex}" required>
+                <option value="">Select Description</option>
+                <option value="Monthly Dues">Monthly Dues</option>
+                <option value="Membership Fee">Membership Fee</option>
+                <option value="Others">Others (Specify)</option>
+            </select>
+            <input type="text" name="billing_items[${itemIndex}][description]" class="form-control mt-2 p-2 border border-slate-300 rounded description-input" placeholder="Enter description" style="display: none;" required>
         </div>
-        <div class="col-span-12 md:col-span-6">
+        <div class="col-span-12 md:col-span-2">
             <label class="form-label text-sm font-medium text-slate-600">Quantity</label>
             <input type="number" name="billing_items[${itemIndex}][qty]" class="form-control mt-1 p-2 border border-slate-300 rounded item-qty" min="1" value="1" required>
         </div>
-        <div class="col-span-12 md:col-span-6">
+        <div class="col-span-12 md:col-span-2">
             <label class="form-label text-sm font-medium text-slate-600">Price</label>
             <input type="number" name="billing_items[${itemIndex}][price]" class="form-control mt-1 p-2 border border-slate-300 rounded item-price" step="0.01" min="0" placeholder="0.00" required>
         </div>
@@ -622,6 +549,35 @@ function addBillingItem() {
     const qtyInput = itemRow.querySelector('.item-qty');
     const priceInput = itemRow.querySelector('.item-price');
     const removeBtn = itemRow.querySelector('.remove-billing-item');
+    const descriptionSelect = itemRow.querySelector('.description-select');
+    const descriptionInput = itemRow.querySelector('.description-input');
+    
+    // Handle description dropdown change
+    if (descriptionSelect) {
+        descriptionSelect.addEventListener('change', function() {
+            const selectedValue = this.value;
+            
+            if (selectedValue === 'Others') {
+                // Show manual input, hide select value from form data
+                descriptionInput.style.display = 'block';
+                descriptionInput.required = true;
+                descriptionInput.value = ''; // Clear any previous value
+                // Remove name from select so it doesn't submit
+                this.removeAttribute('name');
+            } else if (selectedValue) {
+                // Hide manual input, use selected value
+                descriptionInput.style.display = 'none';
+                descriptionInput.required = false;
+                descriptionInput.value = selectedValue; // Set the hidden input value
+                // Set name back to select
+                this.setAttribute('name', `billing_items[${itemIndex}][description]`);
+            } else {
+                // No selection
+                descriptionInput.style.display = 'none';
+                descriptionInput.required = false;
+            }
+        });
+    }
     
     if (qtyInput) {
         qtyInput.addEventListener('input', updateTotalAmount);
@@ -940,34 +896,7 @@ function initializeModalHandlers() {
     }
 }
 
-// Watch for date range value changes
-function initializeDateRangeWatcher() {
-    const dateRangeFilter = document.getElementById('dateRangeFilter');
-    if (!dateRangeFilter) return;
-    
-    let lastValue = '';
-    
-    // Check for value changes every 500ms
-    setInterval(function() {
-        const currentValue = dateRangeFilter.value;
-        if (currentValue !== lastValue) {
-            lastValue = currentValue;
-            handleDateRangeFilter(currentValue);
-        }
-    }, 500);
-    
-    // Also listen for any click events on the document (for Apply button)
-    document.addEventListener('click', function(e) {
-        // Small delay to allow the date picker to update the input value
-        setTimeout(function() {
-            const currentValue = dateRangeFilter.value;
-            if (currentValue !== lastValue) {
-                lastValue = currentValue;
-                handleDateRangeFilter(currentValue);
-            }
-        }, 100);
-    });
-}
+// Duplicate function removed - using the one at line 421
 
 // Tom Select Initialization
 function initializeTomSelect() {
@@ -1148,7 +1077,27 @@ function loadBillingForEdit(billingId) {
             const rows = container.querySelectorAll('.billing-item-row');
             const currentRow = rows[rows.length - 1];
             
-            currentRow.querySelector('input[name$="[description]"]').value = item.description;
+            const descriptionSelect = currentRow.querySelector('.description-select');
+            const descriptionInput = currentRow.querySelector('.description-input');
+            
+            // Check if description is one of the predefined options
+            const predefinedOptions = ['Monthly Dues', 'Membership Fee'];
+            if (predefinedOptions.includes(item.description)) {
+                // Set select to predefined value
+                descriptionSelect.value = item.description;
+                descriptionInput.style.display = 'none';
+                descriptionInput.required = false;
+                descriptionInput.value = item.description;
+                descriptionSelect.setAttribute('name', `billing_items[${index}][description]`);
+            } else {
+                // Set to "Others" and show manual input
+                descriptionSelect.value = 'Others';
+                descriptionInput.style.display = 'block';
+                descriptionInput.required = true;
+                descriptionInput.value = item.description;
+                descriptionSelect.removeAttribute('name');
+            }
+            
             currentRow.querySelector('input[name$="[qty]"]').value = item.qty;
             currentRow.querySelector('input[name$="[price]"]').value = item.price;
         });
@@ -1170,13 +1119,22 @@ function addEditBillingItem() {
     itemRow.className = 'billing-item-row grid grid-cols-12 gap-4 mb-4 p-4 border border-slate-200 rounded-lg bg-slate-50';
     itemRow.innerHTML = `
         <div class="col-span-12 md:col-span-7">
-            <input type="text" name="billing_items[${itemCount}][description]" class="form-control" placeholder="Item description" required>
+            <label class="form-label text-sm font-medium text-slate-600">Description</label>
+            <select class="form-control mt-1 p-2 border border-slate-300 rounded description-select" data-index="${itemCount}" required>
+                <option value="">Select Description</option>
+                <option value="Monthly Dues">Monthly Dues</option>
+                <option value="Membership Fee">Membership Fee</option>
+                <option value="Others">Others (Specify)</option>
+            </select>
+            <input type="text" name="billing_items[${itemCount}][description]" class="form-control mt-2 p-2 border border-slate-300 rounded description-input" placeholder="Enter description" style="display: none;" required>
         </div>
         <div class="col-span-12 md:col-span-2">
-            <input type="number" name="billing_items[${itemCount}][qty]" class="form-control item-qty" placeholder="Qty" min="1" required>
+            <label class="form-label text-sm font-medium text-slate-600">Quantity</label>
+            <input type="number" name="billing_items[${itemCount}][qty]" class="form-control mt-1 p-2 border border-slate-300 rounded item-qty" placeholder="Qty" min="1" required>
         </div>
         <div class="col-span-12 md:col-span-2">
-            <input type="number" name="billing_items[${itemCount}][price]" class="form-control item-price" placeholder="Price" step="0.01" min="0" required>
+            <label class="form-label text-sm font-medium text-slate-600">Price</label>
+            <input type="number" name="billing_items[${itemCount}][price]" class="form-control mt-1 p-2 border border-slate-300 rounded item-price" placeholder="Price" step="0.01" min="0" required>
         </div>
         <div class="col-span-12 md:col-span-1">
             <button type="button" class="btn btn-danger btn-sm w-full remove-item">Remove</button>
@@ -1189,6 +1147,35 @@ function addEditBillingItem() {
     const qtyInput = itemRow.querySelector('.item-qty');
     const priceInput = itemRow.querySelector('.item-price');
     const removeBtn = itemRow.querySelector('.remove-item');
+    const descriptionSelect = itemRow.querySelector('.description-select');
+    const descriptionInput = itemRow.querySelector('.description-input');
+    
+    // Handle description dropdown change
+    if (descriptionSelect) {
+        descriptionSelect.addEventListener('change', function() {
+            const selectedValue = this.value;
+            
+            if (selectedValue === 'Others') {
+                // Show manual input
+                descriptionInput.style.display = 'block';
+                descriptionInput.required = true;
+                descriptionInput.value = '';
+                // Remove name from select
+                this.removeAttribute('name');
+            } else if (selectedValue) {
+                // Hide manual input, use selected value
+                descriptionInput.style.display = 'none';
+                descriptionInput.required = false;
+                descriptionInput.value = selectedValue;
+                // Set name to select
+                this.setAttribute('name', `billing_items[${itemCount}][description]`);
+            } else {
+                // No selection
+                descriptionInput.style.display = 'none';
+                descriptionInput.required = false;
+            }
+        });
+    }
     
     qtyInput.addEventListener('input', updateEditTotalAmount);
     priceInput.addEventListener('input', updateEditTotalAmount);
@@ -1300,34 +1287,7 @@ function handleDeleteBilling() {
     }
 }
 
-// Watch for date range value changes
-function initializeDateRangeWatcher() {
-    const dateRangeFilter = document.getElementById('dateRangeFilter');
-    if (!dateRangeFilter) return;
-    
-    let lastValue = '';
-    
-    // Check for value changes every 500ms
-    setInterval(function() {
-        const currentValue = dateRangeFilter.value;
-        if (currentValue !== lastValue) {
-            lastValue = currentValue;
-            handleDateRangeFilter(currentValue);
-        }
-    }, 500);
-    
-    // Also listen for any click events on the document (for Apply button)
-    document.addEventListener('click', function(e) {
-        // Small delay to allow the date picker to update the input value
-        setTimeout(function() {
-            const currentValue = dateRangeFilter.value;
-            if (currentValue !== lastValue) {
-                lastValue = currentValue;
-                handleDateRangeFilter(currentValue);
-            }
-        }, 100);
-    });
-}
+// Duplicate function removed - using the one at line 421
 
 // Tom Select Initialization
 function initializeTomSelect() {

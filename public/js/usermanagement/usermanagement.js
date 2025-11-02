@@ -157,7 +157,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     document.getElementById('edit_lot').value = data.lot || '';
                     document.getElementById('edit_block').value = data.block || '';
                     document.getElementById('edit_membership_fee').value = data.membership_fee || '';
-                    document.getElementById('edit_is_with_title').value = (data.is_with_title || 0);
                     document.getElementById('edit_gender').value = data.gender || '';
                     document.getElementById('edit_role').value = data.role || '';
                 } catch (err) {
@@ -197,7 +196,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const photoUrl = hasPhoto ? `/storage/profiles/${user.photo}` : null;
         const statusClass = user.active == 1 ? 'text-success' : 'text-slate-400';
         const statusText = user.active == 1 ? 'Active' : 'Inactive';
-        const withTitleText = user.is_with_title == 1 ? 'Yes' : 'No';
         const userInitial = user.name ? user.name.charAt(0).toUpperCase() : 'U';
         
         // Profile photo HTML - either image or initial circle
@@ -304,10 +302,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         <div class="col-span-12 md:col-span-6">
                             <label class="form-label font-medium text-slate-600">Membership Fee</label>
                             <div class="form-control bg-slate-50">${user.membership_fee || 'N/A'}</div>
-                        </div>
-                        <div class="col-span-12 md:col-span-6">
-                            <label class="form-label font-medium text-slate-600">With Title</label>
-                            <div class="form-control bg-slate-50">${withTitleText}</div>
                         </div>
                         <div class="col-span-12 md:col-span-6">
                             <label class="form-label font-medium text-slate-600">Online Status</label>

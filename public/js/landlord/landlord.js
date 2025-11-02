@@ -206,15 +206,33 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        const documentLink = landlord.supporting_documents ? 
-            `<a href="${window.location.origin}/storage/${landlord.supporting_documents}" target="_blank" class="text-blue-600 hover:text-blue-800 underline inline-flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14,2 14,8 20,8"></polyline>
-                </svg>
-                View Document
-            </a>` : 
-            '<span class="text-slate-400">No file uploaded</span>';
+        // Handle supporting documents (can be string or array)
+        let documentLinks = '<span class="text-slate-400">No files uploaded</span>';
+        if (landlord.supporting_documents) {
+            let documents = [];
+            try {
+                // Try to parse as JSON array
+                documents = typeof landlord.supporting_documents === 'string' 
+                    ? JSON.parse(landlord.supporting_documents) 
+                    : landlord.supporting_documents;
+            } catch (e) {
+                // If not JSON, treat as single file path
+                documents = [landlord.supporting_documents];
+            }
+            
+            if (documents && documents.length > 0) {
+                documentLinks = documents.map((doc, index) => {
+                    const fileName = doc.split('/').pop();
+                    return `<a href="${window.location.origin}/storage/${doc}" target="_blank" class="text-blue-600 hover:text-blue-800 underline inline-flex items-center mr-3 mb-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14,2 14,8 20,8"></polyline>
+                        </svg>
+                        ${fileName}
+                    </a>`;
+                }).join('');
+            }
+        }
 
         const businessClearanceLink = landlord.business_clearance_attachments ? 
             `<a href="${window.location.origin}/storage/${landlord.business_clearance_attachments}" target="_blank" class="text-blue-600 hover:text-blue-800 underline inline-flex items-center">
@@ -375,24 +393,43 @@ document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('editLandlordForm');
         form.action = `/landlord/${landlord.id}`;
         
-        // Show current file info if exists
+        // Show current files if exist
         const fileInfo = document.getElementById('editFileInfo');
-        const currentDocDiv = document.getElementById('editCurrentDocument');
-        const currentDocLink = document.getElementById('editCurrentDocumentLink');
+        const currentDocsDiv = document.getElementById('editCurrentDocuments');
+        const currentDocsList = document.getElementById('editCurrentDocumentsList');
         
         if (landlord.supporting_documents) {
-            if (currentDocDiv && currentDocLink) {
-                currentDocLink.href = `${window.location.origin}/storage/${landlord.supporting_documents}`;
-                currentDocDiv.style.display = 'block';
+            let documents = [];
+            try {
+                documents = typeof landlord.supporting_documents === 'string' 
+                    ? JSON.parse(landlord.supporting_documents) 
+                    : landlord.supporting_documents;
+            } catch (e) {
+                documents = [landlord.supporting_documents];
             }
-            if (fileInfo) {
-                fileInfo.innerHTML = `Current: <a href="${window.location.origin}/storage/${landlord.supporting_documents}" target="_blank" class="text-blue-600 hover:underline">View Current Document</a>`;
-                fileInfo.style.display = 'block';
+            
+            if (documents && documents.length > 0) {
+                if (currentDocsDiv && currentDocsList) {
+                    currentDocsList.innerHTML = documents.map((doc, index) => {
+                        const fileName = doc.split('/').pop();
+                        return `<a href="${window.location.origin}/storage/${doc}" target="_blank" class="inline-flex items-center px-3 py-1 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 text-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14,2 14,8 20,8"></polyline>
+                            </svg>
+                            ${fileName}
+                        </a>`;
+                    }).join('');
+                    currentDocsDiv.style.display = 'block';
+                }
+            } else {
+                if (currentDocsDiv) currentDocsDiv.style.display = 'none';
             }
         } else {
-            if (currentDocDiv) currentDocDiv.style.display = 'none';
-            if (fileInfo) fileInfo.style.display = 'none';
+            if (currentDocsDiv) currentDocsDiv.style.display = 'none';
         }
+        
+        if (fileInfo) fileInfo.style.display = 'none';
         
         console.log('Edit form populated successfully');
     }
@@ -419,14 +456,21 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
     }
 
-    // File input change handlers - EXACT SAME STRUCTURE AS BUSINESS.JS
-    const createFileInput = document.getElementById('createSupportingDocuments');
+    // File input change handlers - Multiple files support
+    const createFileInput = document.getElementById('createSupportingDocs');
     if (createFileInput) {
         createFileInput.addEventListener('change', function() {
-            const file = this.files[0];
+            const files = this.files;
             const fileInfo = document.getElementById('createFileInfo');
-            if (file && fileInfo) {
-                fileInfo.innerHTML = `Selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+            if (files.length > 0 && fileInfo) {
+                let fileListHtml = `Selected ${files.length} file(s):<br>`;
+                let totalSize = 0;
+                for (let i = 0; i < files.length; i++) {
+                    fileListHtml += `• ${files[i].name} (${(files[i].size / 1024 / 1024).toFixed(2)} MB)<br>`;
+                    totalSize += files[i].size;
+                }
+                fileListHtml += `<strong>Total size: ${(totalSize / 1024 / 1024).toFixed(2)} MB</strong>`;
+                fileInfo.innerHTML = fileListHtml;
                 fileInfo.style.display = 'block';
             } else if (fileInfo) {
                 fileInfo.style.display = 'none';
@@ -434,15 +478,25 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Edit file input change handler
+    // Edit file input change handler - Multiple files support
     const editFileInput = document.getElementById('editSupportingDocs');
     if (editFileInput) {
         editFileInput.addEventListener('change', function() {
-            const file = this.files[0];
+            const files = this.files;
             const fileInfo = document.getElementById('editFileInfo');
-            if (file && fileInfo) {
-                fileInfo.innerHTML = `New file selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+            if (files.length > 0 && fileInfo) {
+                let fileListHtml = `New file(s) selected (${files.length}):<br>`;
+                let totalSize = 0;
+                for (let i = 0; i < files.length; i++) {
+                    fileListHtml += `• ${files[i].name} (${(files[i].size / 1024 / 1024).toFixed(2)} MB)<br>`;
+                    totalSize += files[i].size;
+                }
+                fileListHtml += `<strong>Total size: ${(totalSize / 1024 / 1024).toFixed(2)} MB</strong><br>`;
+                fileListHtml += `<span class="text-amber-600">Note: Uploading new files will replace existing documents</span>`;
+                fileInfo.innerHTML = fileListHtml;
                 fileInfo.style.display = 'block';
+            } else if (fileInfo) {
+                fileInfo.style.display = 'none';
             }
         });
     }

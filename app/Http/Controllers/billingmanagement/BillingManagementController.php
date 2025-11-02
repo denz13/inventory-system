@@ -34,6 +34,39 @@ class BillingManagementController extends Controller
             });
         }
         
+        // Apply date range filter (server-side)
+        if ($request->has('date_range') && $request->date_range != '') {
+            $dateRange = $request->date_range;
+            
+            // Parse the date range (format: "1 Aug, 2025 - 31 Aug, 2025")
+            $dateParts = explode(' - ', $dateRange);
+            if (count($dateParts) === 2) {
+                try {
+                    $startDate = Carbon::parse(trim($dateParts[0]))->startOfDay();
+                    $endDate = Carbon::parse(trim($dateParts[1]))->endOfDay();
+                    
+                    // Filter by billing_date range
+                    // Since billing_date can be a range itself, we'll match if the billing date overlaps with filter range
+                    $query->where(function($q) use ($startDate, $endDate, $dateRange) {
+                        // Direct match or date range overlap
+                        $q->where('billing_date', 'like', "%{$dateRange}%")
+                          ->orWhere(function($subQ) use ($startDate, $endDate) {
+                              // Also check if created_at falls within the range
+                              $subQ->whereBetween('created_at', [$startDate, $endDate]);
+                          });
+                    });
+                    
+                    \Log::info('Date range filter applied', [
+                        'date_range' => $dateRange,
+                        'start_date' => $startDate->format('Y-m-d'),
+                        'end_date' => $endDate->format('Y-m-d')
+                    ]);
+                } catch (\Exception $e) {
+                    \Log::error('Error parsing date range: ' . $e->getMessage());
+                }
+            }
+        }
+        
         // Get per_page from request, default to 10
         $perPage = $request->input('per_page', 10);
         $perPage = in_array($perPage, [10, 25, 35, 50]) ? $perPage : 10;

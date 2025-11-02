@@ -247,23 +247,37 @@ function initializeDateRangeWatcher() {
     const dateRangeFilter = document.getElementById('dateRangeFilter');
     if (!dateRangeFilter) return;
 
-    let lastValue = dateRangeFilter.value;
+    // Initialize lastValue with current value from URL to prevent auto-trigger
+    let lastValue = dateRangeFilter.value || '';
+    let initialized = false;
+    
+    // Wait a bit before starting to watch (prevent initial trigger)
+    setTimeout(function() {
+        initialized = true;
+        console.log('Date range watcher initialized with value:', lastValue);
+    }, 1000);
 
-    // Watch for value changes using interval
+    // Watch for value changes using interval (only after initialized)
     setInterval(() => {
+        if (!initialized) return; // Don't check until initialized
+        
         const currentValue = dateRangeFilter.value;
         if (currentValue !== lastValue) {
+            console.log('Date range changed from', lastValue, 'to', currentValue);
             lastValue = currentValue;
             handleDateRangeFilter(currentValue);
         }
     }, 100);
 
-    // Also listen for clicks on the document to catch date picker Apply clicks
+    // Also listen for clicks on the document to catch date picker Apply clicks (only after initialized)
     document.addEventListener('click', function(e) {
+        if (!initialized) return; // Don't check until initialized
+        
         // Add a small delay to ensure the value has been updated
         setTimeout(() => {
             const currentValue = dateRangeFilter.value;
             if (currentValue !== lastValue) {
+                console.log('Date range changed via click from', lastValue, 'to', currentValue);
                 lastValue = currentValue;
                 handleDateRangeFilter(currentValue);
             }
@@ -272,118 +286,25 @@ function initializeDateRangeWatcher() {
 }
 
 function handleDateRangeFilter(dateRange) {
-    console.log('Filtering by date range:', dateRange);
+    console.log('Filtering by date range (server-side):', dateRange);
     
     if (!dateRange || dateRange.trim() === '') {
-        // If no date range selected, show all rows
-        const tableRows = document.querySelectorAll('tbody tr.intro-x');
-        tableRows.forEach(row => {
-            row.style.display = '';
-        });
-        updateFilteredCount();
-        return;
+        // If no date range selected, clear filter and reload
+        console.log('No date range, clearing filter');
+        return; // Let the clear button handle this
     }
 
-    const tableRows = document.querySelectorAll('tbody tr.intro-x');
-
-    // Parse the date range (format: "1 Aug, 2025 - 31 Aug, 2025")
-    const dateParts = dateRange.split(' - ');
-    if (dateParts.length !== 2) {
-        console.error('Invalid date range format:', dateRange);
-        return;
-    }
-
-    try {
-        // Parse dates more robustly
-        const startDateStr = dateParts[0].trim();
-        const endDateStr = dateParts[1].trim();
-        
-        const startDate = new Date(startDateStr);
-        const endDate = new Date(endDateStr);
-        
-        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-            console.error('Invalid date values:', startDateStr, endDateStr);
-            return;
-        }
-
-        // Normalize dates to start of day for proper comparison
-        startDate.setHours(0, 0, 0, 0);
-        endDate.setHours(23, 59, 59, 999);
-
-        console.log('Date range:', startDate, 'to', endDate);
-
-        tableRows.forEach(row => {
-            const billingDateStr = row.getAttribute('data-billing-date');
-            if (!billingDateStr) {
-                console.log('No billing date found for row, hiding');
-                row.style.display = 'none';
-                return;
-            }
-
-            // Parse date - handle YYYY-MM-DD format
-            const billingDate = new Date(billingDateStr);
-            
-            // Check if date is valid
-            if (isNaN(billingDate.getTime())) {
-                console.error('Invalid billing date:', billingDateStr);
-                row.style.display = 'none';
-                return;
-            }
-            
-            // Normalize billing date to start of day
-            billingDate.setHours(0, 0, 0, 0);
-            
-            console.log('Comparing billing date:', billingDate.toDateString(), '(' + billingDateStr + ') with range:', startDate.toDateString(), '-', endDate.toDateString());
-            
-            // Check if billing date is within the selected range
-            if (billingDate >= startDate && billingDate <= endDate) {
-                console.log('✓ Date is in range, showing row');
-                row.style.display = '';
-            } else {
-                console.log('✗ Date is out of range, hiding row');
-                row.style.display = 'none';
-            }
-        });
-
-        updateFilteredCount();
-        
-        // Clear search input when filtering
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) {
-            searchInput.value = '';
-        }
-    } catch (error) {
-        console.error('Error in date range filtering:', error);
-    }
+    // Server-side filtering: reload page with date range parameter
+    const url = new URL(window.location.href);
+    url.searchParams.set('date_range', dateRange);
+    url.searchParams.delete('page'); // Reset to page 1 when filtering
+    url.searchParams.delete('search'); // Clear search when using date filter
+    
+    console.log('Reloading with date range filter:', url.toString());
+    window.location.href = url.toString();
 }
 
-function updateFilteredCount() {
-    const allRows = document.querySelectorAll('tbody tr.intro-x');
-    const noResultsRow = document.getElementById('noResultsRow');
-    let visibleCount = 0;
-    
-    allRows.forEach(row => {
-        if (row.style.display !== 'none') {
-            visibleCount++;
-        }
-    });
-    
-    // Show/hide "no results found" message
-    if (noResultsRow) {
-        if (visibleCount === 0 && allRows.length > 0) {
-            noResultsRow.style.display = '';
-        } else {
-            noResultsRow.style.display = 'none';
-        }
-    }
-    
-    const filteredCount = document.getElementById('filtered-count');
-    if (filteredCount) {
-        filteredCount.textContent = visibleCount;
-    }
-    
-    console.log('Updated filtered count:', visibleCount, 'out of', allRows.length);
-}
+// updateFilteredCount() removed - now using server-side filtering
 
 // showAllData() removed - now using URL redirect to clear filters
 

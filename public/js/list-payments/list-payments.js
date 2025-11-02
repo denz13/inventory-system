@@ -74,55 +74,44 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function handleDateRangeFilter(dateRange) {
-        console.log('Date range selected:', dateRange);
+        console.log('Filtering by date range (server-side):', dateRange);
         
         if (!dateRange || dateRange.trim() === '') {
-            return;
+            // If no date range selected, clear filter and reload
+            console.log('No date range, clearing filter');
+            return; // Let the clear button handle this
         }
 
-        // Parse the date range (format: "1 Aug, 2025 - 31 Aug, 2025")
-        const dateParts = dateRange.split(' - ');
-        if (dateParts.length !== 2) {
-            console.error('Invalid date range format:', dateRange);
-            return;
-        }
-
-        try {
-            const startDate = new Date(dateParts[0].trim());
-            const endDate = new Date(dateParts[1].trim());
-            
-            if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-                console.error('Invalid date values');
-                return;
-            }
-
-            // Format dates as YYYY-MM-DD
-            const dateFrom = startDate.toISOString().split('T')[0];
-            const dateTo = endDate.toISOString().split('T')[0];
-            
-            // Update URL with date range
-            const urlParams = new URLSearchParams(window.location.search);
-            urlParams.set('date_from', dateFrom);
-            urlParams.set('date_to', dateTo);
-            urlParams.delete('page'); // Reset to page 1
-            
-            // Reload page with date filter
-            window.location.href = window.location.pathname + '?' + urlParams.toString();
-            
-        } catch (error) {
-            console.error('Error in date range filtering:', error);
-        }
+        // Server-side filtering: reload page with date range parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.set('date_range', dateRange);
+        urlParams.delete('page'); // Reset to page 1 when filtering
+        urlParams.delete('search'); // Clear search when using date filter
+        
+        console.log('Reloading with date range filter:', window.location.pathname + '?' + urlParams.toString());
+        window.location.href = window.location.pathname + '?' + urlParams.toString();
     }
     
     function initializeDateRangeWatcher() {
         if (!dateRangeFilter) return;
 
-        let lastValue = dateRangeFilter.value;
+        // Initialize lastValue with current value from URL to prevent auto-trigger
+        let lastValue = dateRangeFilter.value || '';
+        let initialized = false;
+        
+        // Wait a bit before starting to watch (prevent initial trigger)
+        setTimeout(function() {
+            initialized = true;
+            console.log('Date range watcher initialized with value:', lastValue);
+        }, 1000);
 
-        // Watch for value changes using interval
+        // Watch for value changes using interval (only after initialized)
         setInterval(() => {
+            if (!initialized) return; // Don't check until initialized
+            
             const currentValue = dateRangeFilter.value;
             if (currentValue !== lastValue) {
+                console.log('Date range changed from', lastValue, 'to', currentValue);
                 lastValue = currentValue;
                 handleDateRangeFilter(currentValue);
             }

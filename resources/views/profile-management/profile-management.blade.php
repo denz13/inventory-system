@@ -261,14 +261,6 @@
                                 <label class="form-label font-medium">Membership Fee</label>
                                 <div class="mt-1 text-slate-600">{{ $user->membership_fee ?? 'Not provided' }}</div>
                             </div>
-                            <div class="mb-5">
-                                <label class="form-label font-medium">With Title</label>
-                                <div class="mt-1 text-slate-600">
-                                    <span class="px-2 py-1 rounded-full text-xs {{ ($user->is_with_title ?? '') == 'yes' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
-                                        {{ ($user->is_with_title ?? '') == 'yes' ? 'Yes' : 'No' }}
-                                    </span>
-                                </div>
-                            </div>
                             <div class="flex justify-end space-x-2">
                                 <button type="button" class="btn btn-outline-secondary" id="cancelEditProfile">Cancel</button>
                                 <button type="submit" class="btn btn-primary">Update Profile</button>
@@ -410,15 +402,6 @@
                             <div class="mb-5">
                                 <label class="form-label font-medium">Membership Fee</label>
                                 <div class="mt-1 text-slate-600" data-field="membership_fee">₱{{ number_format($user->membership_fee ?? 0, 2) }}</div>
-                            </div>
-                            <!-- With Title -->
-                            <div class="mb-5">
-                                <label class="form-label font-medium">With Title</label>
-                                <div class="mt-1" data-field="is_with_title">
-                                    <span class="px-2 py-1 rounded-full text-xs {{ $user->is_with_title == 'yes' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800' }}">
-                                        {{ $user->is_with_title == 'yes' ? 'Yes' : 'No' }}
-                                    </span>
-                                </div>
                             </div>
                         </div>
                     </div>

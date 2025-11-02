@@ -181,7 +181,6 @@ document.addEventListener('DOMContentLoaded', function () {
           };
           
           setValue('view_type_of_vehicle_text', v.type_of_vehicle);
-          setValue('view_owner_name_text', v.user?.name || 'N/A');
           setValue('view_owner', details.owner);
           setValue('view_driver', details.driver);
           setValue('view_plate_number', details.plate_number);
@@ -246,7 +245,6 @@ document.addEventListener('DOMContentLoaded', function () {
           
           var setVal = function (id, value) { var el = document.getElementById(id); if (el) el.value = value || ''; };
           setVal('editVehicleId', v.id);
-          setVal('edit_user_id', v.user_id);
           setVal('edit_status', v.status || 'Pending');
           
           // Set vehicle type radio buttons

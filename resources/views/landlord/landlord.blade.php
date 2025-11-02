@@ -209,8 +209,8 @@
 
                                         <div class="col-span-12">
                                         <label class="form-label">Supporting Documents</label>
-                                        <input type="file" name="supporting_documents" id="createSupportingDocs" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
-                                        <div class="text-xs text-slate-500 mt-1">Upload supporting documents (PDF, JPG, PNG - max 10MB)</div>
+                                        <input type="file" name="supporting_documents[]" id="createSupportingDocs" class="form-control" accept=".pdf,.jpg,.jpeg,.png" multiple>
+                                        <div class="text-xs text-slate-500 mt-1">Upload multiple supporting documents (PDF, JPG, PNG - max 10MB each, no limit on number of files)</div>
                                             <div id="createFileInfo" class="text-xs text-blue-600 mt-1" style="display: none;"></div>
                                     </div>
                                         </div>
@@ -286,7 +286,7 @@
                                 <div class="flex items-center justify-center {{ $statusClass }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide w-4 h-4 mr-2">
                                         <polyline points="9 11 12 14 22 4"></polyline>
-                                    <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 0 012-2h11"></path>
+                                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
                                     </svg>
                                     {{ $statusText }}
                                 </div>
@@ -328,7 +328,7 @@
                                     <a class="flex items-center text-danger" href="javascript:;" data-action="delete" data-id="{{ $landlord->id }}" data-tw-toggle="modal" data-tw-target="#delete-landlord-modal">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1">
                                                 <polyline points="3 6 5 6 21 6"></polyline>
-                                            <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                                                 <line x1="10" y1="11" x2="10" y2="17"></line>
                                                 <line x1="14" y1="11" x2="14" y2="17"></line>
                                             </svg>
@@ -521,9 +521,11 @@
 
                                 <div class="col-span-12">
                                     <label class="form-label">Supporting Documents</label>
-                                    <input type="file" name="supporting_documents" id="editSupportingDocs" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
-                                    <div id="editCurrentDocument" class="mt-2" style="display: none;">
-                                        <a id="editCurrentDocumentLink" href="" target="_blank" class="text-blue-600 hover:underline text-sm">View current document</a>
+                                    <input type="file" name="supporting_documents[]" id="editSupportingDocs" class="form-control" accept=".pdf,.jpg,.jpeg,.png" multiple>
+                                    <div class="text-xs text-slate-500 mt-1">Upload new files to add or replace existing documents (max 10MB each)</div>
+                                    <div id="editCurrentDocuments" class="mt-2" style="display: none;">
+                                        <label class="text-sm font-medium text-slate-600">Current Documents:</label>
+                                        <div id="editCurrentDocumentsList" class="flex flex-wrap gap-2 mt-1"></div>
                                         </div>
                                         <div id="editFileInfo" class="text-xs text-blue-600 mt-1" style="display: none;"></div>
                 </div>
