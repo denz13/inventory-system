@@ -19,17 +19,65 @@ class AppointmentAllowingController extends Controller
         // Start with base query
         $query = appointment_schedule_daily::query();
         
-        // Apply search filter - search by allow_number_of_appointment and date range
+        // Apply search filter - comprehensive search across all fields
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 // Search in allow_number_of_appointment
                 $q->where('allow_number_of_appointment', 'like', "%{$search}%")
+                  // Search in status
+                  ->orWhere('status', 'like', "%{$search}%")
+                  // Search in created_at (formatted)
+                  ->orWhere('created_at', 'like', "%{$search}%")
                   // Search in related schedule dates
                   ->orWhereHas('scheduleDates', function($dateQuery) use ($search) {
+                      // Search in dates field (YYYY-MM-DD format)
                       $dateQuery->where('dates', 'like', "%{$search}%")
-                                ->orWhere('day', 'like', "%{$search}%");
+                                // Search in day name (Monday, Tuesday, etc.)
+                                ->orWhere('day', 'like', "%{$search}%")
+                                // Search in created_at
+                                ->orWhere('created_at', 'like', "%{$search}%");
                   });
+                
+                // Also search for month names (October, Oct, etc.)
+                // Convert common month searches to numeric format
+                $monthMap = [
+                    'january' => '1', 'jan' => '1',
+                    'february' => '2', 'feb' => '2',
+                    'march' => '3', 'mar' => '3',
+                    'april' => '4', 'apr' => '4',
+                    'may' => '5',
+                    'june' => '6', 'jun' => '6',
+                    'july' => '7', 'jul' => '7',
+                    'august' => '8', 'aug' => '8',
+                    'september' => '9', 'sep' => '9', 'sept' => '9',
+                    'october' => '10', 'oct' => '10',
+                    'november' => '11', 'nov' => '11',
+                    'december' => '12', 'dec' => '12',
+                ];
+                
+                $searchLower = strtolower($search);
+                if (isset($monthMap[$searchLower])) {
+                    $monthNum = $monthMap[$searchLower];
+                    // Search for month (e.g., -10- for October)
+                    $q->orWhereHas('scheduleDates', function($dateQuery) use ($monthNum) {
+                        $dateQuery->where('dates', 'like', "%-{$monthNum}-%")
+                                  ->orWhere('dates', 'like', "%-0{$monthNum}-%");
+                    });
+                }
+                
+                // If search is a number (1-31), search for day in dates
+                if (is_numeric($search) && $search >= 1 && $search <= 31) {
+                    $dayNum = (int)$search;
+                    $q->orWhereHas('scheduleDates', function($dateQuery) use ($dayNum) {
+                        // Search for day with or without leading zero
+                        // e.g., searching "1" will match "01", "11", "21", "31"
+                        $dateQuery->where('dates', 'like', "%-{$dayNum}")
+                                  ->orWhere('dates', 'like', "%-0{$dayNum}")
+                                  ->orWhere('dates', 'like', "%-{$dayNum}-%")
+                                  ->orWhere('dates', 'like', "%-0{$dayNum}-%");
+                    });
+                }
             });
         }
         

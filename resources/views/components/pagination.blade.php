@@ -11,8 +11,20 @@
     // Function to generate pagination URL - check if exists to avoid redeclaration
     if (!function_exists('getPaginationUrl')) {
         function getPaginationUrl($page) {
+            // Get ALL current query parameters
             $query = request()->query();
+            
+            // Set the page number
             $query['page'] = $page;
+            
+            // Explicitly preserve common filter parameters (for safety)
+            $preserveParams = ['search', 'date_range', 'status', 'role', 'name_sort', 'module_filter', 'date_from', 'date_to'];
+            foreach ($preserveParams as $param) {
+                if (request()->has($param)) {
+                    $query[$param] = request()->get($param);
+                }
+            }
+            
             return request()->url() . '?' . http_build_query($query);
         }
     }
@@ -115,6 +127,10 @@
                 const url = new URL(window.location.href);
                 url.searchParams.set('per_page', value);
                 url.searchParams.set('page', 1); // Reset to page 1 when changing per page
+                
+                // Note: All existing query parameters (search, filters, etc.) are automatically preserved
+                // by using window.location.href which includes all current parameters
+                
                 window.location.href = url.toString();
             }
         </script>

@@ -4,18 +4,49 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize search from URL
     initializeSearchFromURL();
     
-    // Initialize search functionality - server-side
+    // Initialize search functionality - server-side (Enter key or icon click)
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
+        // Get search term from URL if it exists
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchTerm = urlParams.get('search') || '';
+        searchInput.value = searchTerm;
+        
+        // Search when Enter key is pressed
         searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' || e.keyCode === 13) {
                 e.preventDefault();
                 performServerSideSearch();
             }
         });
         
-        // Also trigger on input with debounce
-        searchInput.addEventListener('input', debounce(performServerSideSearch, 500));
+        // Allow clicking the search icon to trigger search
+        const searchIcon = searchInput.parentElement.querySelector('svg');
+        if (searchIcon) {
+            searchIcon.style.cursor = 'pointer';
+            searchIcon.addEventListener('click', function() {
+                performServerSideSearch();
+            });
+        }
+    }
+
+    // Server-side search function
+    function performServerSideSearch() {
+        const searchValue = searchInput ? searchInput.value.trim() : '';
+        const url = new URL(window.location.href);
+        
+        // Update URL parameters
+        if (searchValue) {
+            url.searchParams.set('search', searchValue);
+        } else {
+            url.searchParams.delete('search');
+        }
+        
+        // Reset to page 1 when searching
+        url.searchParams.delete('page');
+        
+        // Reload page with new parameters
+        window.location.href = url.toString();
     }
 
     // Initialize search input from URL parameter
@@ -27,37 +58,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (searchInput && searchValue) {
             searchInput.value = searchValue;
         }
-    }
-
-    // Server-side search function
-    function performServerSideSearch() {
-        const searchValue = document.getElementById('searchInput').value;
-        const urlParams = new URLSearchParams(window.location.search);
-        
-        if (searchValue) {
-            urlParams.set('search', searchValue);
-        } else {
-            urlParams.delete('search');
-        }
-        
-        // Reset to page 1 when searching
-        urlParams.delete('page');
-        
-        // Redirect with new search parameter
-        window.location.search = urlParams.toString();
-    }
-
-    // Debounce function
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
     }
 
     // Handle View Activity Log

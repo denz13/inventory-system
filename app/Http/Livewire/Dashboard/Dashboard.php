@@ -21,9 +21,10 @@ class Dashboard extends Component
     
     public $perPage = 10;
     
-    public function updatingPerPage()
+    public function mount()
     {
-        $this->resetPage();
+        // Read per_page from URL query parameter
+        $this->perPage = request()->get('per_page', 10);
     }
     
     public function render()

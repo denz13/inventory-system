@@ -267,7 +267,7 @@
                                 </div>
                             </div>
                         </div>
-                        <textarea name="description" id="createDescription" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" rows="4" placeholder="Enter feedback description..." required></textarea>
+                        <textarea name="description" id="createDescription" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500 resize-y overflow-y-auto overflow-x-hidden" rows="4" placeholder="Enter feedback description..." style="word-wrap: break-word; white-space: pre-wrap;" required></textarea>
                         <small id="descriptionError" class="text-red-600 hidden mt-1">Description is required</small>
                     </div>
                     
@@ -375,7 +375,7 @@
                                 </div>
                             </div>
                         </div>
-                        <textarea name="description" id="editDescription" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" rows="4" required></textarea>
+                        <textarea name="description" id="editDescription" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500 resize-y overflow-y-auto overflow-x-hidden" rows="4" style="word-wrap: break-word; white-space: pre-wrap;" required></textarea>
                         <small id="editDescriptionError" class="text-red-600 hidden mt-1">Description is required</small>
                     </div>
                     

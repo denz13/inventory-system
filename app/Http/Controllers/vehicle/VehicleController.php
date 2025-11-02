@@ -119,24 +119,32 @@ class VehicleController extends Controller
         try {
             $vehicle = vehicle_homeowners::findOrFail($id);
             
+            // Get current vehicle details ID for unique validation
+            $vehicleDetailsId = $vehicle->supportingDocuments?->vehicleDetails?->id;
+            
             $validated = $request->validate([
-                'type_of_vehicle' => 'required|string|max:255',
-                'plate_number' => 'required|string|max:20|unique:tbl_vehicle_list_details_homeowners,plate_number,' . $id,
-                'or_no' => 'required|string|max:50',
-                'vehicle_model' => 'required|string|max:255',
-                'cr_no' => 'required|string|max:50',
-                'color_of_vehicle' => 'required|string|max:100',
-                'owner' => 'required|string|max:255',
-                'driver' => 'required|string|max:255',
+                'type_of_vehicle' => 'nullable|string|max:255',
+                'plate_number' => 'nullable|string|max:20|unique:tbl_vehicle_list_details_homeowners,plate_number,' . $vehicleDetailsId,
+                'or_no' => 'nullable|string|max:50',
+                'vehicle_model' => 'nullable|string|max:255',
+                'cr_no' => 'nullable|string|max:50',
+                'color_of_vehicle' => 'nullable|string|max:100',
+                'owner' => 'nullable|string|max:255',
+                'driver' => 'nullable|string|max:255',
                 'supporting_documents_attachments.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240'
             ]);
 
             DB::beginTransaction();
 
-            $vehicle->update([
-                'type_of_vehicle' => $validated['type_of_vehicle'],
-                'status' => 'Pending' // Keep as Pending
-            ]);
+            // Only update vehicle type if provided
+            $vehicleUpdates = [];
+            if ($request->filled('type_of_vehicle')) {
+                $vehicleUpdates['type_of_vehicle'] = $validated['type_of_vehicle'];
+            }
+            
+            if (!empty($vehicleUpdates)) {
+                $vehicle->update($vehicleUpdates);
+            }
 
             if ($vehicle->supportingDocuments) {
                 // Get existing files
@@ -148,7 +156,7 @@ class VehicleController extends Controller
                     $existingFilePaths = $existingFiles ? [$existingFiles] : [];
                 }
                 
-                // Handle multiple file uploads for update
+                // Handle multiple file uploads for update - only if new files provided
                 if ($request->hasFile('supporting_documents_attachments')) {
                     // Delete old files
                     foreach ($existingFilePaths as $oldFile) {
@@ -165,26 +173,41 @@ class VehicleController extends Controller
                         $newFilePaths[] = $filePath;
                     }
                     
-                    $existingFilePaths = $newFilePaths;
+                    // Update supporting documents with new files
+                    $vehicle->supportingDocuments->update([
+                        'supporting_documents_attachments' => !empty($newFilePaths) ? json_encode($newFilePaths) : null
+                    ]);
                 }
 
-                $vehicle->supportingDocuments->update([
-                    'supporting_documents_attachments' => !empty($existingFilePaths) ? json_encode($existingFilePaths) : null,
-                    'status' => 'Pending'
-                ]);
-
+                // Update vehicle details - only fields that are provided
                 if ($vehicle->supportingDocuments->vehicleDetails) {
-                    $vehicle->supportingDocuments->vehicleDetails->update([
-                        'plate_number' => $validated['plate_number'],
-                        'or_no' => $validated['or_no'],
-                        'vehicle_model' => $validated['vehicle_model'],
-                        'cr_no' => $validated['cr_no'],
-                        'color_of_vehicle' => $validated['color_of_vehicle'],
-                        'owner' => $validated['owner'],
-                        'driver' => $validated['driver'],
-                        'vehicle_sticker_control_no' => null, // Keep as null
-                        'status' => 'Pending'
-                    ]);
+                    $detailsUpdates = [];
+                    
+                    if ($request->filled('plate_number')) {
+                        $detailsUpdates['plate_number'] = $validated['plate_number'];
+                    }
+                    if ($request->filled('or_no')) {
+                        $detailsUpdates['or_no'] = $validated['or_no'];
+                    }
+                    if ($request->filled('vehicle_model')) {
+                        $detailsUpdates['vehicle_model'] = $validated['vehicle_model'];
+                    }
+                    if ($request->filled('cr_no')) {
+                        $detailsUpdates['cr_no'] = $validated['cr_no'];
+                    }
+                    if ($request->filled('color_of_vehicle')) {
+                        $detailsUpdates['color_of_vehicle'] = $validated['color_of_vehicle'];
+                    }
+                    if ($request->filled('owner')) {
+                        $detailsUpdates['owner'] = $validated['owner'];
+                    }
+                    if ($request->filled('driver')) {
+                        $detailsUpdates['driver'] = $validated['driver'];
+                    }
+                    
+                    if (!empty($detailsUpdates)) {
+                        $vehicle->supportingDocuments->vehicleDetails->update($detailsUpdates);
+                    }
                 }
             }
 

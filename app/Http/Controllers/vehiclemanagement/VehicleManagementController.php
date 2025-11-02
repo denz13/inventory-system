@@ -42,8 +42,6 @@ class VehicleManagementController extends Controller
         $perPage = $request->input('per_page', 10);
         $vehicles = $query->latest()->paginate($perPage);
         
-        $owners = User::select('id','name')->orderBy('name')->get();
-        
         // Get unique statuses for filter
         $statuses = vehicle_homeowners::distinct()
             ->pluck('status')
@@ -51,7 +49,7 @@ class VehicleManagementController extends Controller
             ->sort()
             ->values();
             
-        return view('vehiclemanagement.vehiclemanagement', compact('vehicles', 'owners', 'statuses'));
+        return view('vehiclemanagement.vehiclemanagement', compact('vehicles', 'statuses'));
     }
 
     public function show($id)
@@ -188,7 +186,6 @@ class VehicleManagementController extends Controller
     {
         try {
             $validated = $request->validate([
-                'user_id' => ['required', 'exists:users,id'],
                 'type_of_vehicle' => ['required', 'string', 'max:255'],
                 'status' => ['required', Rule::in(['Pending', 'Active', 'Inactive'])],
                 'owner' => ['required', 'string', 'max:255'],
@@ -215,7 +212,7 @@ class VehicleManagementController extends Controller
 
             // Create vehicle homeowner record
             $vehicleHomeowner = vehicle_homeowners::create([
-                'user_id' => $validated['user_id'],
+                'user_id' => auth()->id(), // Use logged in user
                 'type_of_vehicle' => $validated['type_of_vehicle'],
                 'status' => $validated['status']
             ]);
@@ -262,7 +259,6 @@ class VehicleManagementController extends Controller
             $vehicle = vehicle_homeowners::findOrFail($id);
             
             $validated = $request->validate([
-                'user_id' => ['required', 'exists:users,id'],
                 'type_of_vehicle' => ['required', 'string', 'max:255'],
                 'status' => ['required', Rule::in(['Pending', 'Active', 'Inactive'])],
                 'owner' => ['required', 'string', 'max:255'],
@@ -278,7 +274,6 @@ class VehicleManagementController extends Controller
             DB::beginTransaction();
 
             $vehicle->update([
-                'user_id' => $validated['user_id'],
                 'type_of_vehicle' => $validated['type_of_vehicle'],
                 'status' => $validated['status']
             ]);

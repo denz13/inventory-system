@@ -199,7 +199,7 @@
                             @if($vehicle->status === 'Active')
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
                                     <polyline points="9 11 12 14 22 4"></polyline>
-                                    <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+                                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
                                 </svg>
                             @elseif($vehicle->status === 'Pending')
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
@@ -236,7 +236,7 @@
                             <a class="flex items-center text-danger" href="javascript:;" data-action="delete" data-id="{{ $vehicle->id }}" data-tw-toggle="modal" data-tw-target="#delete-confirmation-modal">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1">
                                     <polyline points="3 6 5 6 21 6"></polyline>
-                                    <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                                     <line x1="10" y1="11" x2="10" y2="17"></line>
                                     <line x1="14" y1="11" x2="14" y2="17"></line>
                                 </svg>
@@ -352,7 +352,7 @@
                     <button type="submit" form="createVehicleForm" class="btn btn-primary px-6 py-2 flex items-center mr-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
                             <polyline points="9 11 12 14 22 4"></polyline>
-                            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
                         </svg>
                         Add Vehicle
                     </button>
@@ -401,7 +401,7 @@
                     <input type="hidden" id="editVehicleId">
                     
                     <div class="mb-6">
-                        <label class="form-label text-base font-semibold text-slate-700">Type of Vehicle</label>
+                        <label class="form-label text-base font-semibold text-slate-700">Type of Vehicle <span class="text-slate-400 text-sm">(Optional - leave as is to keep current)</span></label>
                         <div class="flex flex-wrap gap-6 mt-2">
                             <label class="flex items-center gap-2"><input type="radio" name="edit_type_of_vehicle_opt" value="car" class="form-check-input"> <span>Car</span></label>
                             <label class="flex items-center gap-2"><input type="radio" name="edit_type_of_vehicle_opt" value="motorcycle" class="form-check-input"> <span>Motorcycle</span></label>
@@ -417,46 +417,46 @@
                     
                     <div class="grid grid-cols-12 gap-4 mb-6">
                         <div class="col-span-12 md:col-span-6">
-                            <label class="form-label text-base font-semibold text-slate-700">Plate Number</label>
-                            <input type="text" name="plate_number" id="editPlateNumber" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" required>
+                            <label class="form-label text-base font-semibold text-slate-700">Plate Number <span class="text-slate-400 text-sm">(Optional)</span></label>
+                            <input type="text" name="plate_number" id="editPlateNumber" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" placeholder="Leave blank to keep current">
                         </div>
                         <div class="col-span-12 md:col-span-6">
-                            <label class="form-label text-base font-semibold text-slate-700">Vehicle Model</label>
-                            <input type="text" name="vehicle_model" id="editVehicleModel" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" required>
+                            <label class="form-label text-base font-semibold text-slate-700">Vehicle Model <span class="text-slate-400 text-sm">(Optional)</span></label>
+                            <input type="text" name="vehicle_model" id="editVehicleModel" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" placeholder="Leave blank to keep current">
                         </div>
                     </div>
                     
                     <div class="grid grid-cols-12 gap-4 mb-6">
                         <div class="col-span-12 md:col-span-6">
-                            <label class="form-label text-base font-semibold text-slate-700">OR Number</label>
-                            <input type="text" name="or_no" id="editOrNo" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" required>
+                            <label class="form-label text-base font-semibold text-slate-700">OR Number <span class="text-slate-400 text-sm">(Optional)</span></label>
+                            <input type="text" name="or_no" id="editOrNo" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" placeholder="Leave blank to keep current">
                         </div>
                         <div class="col-span-12 md:col-span-6">
-                            <label class="form-label text-base font-semibold text-slate-700">CR Number</label>
-                            <input type="text" name="cr_no" id="editCrNo" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" required>
+                            <label class="form-label text-base font-semibold text-slate-700">CR Number <span class="text-slate-400 text-sm">(Optional)</span></label>
+                            <input type="text" name="cr_no" id="editCrNo" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" placeholder="Leave blank to keep current">
                         </div>
                     </div>
                     
                     <div class="mb-6">
-                        <label class="form-label text-base font-semibold text-slate-700">Color</label>
-                        <input type="text" name="color_of_vehicle" id="editColorOfVehicle" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" required>
+                        <label class="form-label text-base font-semibold text-slate-700">Color <span class="text-slate-400 text-sm">(Optional)</span></label>
+                        <input type="text" name="color_of_vehicle" id="editColorOfVehicle" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" placeholder="Leave blank to keep current">
                     </div>
                     
                     <div class="grid grid-cols-12 gap-4 mb-6">
                         <div class="col-span-12 md:col-span-6">
-                            <label class="form-label text-base font-semibold text-slate-700">Owner of Vehicle</label>
-                            <input type="text" name="owner" id="editOwner" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" placeholder="Enter owner's name" required>
+                            <label class="form-label text-base font-semibold text-slate-700">Owner of Vehicle <span class="text-slate-400 text-sm">(Optional)</span></label>
+                            <input type="text" name="owner" id="editOwner" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" placeholder="Leave blank to keep current">
                         </div>
                         <div class="col-span-12 md:col-span-6">
-                            <label class="form-label text-base font-semibold text-slate-700">Driver Name</label>
-                            <input type="text" name="driver" id="editDriver" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" placeholder="Enter driver's name" required>
+                            <label class="form-label text-base font-semibold text-slate-700">Driver Name <span class="text-slate-400 text-sm">(Optional)</span></label>
+                            <input type="text" name="driver" id="editDriver" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" placeholder="Leave blank to keep current">
                         </div>
                     </div>
                     
                     <div class="mb-6">
-                        <label class="form-label text-base font-semibold text-slate-700">Supporting Documents</label>
+                        <label class="form-label text-base font-semibold text-slate-700">Supporting Documents <span class="text-slate-400 text-sm">(Optional - upload only if you want to replace)</span></label>
                         <input type="file" name="supporting_documents_attachments[]" id="editSupportingDocumentsAttachments" class="form-control mt-2 p-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-blue-500" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" multiple>
-                        <div class="text-xs text-slate-500 mt-1">You can select multiple files. Accepted formats: PDF, DOC, DOCX, JPG, JPEG, PNG (Max: 10MB per file)</div>
+                        <div class="text-xs text-slate-500 mt-1">Upload new files only if you want to replace the existing documents. Leave empty to keep current files.</div>
                         <div id="currentFileInfo" class="text-xs text-blue-600 mt-1" style="display: none;"></div>
                     </div>
                 </form>
@@ -467,7 +467,7 @@
                     <button type="submit" form="editVehicleForm" class="btn btn-primary px-6 py-2 flex items-center mr-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
                             <polyline points="9 11 12 14 22 4"></polyline>
-                            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
                         </svg>
                         Update Vehicle
                     </button>

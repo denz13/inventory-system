@@ -66,7 +66,6 @@ class UserManagamentController extends Controller
             'lot' => ['nullable', 'string', 'max:255'],
             'block' => ['nullable', 'string', 'max:255'],
             'membership_fee' => ['nullable', 'string', 'max:255'],
-            'is_with_title' => ['nullable', 'in:0,1'],
             'role' => ['nullable', 'in:admin,home owners,non home owners,guard,operational manager,service manager,financial manager,appointment coordinator,occupancy manager'],
             'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif', 'max:5120'],
         ]);
@@ -92,7 +91,6 @@ class UserManagamentController extends Controller
         $user->lot = $request->input('lot');
         $user->block = $request->input('block');
         $user->membership_fee = $request->input('membership_fee');
-        $user->is_with_title = $request->input('is_with_title', 0);
         $user->role = $request->input('role');
         $user->photo = $photoFilename;
         $user->active = 1; // auto-active
@@ -127,7 +125,6 @@ class UserManagamentController extends Controller
             'lot' => ['nullable', 'string', 'max:255'],
             'block' => ['nullable', 'string', 'max:255'],
             'membership_fee' => ['nullable', 'string', 'max:255'],
-            'is_with_title' => ['nullable', 'in:0,1'],
             'role' => ['nullable', 'in:admin,home owners,non home owners,guard,operational manager,service manager,financial manager,appointment coordinator,occupancy manager'],
             'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif', 'max:5120'],
         ]);
@@ -153,7 +150,6 @@ class UserManagamentController extends Controller
         $user->lot = $request->input('lot');
         $user->block = $request->input('block');
         $user->membership_fee = $request->input('membership_fee');
-        $user->is_with_title = $request->input('is_with_title', 0);
         $user->role = $request->input('role');
         $user->save();
 

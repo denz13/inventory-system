@@ -129,7 +129,7 @@
         </div>
 
         <!-- Filter by Date Range -->
-        <input type="text" data-daterange="true" class="datepicker form-control w-56" placeholder="Filter by date range" id="dateRangeFilter">
+        <input type="text" data-daterange="true" class="datepicker form-control w-56" placeholder="Filter by date range" id="dateRangeFilter" value="{{ request()->get('date_range', '') }}">
         
         <!-- Clear Filter Button -->
         <button type="button" class="btn btn-outline-secondary" id="clearFilterBtn">
@@ -210,7 +210,7 @@
                             @if($payment->receipt)
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2 text-success">
                                     <polyline points="9 11 12 14 22 4"></polyline>
-                                    <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+                                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
                                 </svg>
                                 <span class="text-success text-sm">Payment Submitted</span>
                             @else
@@ -245,7 +245,7 @@
                             @elseif($payment->status === 'approved')
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
                                     <polyline points="9 11 12 14 22 4"></polyline>
-                                    <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+                                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
                                 </svg>
                                 Approved
                             @elseif($payment->status === 'rejected')
@@ -310,7 +310,7 @@
                                             <a href="javascript:;" class="dropdown-item" data-action="approve-payment" data-payment-id="{{ $payment->id }}" data-amount="{{ $payment->amount_due }}">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2 text-success">
                                                     <polyline points="9 11 12 14 22 4"></polyline>
-                                                    <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+                                                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
                                                 </svg>
                                                 Approve Payment
                                             </a>

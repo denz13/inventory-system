@@ -51,15 +51,6 @@
                                             </div>
                                         </div>
                                         <div class="col-span-12 md:col-span-6">
-                                            <label class="form-label">Owner *</label>
-                                            <select name="user_id" id="add_user_id" class="form-select" required>
-                                                <option value="">Select owner</option>
-                                                @foreach($owners as $owner)
-                                                    <option value="{{ $owner->id }}">{{ $owner->name }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                        <div class="col-span-12 md:col-span-6">
                                             <label class="form-label">Status *</label>
                                             <select name="status" class="form-select" required>
                                                 <option value="Pending">Pending</option>
@@ -388,15 +379,6 @@
                                         </div>
                                     </div>
                                     <div class="col-span-12 md:col-span-6">
-                                        <label class="form-label">Owner *</label>
-                                        <select id="edit_user_id" name="user_id" class="form-select" required>
-                                            <option value="">Select owner</option>
-                                            @foreach($owners as $owner)
-                                                <option value="{{ $owner->id }}">{{ $owner->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="col-span-12 md:col-span-6">
                                         <label class="form-label">Status *</label>
                                         <select id="edit_status" name="status" class="form-select" required>
                                             <option value="Pending">Pending</option>
@@ -475,10 +457,6 @@
                                 <div class="col-span-12 md:col-span-6">
                                     <label class="form-label">Vehicle Type</label>
                                     <input type="text" id="view_type_of_vehicle_text" class="form-control capitalize" readonly>
-                                </div>
-                                <div class="col-span-12 md:col-span-6">
-                                    <label class="form-label">Registered By</label>
-                                    <input type="text" id="view_owner_name_text" class="form-control" readonly>
                                 </div>
                                 <div class="col-span-12 md:col-span-6">
                                     <label class="form-label">Owner of Vehicle</label>

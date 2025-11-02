@@ -15,17 +15,31 @@ class LandlordController extends Controller
         $query = applied_landlord::with('user')
             ->where('submitted_by', auth()->id());
         
-        // Apply search filter
+        // Apply search filter - comprehensive search across all fields
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
             $query->where(function($q) use ($search) {
+                // Personal Information fields
                 $q->where('first_name', 'like', "%{$search}%")
                   ->orWhere('last_name', 'like', "%{$search}%")
+                  ->orWhere('middle_initial', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%")
                   ->orWhere('phone_number', 'like', "%{$search}%")
+                  ->orWhere('nationality', 'like', "%{$search}%")
+                  ->orWhere('address', 'like', "%{$search}%")
+                  ->orWhere('civil_status', 'like', "%{$search}%")
+                  // Property Information fields
                   ->orWhere('property_name', 'like', "%{$search}%")
                   ->orWhere('unit_number', 'like', "%{$search}%")
-                  ->orWhere('nationality', 'like', "%{$search}%");
+                  ->orWhere('property_address', 'like', "%{$search}%")
+                  ->orWhere('unit_type', 'like', "%{$search}%")
+                  ->orWhere('unit_condition', 'like', "%{$search}%")
+                  ->orWhere('unit_condition_optional', 'like', "%{$search}%")
+                  ->orWhere('status', 'like', "%{$search}%")
+                  // Search by submitted user name
+                  ->orWhereHas('user', function($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%");
+                  });
             });
         }
         
@@ -65,17 +79,22 @@ class LandlordController extends Controller
                 'unit_condition' => 'required|string|in:Fully Furnished,Semi-Furnished,Unfurnished',
                 'unit_condition_optional' => 'nullable|string|max:255',
                 
-                // File upload
-                'supporting_documents' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240', // 10MB max
+                // File upload - multiple files
+                'supporting_documents.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240', // 10MB max per file
             ]);
 
-            // Handle file upload
-            $filePath = null;
+            // Handle multiple file uploads
+            $filePaths = [];
             if ($request->hasFile('supporting_documents')) {
-                $file = $request->file('supporting_documents');
-                $fileName = time() . '_' . $file->getClientOriginalName();
-                $filePath = $file->storeAs('landlord_documents', $fileName, 'public');
+                foreach ($request->file('supporting_documents') as $index => $file) {
+                    $fileName = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
+                    $path = $file->storeAs('landlord_documents', $fileName, 'public');
+                    $filePaths[] = $path;
+                }
             }
+            
+            // Convert array to JSON string for storage
+            $filePathsJson = !empty($filePaths) ? json_encode($filePaths) : null;
 
             $landlord = applied_landlord::create([
                 'submitted_by' => auth()->id(), // Current logged in user
@@ -96,7 +115,7 @@ class LandlordController extends Controller
                 'floor_area' => $validated['floor_area'],
                 'unit_condition' => $validated['unit_condition'],
                 'unit_condition_optional' => $validated['unit_condition_optional'],
-                'supporting_documents' => $filePath,
+                'supporting_documents' => $filePathsJson,
                 'status' => 'pending',
             ]);
 
@@ -161,19 +180,34 @@ class LandlordController extends Controller
                 'floor_area' => 'required|numeric|min:0',
                 'unit_condition' => 'required|string|in:Fully Furnished,Semi-Furnished,Unfurnished',
                 'unit_condition_optional' => 'nullable|string|max:255',
-                'supporting_documents' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+                'supporting_documents.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             ]);
 
-            // Handle file upload
+            // Handle multiple file uploads
             if ($request->hasFile('supporting_documents')) {
-                // Delete old file if exists
+                // Delete old files if exist
                 if ($landlord->supporting_documents) {
-                    Storage::disk('public')->delete($landlord->supporting_documents);
+                    $oldFiles = json_decode($landlord->supporting_documents, true);
+                    if (is_array($oldFiles)) {
+                        foreach ($oldFiles as $oldFile) {
+                            Storage::disk('public')->delete($oldFile);
+                        }
+                    } else {
+                        // Handle single file (old format)
+                        Storage::disk('public')->delete($landlord->supporting_documents);
+                    }
                 }
                 
-                $file = $request->file('supporting_documents');
-                $fileName = time() . '_' . $file->getClientOriginalName();
-                $validated['supporting_documents'] = $file->storeAs('landlord_documents', $fileName, 'public');
+                // Upload new files
+                $filePaths = [];
+                foreach ($request->file('supporting_documents') as $index => $file) {
+                    $fileName = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
+                    $path = $file->storeAs('landlord_documents', $fileName, 'public');
+                    $filePaths[] = $path;
+                }
+                
+                // Store as JSON
+                $validated['supporting_documents'] = json_encode($filePaths);
             }
 
             $landlord->update($validated);
@@ -201,9 +235,17 @@ class LandlordController extends Controller
                 ->where('submitted_by', auth()->id())
                 ->firstOrFail();
             
-            // Delete file if exists
+            // Delete files if exist
             if ($landlord->supporting_documents) {
-                Storage::disk('public')->delete($landlord->supporting_documents);
+                $files = json_decode($landlord->supporting_documents, true);
+                if (is_array($files)) {
+                    foreach ($files as $file) {
+                        Storage::disk('public')->delete($file);
+                    }
+                } else {
+                    // Handle single file (old format)
+                    Storage::disk('public')->delete($landlord->supporting_documents);
+                }
             }
             
             $landlord->delete();

@@ -21,7 +21,7 @@ class ProfileManagementController extends Controller
             
             // Get user statistics based on available User model fields
             $stats = [
-                'orders' => $user->is_with_title === 'yes' ? 'Yes' : 'No', // Title status
+                'orders' => $user->role ?? 'User', // User role
                 'purchases' => $user->membership_fee ?? '0', // Membership fee
                 'reviews' => $user->gender ?? 'N/A' // Gender
             ];

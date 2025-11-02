@@ -388,7 +388,7 @@ function displayFeedbackDetails(feedback) {
             <!-- Feedback Description -->
             <div class="mb-6">
                 <label class="form-label text-base font-semibold text-slate-700">Feedback Description</label>
-                <div class="form-control mt-2 p-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 min-h-24 max-h-64 overflow-y-auto">
+                <div class="form-control mt-2 p-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 min-h-24 max-h-64 overflow-y-auto overflow-x-hidden" style="word-wrap: break-word; white-space: pre-wrap; overflow-wrap: break-word;">
                     ${feedback.description || 'No description provided'}
                 </div>
             </div>

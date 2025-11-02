@@ -83,8 +83,8 @@
         
         <div class="dropdown ml-2"> 
             <button class="dropdown-toggle btn btn-outline-secondary" aria-expanded="false" data-tw-toggle="dropdown">Filter by Module</button> 
-            <div class="dropdown-menu w-40"> 
-                <ul class="dropdown-content"> 
+            <div class="dropdown-menu w-56"> 
+                <ul class="dropdown-content overflow-y-auto" style="max-height: 300px;"> 
                     <li> <a href="javascript:;" class="dropdown-item" data-module-filter="all">All Modules</a> </li> 
                     @foreach($modules as $module)
                         <li> <a href="javascript:;" class="dropdown-item" data-module-filter="{{ $module->id }}">{{ ucwords(str_replace('_', ' ', $module->module_name)) }}</a> </li> 
