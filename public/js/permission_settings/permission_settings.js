@@ -33,6 +33,27 @@ document.addEventListener('DOMContentLoaded', function() {
         searchInput.addEventListener('input', debounce(performServerSideSearch, 500));
     }
     
+    // Initialize Tom Select and add change listener for Create User Select
+    setTimeout(function() {
+        const createUserSelect = document.getElementById('createUserSelect');
+        if (createUserSelect && createUserSelect.tomselect) {
+            createUserSelect.tomselect.on('change', function(value) {
+                if (value) {
+                    handleUserRoleChange(value, 'create');
+                }
+            });
+        }
+        
+        const editUserSelect = document.getElementById('editUsersId');
+        if (editUserSelect && editUserSelect.tomselect) {
+            editUserSelect.tomselect.on('change', function(value) {
+                if (value) {
+                    handleUserRoleChange(value, 'edit');
+                }
+            });
+        }
+    }, 1000);
+    
     // View permission setting modal functionality
     document.querySelectorAll('[data-tw-target="#view-permission-setting-modal"]').forEach(button => {
         button.addEventListener('click', function() {
@@ -453,4 +474,198 @@ function capitalizeWords(str) {
     return str.toLowerCase().split(' ').map(word => {
         return word.charAt(0).toUpperCase() + word.slice(1);
     }).join(' ');
+}
+
+// Role-based permissions configuration
+const rolePermissions = {
+    'home owners': [
+        'dashboard',
+        'message',
+        'feedback',
+        'vehicle',
+        'apply business',
+        'apply landlord',
+        'apply appointment',
+        'billing payment',
+        'service request',
+        'incident report'
+    ],
+    'non home owners': [
+        'dashboard',
+        'vehicle',
+        'apply appointment'
+    ],
+    'guard': [
+        'dashboard',
+        'message',
+        'service management',
+        'incident management'
+    ],
+    'operational manager': [
+        'dashboard',
+        'message',
+        'user management',
+        'announcement management',
+        'guest chatbot',
+        'notification settings',
+        'permission settings',
+        'system settings',
+        'activity records'
+    ],
+    'service manager': [
+        'dashboard',
+        'message',
+        'service management',
+        'incident management',
+        'feedback management',
+        'system settings',
+        'guest chatbot'
+    ],
+    'financial manager': [
+        'dashboard',
+        'message',
+        'billing management',
+        'payment account management',
+        'system settings',
+        'guest chatbot'
+    ],
+    'appointment coordinator': [
+        'dashboard',
+        'message',
+        'appointment management',
+        'vehicle sticker registration management',
+        'calendar',
+        'appointment category',
+        'appointment allow schedule',
+        'system settings',
+        'guest chatbot'
+    ],
+    'occupancy manager': [
+        'dashboard',
+        'message',
+        'landlord management',
+        'establishment management',
+        'landlord permissions',
+        'system settings',
+        'guest chatbot'
+    ]
+};
+
+// Handle user role change and auto-check permissions based on role
+function handleUserRoleChange(userId, formType) {
+    // Build the URL with proper base URL
+    const baseUrl = window.location.origin;
+    const url = `${baseUrl}/permission-settings/user/${userId}/role`;
+    
+    fetch(url, {
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.role) {
+                const roleLower = data.role.toLowerCase().trim();
+                console.log('User role detected:', data.role);
+                
+                // Special case: Admin gets all permissions
+                if (roleLower === 'admin') {
+                    autoCheckAllPermissions(formType);
+                }
+                // Check if we have permissions configured for this role
+                else if (rolePermissions[roleLower]) {
+                    autoCheckPermissionsByRole(roleLower, formType);
+                } else {
+                    console.log('No auto-permissions configured for role:', data.role);
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching user role:', error);
+        });
+}
+
+// Auto-check ALL permissions (for Admin role)
+function autoCheckAllPermissions(formType) {
+    // Determine which container to use based on form type
+    const container = formType === 'create' 
+        ? document.querySelector('#createPermissionSettingForm .border.rounded-lg')
+        : document.getElementById('editPermissionsContainer');
+    
+    if (!container) {
+        console.error('Permissions container not found!');
+        return;
+    }
+    
+    // Get all permission checkboxes in the container
+    const checkboxes = container.querySelectorAll('input[type="checkbox"][name="permissions[]"]');
+    
+    let checkedCount = 0;
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = true;
+        checkedCount++;
+    });
+    
+    console.log(`Admin: Auto-checked ALL ${checkedCount} permissions`);
+    
+    // Show a notification that all permissions were auto-selected
+    if (checkedCount > 0) {
+        showToast('All permissions auto-selected for Admin role', 'success');
+    }
+}
+
+// Auto-check permissions based on role configuration
+function autoCheckPermissionsByRole(role, formType) {
+    // Get permissions for this role
+    const permissionsToCheck = rolePermissions[role];
+    
+    if (!permissionsToCheck) {
+        console.error('No permissions configured for role:', role);
+        return;
+    }
+    
+    // Determine which container to use based on form type
+    const container = formType === 'create' 
+        ? document.querySelector('#createPermissionSettingForm .border.rounded-lg')
+        : document.getElementById('editPermissionsContainer');
+    
+    if (!container) {
+        console.error('Permissions container not found!');
+        return;
+    }
+    
+    // Get all permission checkboxes in the container
+    const checkboxes = container.querySelectorAll('input[type="checkbox"][name="permissions[]"]');
+    
+    let checkedCount = 0;
+    checkboxes.forEach(checkbox => {
+        // Get the label text next to the checkbox
+        const label = checkbox.closest('label');
+        if (label) {
+            const labelText = label.textContent.trim().toLowerCase();
+            
+            // Check if this permission should be auto-checked (case-insensitive comparison)
+            const shouldCheck = permissionsToCheck.some(permission => 
+                labelText.includes(permission) || permission.includes(labelText)
+            );
+            
+            if (shouldCheck) {
+                checkbox.checked = true;
+                checkedCount++;
+            }
+        }
+    });
+    
+    console.log(`${capitalizeWords(role)}: Auto-checked ${checkedCount} permissions`);
+    
+    // Show a notification that permissions were auto-selected
+    if (checkedCount > 0) {
+        showToast(`Permissions auto-selected for ${capitalizeWords(role)} role`, 'success');
+    }
 }

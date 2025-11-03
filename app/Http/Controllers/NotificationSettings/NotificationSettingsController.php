@@ -219,4 +219,21 @@ class NotificationSettingsController extends Controller
             ], 500);
         }
     }
+
+    public function getUserRole($userId)
+    {
+        try {
+            $user = User::findOrFail($userId);
+            
+            return response()->json([
+                'success' => true,
+                'role' => $user->role
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found'
+            ], 404);
+        }
+    }
 }

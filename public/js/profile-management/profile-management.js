@@ -976,6 +976,9 @@ function initializeTenantManagement() {
     
     // Initialize delete modal functionality (following complaints pattern)
     initializeDeleteModal();
+    
+    // Initialize relationship "other" functionality
+    initializeRelationshipOtherInput();
 }
 
 function initializeTenantKeyboardShortcuts() {
@@ -1038,6 +1041,19 @@ function initializeTenantKeyboardShortcuts() {
 function handleAddTenant() {
     const form = document.getElementById('addTenantForm');
     const formData = new FormData(form);
+    
+    // Handle "other" relationship - use manual input value if "other" is selected
+    const relationshipSelect = document.getElementById('tenantRelationship');
+    const otherRelationshipInput = document.getElementById('otherRelationship');
+    
+    if (relationshipSelect && relationshipSelect.value === 'other' && otherRelationshipInput) {
+        if (!otherRelationshipInput.value.trim()) {
+            showToast('Please specify the relationship', 'error');
+            return;
+        }
+        // Use the manual input value as the relationship
+        formData.set('relationship', otherRelationshipInput.value.trim());
+    }
     
     // Check if we're in edit mode
     const isEditMode = form.getAttribute('data-edit-mode') === 'true';
@@ -1143,11 +1159,150 @@ function resetTenantForm() {
         form.style.borderRadius = '';
         form.style.backgroundColor = '';
         
+        // Hide "other" relationship input
+        const otherContainer = document.getElementById('otherRelationshipContainer');
+        if (otherContainer) {
+            otherContainer.style.display = 'none';
+        }
+        
         // Show appropriate toast message
         if (wasInEditMode) {
             showToast('Edit cancelled. Form reset to add new tenant.', 'success');
         }
     }
+}
+
+// Initialize relationship "other" input functionality
+function initializeRelationshipOtherInput() {
+    // For Add Tenant Form
+    const tenantRelationship = document.getElementById('tenantRelationship');
+    const otherRelationshipContainer = document.getElementById('otherRelationshipContainer');
+    const otherRelationshipInput = document.getElementById('otherRelationship');
+    
+    if (tenantRelationship && otherRelationshipContainer) {
+        tenantRelationship.addEventListener('change', function() {
+            if (this.value === 'other') {
+                otherRelationshipContainer.style.display = 'block';
+                if (otherRelationshipInput) {
+                    otherRelationshipInput.required = true;
+                    otherRelationshipInput.focus();
+                }
+            } else {
+                otherRelationshipContainer.style.display = 'none';
+                if (otherRelationshipInput) {
+                    otherRelationshipInput.required = false;
+                    otherRelationshipInput.value = '';
+                }
+            }
+        });
+    }
+    
+    // For Edit Tenant Modal
+    const editTenantRelationship = document.getElementById('editTenantRelationship');
+    const editOtherRelationshipContainer = document.getElementById('editOtherRelationshipContainer');
+    const editOtherRelationshipInput = document.getElementById('editOtherRelationship');
+    
+    if (editTenantRelationship && editOtherRelationshipContainer) {
+        editTenantRelationship.addEventListener('change', function() {
+            if (this.value === 'other') {
+                editOtherRelationshipContainer.style.display = 'block';
+                if (editOtherRelationshipInput) {
+                    editOtherRelationshipInput.required = true;
+                    editOtherRelationshipInput.focus();
+                }
+            } else {
+                editOtherRelationshipContainer.style.display = 'none';
+                if (editOtherRelationshipInput) {
+                    editOtherRelationshipInput.required = false;
+                    editOtherRelationshipInput.value = '';
+                }
+            }
+        });
+    }
+    
+    // Handle Update Tenant button click in edit modal
+    const updateTenantBtn = document.getElementById('updateTenantBtn');
+    if (updateTenantBtn) {
+        updateTenantBtn.addEventListener('click', function() {
+            handleUpdateTenantFromModal();
+        });
+    }
+}
+
+// Handle tenant update from edit modal
+function handleUpdateTenantFromModal() {
+    const form = document.getElementById('editTenantForm');
+    const formData = new FormData(form);
+    
+    // Handle "other" relationship - use manual input value if "other" is selected
+    const relationshipSelect = document.getElementById('editTenantRelationship');
+    const otherRelationshipInput = document.getElementById('editOtherRelationship');
+    
+    if (relationshipSelect && relationshipSelect.value === 'other' && otherRelationshipInput) {
+        if (!otherRelationshipInput.value.trim()) {
+            showToast('Please specify the relationship', 'error');
+            return;
+        }
+        // Use the manual input value as the relationship
+        formData.set('relationship', otherRelationshipInput.value.trim());
+    }
+    
+    const tenantId = document.getElementById('editTenantId').value;
+    
+    if (!tenantId) {
+        showToast('Tenant ID not found', 'error');
+        return;
+    }
+    
+    // Show loading state
+    const submitBtn = document.getElementById('updateTenantBtn');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Updating...';
+    submitBtn.disabled = true;
+    
+    // Add method override for Laravel
+    formData.append('_method', 'PUT');
+    
+    fetch(`/profile-management/tenants/${tenantId}`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                           document.querySelector('input[name="_token"]')?.value,
+            'Accept': 'application/json'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Tenant updated successfully!', 'success');
+            
+            // Close modal
+            const modal = document.getElementById('edit-tenant-modal');
+            const closeBtn = modal.querySelector('[data-tw-dismiss="modal"]');
+            if (closeBtn) closeBtn.click();
+            
+            // Reload page to show updated tenant
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            let errorMessage = data.message || 'Error updating tenant';
+            if (data.errors) {
+                const errorMessages = Object.values(data.errors).flat();
+                errorMessage = errorMessages.join(', ');
+            }
+            showToast(errorMessage, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating tenant:', error);
+        showToast('Error updating tenant. Please try again.', 'error');
+    })
+    .finally(() => {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    });
 }
 
 function refreshTenantsList(newTenant) {
@@ -1252,8 +1407,88 @@ function handleEditTenant(e) {
     e.preventDefault();
     const tenantId = this.getAttribute('data-tenant-id');
     
+    // Check if this is triggering the edit modal or inline edit
+    const isModalTrigger = this.getAttribute('data-tw-toggle') === 'modal';
+    
+    if (isModalTrigger) {
+        // Load data for edit modal
+        loadTenantForEditModal(tenantId);
+    } else {
+        // Original inline edit functionality
+        loadTenantForInlineEdit(tenantId, this);
+    }
+}
+
+// Load tenant data for edit modal
+function loadTenantForEditModal(tenantId) {
+    fetch(`/profile-management/tenants/${tenantId}`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            populateEditTenantModal(data.tenant);
+        } else {
+            showToast('Error loading tenant data: ' + (data.message || 'Unknown error'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching tenant:', error);
+        showToast('Error loading tenant data. Please try again.', 'error');
+    });
+}
+
+// Populate edit tenant modal with data
+function populateEditTenantModal(tenant) {
+    // Populate form fields
+    document.getElementById('editTenantId').value = tenant.id || '';
+    document.getElementById('editTenantFullName').value = tenant.full_name || '';
+    document.getElementById('editTenantContact').value = tenant.contact_number || '';
+    document.getElementById('editTenantEmail').value = tenant.email || '';
+    
+    // Handle relationship - check if it's a predefined value or custom
+    const relationshipSelect = document.getElementById('editTenantRelationship');
+    const predefinedValues = ['spouse', 'child', 'parent', 'sibling', 'relative', 'friend', 'boarder'];
+    const tenantRelationshipLower = tenant.relationship ? tenant.relationship.toLowerCase() : '';
+    
+    if (predefinedValues.includes(tenantRelationshipLower)) {
+        // It's a predefined value
+        relationshipSelect.value = tenantRelationshipLower;
+        // Hide other input
+        const editOtherContainer = document.getElementById('editOtherRelationshipContainer');
+        if (editOtherContainer) {
+            editOtherContainer.style.display = 'none';
+        }
+    } else if (tenant.relationship) {
+        // It's a custom value - select "other" and show manual input
+        relationshipSelect.value = 'other';
+        const editOtherContainer = document.getElementById('editOtherRelationshipContainer');
+        const editOtherInput = document.getElementById('editOtherRelationship');
+        if (editOtherContainer && editOtherInput) {
+            editOtherContainer.style.display = 'block';
+            editOtherInput.value = tenant.relationship;
+            editOtherInput.required = true;
+        }
+    }
+    
+    // Handle current photo display if exists
+    if (tenant.photo) {
+        const currentPhotoDiv = document.getElementById('editCurrentPhoto');
+        const currentPhotoImg = document.getElementById('editCurrentPhotoImg');
+        if (currentPhotoDiv && currentPhotoImg) {
+            currentPhotoDiv.style.display = 'block';
+            currentPhotoImg.src = `/storage/tenants/${tenant.photo}`;
+        }
+    }
+}
+
+// Load tenant for inline edit (original functionality)
+function loadTenantForInlineEdit(tenantId, button) {
     // Show loading state
-    const button = this;
     const originalText = button.innerHTML;
     button.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Loading...';
     button.disabled = true;
@@ -1299,9 +1534,28 @@ function populateTenantForm(tenant) {
 
     // Populate form fields
     document.getElementById('tenantFullName').value = tenant.full_name || '';
-    document.getElementById('tenantRelationship').value = tenant.relationship || '';
     document.getElementById('tenantContact').value = tenant.contact_number || '';
     document.getElementById('tenantEmail').value = tenant.email || '';
+    
+    // Handle relationship - check if it's a predefined value or custom
+    const relationshipSelect = document.getElementById('tenantRelationship');
+    const predefinedValues = ['spouse', 'child', 'parent', 'sibling', 'relative', 'friend', 'boarder'];
+    const tenantRelationshipLower = tenant.relationship ? tenant.relationship.toLowerCase() : '';
+    
+    if (predefinedValues.includes(tenantRelationshipLower)) {
+        // It's a predefined value
+        relationshipSelect.value = tenantRelationshipLower;
+    } else if (tenant.relationship) {
+        // It's a custom value - select "other" and show manual input
+        relationshipSelect.value = 'other';
+        const otherContainer = document.getElementById('otherRelationshipContainer');
+        const otherInput = document.getElementById('otherRelationship');
+        if (otherContainer && otherInput) {
+            otherContainer.style.display = 'block';
+            otherInput.value = tenant.relationship;
+            otherInput.required = true;
+        }
+    }
 
     // Change form title and button
     const formTitle = form.closest('.box').querySelector('h2');

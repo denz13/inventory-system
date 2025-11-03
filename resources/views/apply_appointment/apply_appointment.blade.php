@@ -82,7 +82,7 @@
 
     <!-- BEGIN: Data List -->
     <div class="intro-y col-span-12 overflow-auto lg:overflow-visible">
-        <table class="table table-report -mt-2" id="appointmentTable">
+        <table class="table table-report -mt-2 overflow-x-auto" id="appointmentTable">
             <thead>
                 <tr>
                     <th class="whitespace-nowrap">TRACKING NUMBER</th>
