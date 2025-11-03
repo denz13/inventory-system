@@ -245,7 +245,7 @@
                                 <option value="{{ $role }}">{{ ucfirst($role) }}</option>
                             @endforeach
                         </select>
-                        <small class="text-slate-500">Filter users by their role</small>
+                        <small class="text-slate-500">Select a role to auto-check modules and filter users</small>
                     </div>
                     
                     <div class="mb-6">
@@ -344,7 +344,7 @@
                                 <option value="{{ $role }}">{{ ucfirst($role) }}</option>
                             @endforeach
                         </select>
-                        <small class="text-slate-500">Filter users by their role</small>
+                        <small class="text-slate-500">Select a role to auto-check modules and filter users</small>
                     </div>
                     
                     <div class="mb-6">

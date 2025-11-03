@@ -2,7 +2,84 @@
 document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
     initializeSearchFromURL();
+    initializeRoleBasedAutoCheck();
 });
+
+// Role-based modules configuration
+const roleModules = {
+    'admin': 'all', // Special case - all modules
+    'home owners': [
+        'dashboard',
+        'message',
+        'feedback',
+        'vehicle',
+        'apply business',
+        'apply landlord',
+        'apply appointment',
+        'billing payment',
+        'service request',
+        'incident report'
+    ],
+    'non home owners': [
+        'dashboard',
+        'vehicle',
+        'apply appointment'
+    ],
+    'guard': [
+        'dashboard',
+        'message',
+        'service management',
+        'incident management'
+    ],
+    'operational manager': [
+        'dashboard',
+        'message',
+        'user management',
+        'announcement management',
+        'guest chatbot',
+        'notification settings',
+        'permission settings',
+        'system settings',
+        'activity records'
+    ],
+    'service manager': [
+        'dashboard',
+        'message',
+        'service management',
+        'incident management',
+        'feedback management',
+        'system settings',
+        'guest chatbot'
+    ],
+    'financial manager': [
+        'dashboard',
+        'message',
+        'billing management',
+        'payment account management',
+        'system settings',
+        'guest chatbot'
+    ],
+    'appointment coordinator': [
+        'dashboard',
+        'message',
+        'appointment management',
+        'vehicle sticker registration management',
+        'calendar',
+        'appointment category',
+        'appointment allow schedule',
+        'system settings',
+        'guest chatbot'
+    ],
+    'occupancy manager': [
+        'dashboard',
+        'message',
+        'landlord management',
+        'establishment management',
+        'landlord permissions',
+        'system settings',
+        'guest chatbot'
+    ]
+};
 
 function initializeEventListeners() {
     // Search functionality - trigger on Enter key
@@ -440,4 +517,211 @@ function debounce(func, wait) {
         clearTimeout(timeout);
         timeout = setTimeout(later, wait);
     };
+}
+
+// Initialize role-based auto-check functionality
+function initializeRoleBasedAutoCheck() {
+    console.log('Initializing role-based auto-check...');
+    
+    // Add event listener for Create Role Filter
+    const createRoleFilter = document.getElementById('createRoleFilter');
+    if (createRoleFilter) {
+        console.log('Create Role Filter found, attaching event listener');
+        createRoleFilter.addEventListener('change', function() {
+            const selectedRole = this.value;
+            console.log('Create Role Filter changed to:', selectedRole);
+            if (selectedRole) {
+                handleRoleFilterChange(selectedRole, 'create');
+            } else {
+                // Clear all checkboxes if "All Roles" is selected
+                clearAllModules('create');
+            }
+        });
+    } else {
+        console.error('Create Role Filter NOT FOUND!');
+    }
+    
+    // Add event listener for Edit Role Filter
+    const editRoleFilter = document.getElementById('editRoleFilter');
+    if (editRoleFilter) {
+        console.log('Edit Role Filter found, attaching event listener');
+        editRoleFilter.addEventListener('change', function() {
+            const selectedRole = this.value;
+            console.log('Edit Role Filter changed to:', selectedRole);
+            if (selectedRole) {
+                handleRoleFilterChange(selectedRole, 'edit');
+            } else {
+                // Clear all checkboxes if "All Roles" is selected
+                clearAllModules('edit');
+            }
+        });
+    } else {
+        console.error('Edit Role Filter NOT FOUND!');
+    }
+    
+    console.log('Role-based auto-check initialization complete');
+}
+
+// Handle role filter change and auto-check modules based on role
+function handleRoleFilterChange(role, formType) {
+    const roleLower = role.toLowerCase().trim();
+    console.log('Role selected:', role);
+    
+    // Check if role is admin - check all modules
+    if (roleLower === 'admin') {
+        autoCheckAllModules(formType);
+    }
+    // Check if we have modules configured for this role
+    else if (roleModules[roleLower]) {
+        autoCheckModulesByRole(roleLower, formType);
+    } else {
+        console.log('No modules configured for role:', role);
+    }
+}
+
+// Clear all module checkboxes
+function clearAllModules(formType) {
+    // Use more specific selector for the modules container
+    let container;
+    if (formType === 'create') {
+        const form = document.getElementById('createNotificationSettingForm');
+        if (form) {
+            container = form.querySelector('.max-h-48.overflow-y-auto');
+        }
+    } else {
+        container = document.getElementById('editModulesContainer');
+    }
+    
+    if (!container) {
+        console.log('Container not found for clearing');
+        return;
+    }
+    
+    const checkboxes = container.querySelectorAll('input[type="checkbox"][name="modules[]"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    
+    console.log('All', checkboxes.length, 'modules cleared');
+}
+
+// Auto-check ALL modules (for Admin role)
+function autoCheckAllModules(formType) {
+    // Use more specific selector for the modules container
+    let container;
+    if (formType === 'create') {
+        // Find the container within the create form that has the checkboxes
+        const form = document.getElementById('createNotificationSettingForm');
+        if (form) {
+            container = form.querySelector('.max-h-48.overflow-y-auto');
+        }
+    } else {
+        container = document.getElementById('editModulesContainer');
+    }
+    
+    console.log('Container for', formType, ':', container);
+    
+    if (!container) {
+        console.error('Modules container not found!');
+        return;
+    }
+    
+    const checkboxes = container.querySelectorAll('input[type="checkbox"][name="modules[]"]');
+    console.log('Found', checkboxes.length, 'checkboxes for admin');
+    
+    let checkedCount = 0;
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = true;
+        checkedCount++;
+    });
+    
+    console.log(`Admin: Auto-checked ALL ${checkedCount} modules`);
+    
+    if (checkedCount > 0) {
+        showToast('All modules auto-selected for Admin role', 'success');
+    }
+}
+
+// Auto-check modules based on role configuration
+function autoCheckModulesByRole(role, formType) {
+    console.log('autoCheckModulesByRole called with role:', role, 'formType:', formType);
+    
+    const modulesToCheck = roleModules[role];
+    console.log('Modules to check:', modulesToCheck);
+    
+    if (!modulesToCheck || modulesToCheck === 'all') {
+        console.log('No modules to check or role is "all"');
+        return;
+    }
+    
+    // Use more specific selector for the modules container
+    let container;
+    if (formType === 'create') {
+        // Find the container within the create form that has the checkboxes
+        const form = document.getElementById('createNotificationSettingForm');
+        if (form) {
+            container = form.querySelector('.max-h-48.overflow-y-auto');
+        }
+    } else {
+        container = document.getElementById('editModulesContainer');
+    }
+    
+    console.log('Container found:', container);
+    
+    if (!container) {
+        console.error('Modules container not found!');
+        return;
+    }
+    
+    const checkboxes = container.querySelectorAll('input[type="checkbox"][name="modules[]"]');
+    console.log('Found', checkboxes.length, 'checkboxes');
+    
+    // First, log all checkbox labels to see what we're working with
+    console.log('=== ALL AVAILABLE MODULES ===');
+    checkboxes.forEach((checkbox, index) => {
+        const label = checkbox.closest('label');
+        if (label) {
+            const labelText = label.textContent.trim();
+            console.log(`${index}: "${labelText}"`);
+        }
+    });
+    console.log('=== END OF MODULES LIST ===');
+    
+    let checkedCount = 0;
+    checkboxes.forEach((checkbox, index) => {
+        const label = checkbox.closest('label');
+        if (label) {
+            const labelText = label.textContent.trim().toLowerCase();
+            
+            // Check if this module should be auto-checked
+            const shouldCheck = modulesToCheck.some(module => {
+                const matches = labelText.includes(module) || module.includes(labelText);
+                if (matches) {
+                    console.log(`  ✓ MATCH: "${labelText}" matches "${module}"`);
+                }
+                return matches;
+            });
+            
+            if (shouldCheck) {
+                checkbox.checked = true;
+                checkedCount++;
+                console.log(`  ✓ CHECKED: ${labelText}`);
+            }
+        }
+    });
+    
+    console.log(`${capitalizeRole(role)}: Auto-checked ${checkedCount} modules`);
+    
+    if (checkedCount > 0) {
+        showToast(`Modules auto-selected for ${capitalizeRole(role)} role`, 'success');
+    } else {
+        console.warn('No modules were checked! Check if module names match.');
+    }
+}
+
+// Helper function to capitalize role name
+function capitalizeRole(role) {
+    return role.split(' ').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
 }

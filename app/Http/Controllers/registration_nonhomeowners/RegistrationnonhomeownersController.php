@@ -78,7 +78,7 @@ class RegistrationnonhomeownersController extends Controller
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'photo' => $photoName,
-                'role' => 'non_homeowners',
+                'role' => 'non home owners',
                 'active' => 0, // Pending
                 'date_of_birth' => $request->date_of_birth,
                 'civil_status' => $request->civil_status,

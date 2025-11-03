@@ -548,6 +548,7 @@ Route::post('vehicle-management/sticker/{id}/valid-until', [VehicleManagementCon
 // Notification Settings Routes
 Route::get('notification-settings', [NotificationSettingsController::class, 'index'])->name('notification-settings.index');
 Route::post('notification-settings', [NotificationSettingsController::class, 'store'])->name('notification-settings.store');
+Route::get('notification-settings/user/{userId}/role', [NotificationSettingsController::class, 'getUserRole'])->name('notification-settings.user-role');
 Route::get('notification-settings/{id}', [NotificationSettingsController::class, 'show'])->name('notification-settings.show');
 Route::put('notification-settings/{id}', [NotificationSettingsController::class, 'update'])->name('notification-settings.update');
 Route::delete('notification-settings/{id}', [NotificationSettingsController::class, 'destroy'])->name('notification-settings.destroy');
@@ -555,6 +556,7 @@ Route::delete('notification-settings/{id}', [NotificationSettingsController::cla
 // Permission Settings Routes
 Route::get('permission-settings', [PermissionSettingsController::class, 'index'])->name('permission-settings.index');
 Route::post('permission-settings', [PermissionSettingsController::class, 'store'])->name('permission-settings.store');
+Route::get('permission-settings/user/{userId}/role', [PermissionSettingsController::class, 'getUserRole'])->name('permission-settings.user-role');
 Route::get('permission-settings/{id}', [PermissionSettingsController::class, 'show'])->name('permission-settings.show');
 Route::put('permission-settings/{id}', [PermissionSettingsController::class, 'update'])->name('permission-settings.update');
 Route::delete('permission-settings/{id}', [PermissionSettingsController::class, 'destroy'])->name('permission-settings.destroy');

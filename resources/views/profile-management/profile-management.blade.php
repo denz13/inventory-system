@@ -777,6 +777,11 @@
                                     <option value="boarder">Boarder</option>
                                     <option value="other">Other</option>
                                 </select>
+                                <!-- Manual input for "Other" relationship -->
+                                <div id="otherRelationshipContainer" class="mt-3" style="display: none;">
+                                    <label for="otherRelationship" class="form-label">Specify Relationship *</label>
+                                    <input id="otherRelationship" name="other_relationship" type="text" class="form-control" placeholder="Enter relationship">
+                                </div>
                             </div>
                             <div>
                                 <label for="tenantContact" class="form-label">Contact Number</label>
@@ -864,7 +869,7 @@
                                         <div class="dropdown-menu w-40">
                                             <ul class="dropdown-content">
                                                 <li>
-                                                    <a href="javascript:;" class="dropdown-item edit-tenant" data-tenant-id="{{ $tenant->id }}">
+                                                    <a href="javascript:;" class="dropdown-item edit-tenant" data-tw-toggle="modal" data-tw-target="#edit-tenant-modal" data-tenant-id="{{ $tenant->id }}">
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
                                                             <path d="M12 20h9"></path>
                                                             <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4L16.5 3.5z"></path>
@@ -965,6 +970,11 @@
                                 <option value="boarder">Boarder</option>
                                 <option value="other">Other</option>
                             </select>
+                            <!-- Manual input for "Other" relationship in edit modal -->
+                            <div id="editOtherRelationshipContainer" class="mt-3" style="display: none;">
+                                <label for="editOtherRelationship" class="form-label">Specify Relationship *</label>
+                                <input id="editOtherRelationship" name="other_relationship" type="text" class="form-control" placeholder="Enter relationship">
+                            </div>
                         </div>
                         <div>
                             <label for="editTenantContact" class="form-label">Contact Number</label>
