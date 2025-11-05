@@ -613,16 +613,18 @@ Route::middleware('auth')->group(function() {
     Route::get('dashboard/export/users/excel', [DashboardExportController::class, 'exportUsersToExcel'])->name('dashboard.export.users.excel');
     Route::get('dashboard/export/users/pdf', [DashboardExportController::class, 'exportUsersToPDF'])->name('dashboard.export.users.pdf');
 
-    // Chat routes
+    // Chat unread count - accessible to all authenticated users (for notification badge)
+    Route::get('chat/unread-count', [ChatController::class, 'getUnreadCount'])->name('chat.unread-count');
+    Route::get('chat/notifications', [ChatController::class, 'getNotifications'])->name('chat.notifications');
+    Route::get('chat/latest-message-sender', [ChatController::class, 'getLatestMessageSender'])->name('chat.latestMessageSender');
+    
+    // Chat routes (requires message permission)
     Route::middleware(['permission:message'])->group(function() {
         Route::get('chat', [ChatController::class, 'index'])->name('chat.index');
         Route::get('chat/messages/{userId}', [ChatController::class, 'getMessages'])->name('chat.messages');
         Route::post('chat/send', [ChatController::class, 'sendMessage'])->name('chat.send');
-        Route::get('chat/unread-count', [ChatController::class, 'getUnreadCount'])->name('chat.unread-count');
-        Route::get('chat/notifications', [ChatController::class, 'getNotifications'])->name('chat.notifications');
         Route::post('chat/notifications/{notificationId}/read', [ChatController::class, 'markNotificationAsRead'])->name('chat.markNotificationRead');
         Route::post('chat/notifications/read-all', [ChatController::class, 'markAllNotificationsAsRead'])->name('chat.markAllNotificationsRead');
-        Route::get('chat/latest-message-sender', [ChatController::class, 'getLatestMessageSender'])->name('chat.latestMessageSender');
     });
 
     // Business routes (User-facing)
