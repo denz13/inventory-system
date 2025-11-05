@@ -13,7 +13,7 @@
 <div class="grid grid-cols-12 gap-6 mt-5">
         <div class="intro-y col-span-12">
             <div class="intro-y text-lg font-medium mt-10">
-                Apply Business
+                Apply Establishment
             </div>
         </div>
 
