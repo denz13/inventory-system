@@ -8,7 +8,15 @@ import Chart from "chart.js/auto";
     // Chart
     if ($("#report-line-chart").length) {
         let ctx = $("#report-line-chart")[0].getContext("2d");
-        let myChart = new Chart(ctx, {
+        
+        // Wait for service management data to be available
+        function initializeServiceChart() {
+            // Get service management data from the page (passed from Livewire)
+            let serviceData = window.serviceManagementStats || {};
+            let monthlyData = serviceData.monthlyData || [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+            let monthlyApprovedData = serviceData.monthlyApprovedData || [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+            
+            let myChart = new Chart(ctx, {
             type: "line",
             data: {
                 labels: [
@@ -27,11 +35,8 @@ import Chart from "chart.js/auto";
                 ],
                 datasets: [
                     {
-                        label: "# of Votes",
-                        data: [
-                            0, 200, 250, 200, 700, 550, 650, 1050, 950, 1100,
-                            900, 1200,
-                        ],
+                        label: "Total Complaints",
+                        data: monthlyData,
                         borderWidth: 2,
                         borderColor: colors.primary(0.8),
                         backgroundColor: "transparent",
@@ -39,11 +44,8 @@ import Chart from "chart.js/auto";
                         tension: 0.4,
                     },
                     {
-                        label: "# of Votes",
-                        data: [
-                            0, 300, 400, 560, 320, 600, 720, 850, 690, 805,
-                            1200, 1010,
-                        ],
+                        label: "Approved Complaints",
+                        data: monthlyApprovedData,
                         borderWidth: 2,
                         borderDash: [2, 2],
                         borderColor: $("html").hasClass("dark")
@@ -96,6 +98,24 @@ import Chart from "chart.js/auto";
                 },
             },
         });
+        }
+        
+        // Try to initialize immediately, if data is available
+        if (window.serviceManagementStats) {
+            initializeServiceChart();
+        } else {
+            // Wait for data to be available
+            let attempts = 0;
+            const maxAttempts = 50;
+            
+            const checkForData = setInterval(() => {
+                attempts++;
+                if (window.serviceManagementStats || attempts >= maxAttempts) {
+                    clearInterval(checkForData);
+                    initializeServiceChart();
+                }
+            }, 100);
+        }
     }
 
     if ($("#report-pie-chart").length) {
@@ -173,25 +193,34 @@ import Chart from "chart.js/auto";
 
     if ($("#report-donut-chart").length) {
         let ctx = $("#report-donut-chart")[0].getContext("2d");
-        let myDoughnutChart = new Chart(ctx, {
+        
+        // Wait for email verification data to be available
+        function initializeDonutChart() {
+            // Get email verification data from the page (passed from Livewire)
+            let emailData = window.emailVerificationStats || {};
+            let emailLabels = Object.keys(emailData);
+            let emailCounts = Object.values(emailData);
+            
+            // If no email data, show empty chart
+            if (emailLabels.length === 0) {
+                emailLabels = ['No Data'];
+                emailCounts = [1];
+            }
+            
+            let myDoughnutChart = new Chart(ctx, {
             type: "doughnut",
             data: {
-                labels: [
-                  
-                   
-                ],
+                labels: emailLabels,
                 datasets: [
                     {
-                        data: [15, 10, 65],
+                        data: emailCounts,
                         backgroundColor: [
-                            colors.pending(0.9),
+                            colors.success(0.9),
                             colors.warning(0.9),
-                            colors.primary(0.9),
                         ],
                         hoverBackgroundColor: [
-                            colors.pending(0.9),
+                            colors.success(0.9),
                             colors.warning(0.9),
-                            colors.primary(0.9),
                         ],
                         borderWidth: 5,
                         borderColor: $("html").hasClass("dark")
@@ -210,6 +239,24 @@ import Chart from "chart.js/auto";
                 cutout: "80%",
             },
         });
+        }
+        
+        // Try to initialize immediately, if data is available
+        if (window.emailVerificationStats) {
+            initializeDonutChart();
+        } else {
+            // Wait for data to be available
+            let attempts = 0;
+            const maxAttempts = 50;
+            
+            const checkForData = setInterval(() => {
+                attempts++;
+                if (window.emailVerificationStats || attempts >= maxAttempts) {
+                    clearInterval(checkForData);
+                    initializeDonutChart();
+                }
+            }, 100);
+        }
     }
 
     if ($("#report-bar-chart").length) {
@@ -380,22 +427,27 @@ import Chart from "chart.js/auto";
 
     if ($("#report-donut-chart-1").length) {
         let ctx = $("#report-donut-chart-1")[0].getContext("2d");
+        
+        // Get billing data from window variable
+        let billingData = window.billingStats || {};
+        let paidCount = billingData.paid || 0;
+        let pendingCount = billingData.pending || 0;
+        let totalCount = billingData.total || 1;
+        
         let myDoughnutChart = new Chart(ctx, {
             type: "doughnut",
             data: {
-                labels: ["Yellow", "Dark"],
+                labels: ["Paid", "Pending"],
                 datasets: [
                     {
-                        data: [15, 10, 65],
+                        data: [paidCount, pendingCount],
                         backgroundColor: [
+                            colors.success(0.9),
                             colors.pending(0.9),
-                            colors.warning(0.9),
-                            colors.primary(0.9),
                         ],
                         hoverBackgroundColor: [
+                            colors.success(0.9),
                             colors.pending(0.9),
-                            colors.warning(0.9),
-                            colors.primary(0.9),
                         ],
                         borderWidth: 2,
                         borderColor: $("html").hasClass("dark")
@@ -418,22 +470,26 @@ import Chart from "chart.js/auto";
 
     if ($("#report-donut-chart-2").length) {
         let ctx = $("#report-donut-chart-2")[0].getContext("2d");
+        
+        // Get billing items data from window variable
+        let billingData = window.billingStats || {};
+        let paidItems = billingData.paidItems || 0;
+        let unpaidItems = billingData.unpaidItems || 0;
+        
         let myDoughnutChart = new Chart(ctx, {
             type: "doughnut",
             data: {
-                labels: ["Yellow", "Dark"],
+                labels: ["Paid Items", "Unpaid Items"],
                 datasets: [
                     {
-                        data: [15, 10, 65],
+                        data: [paidItems, unpaidItems],
                         backgroundColor: [
-                            colors.pending(0.9),
-                            colors.warning(0.9),
-                            colors.primary(0.9),
+                            colors.success(0.9),
+                            colors.danger(0.9),
                         ],
                         hoverBackgroundColor: [
-                            colors.pending(0.9),
-                            colors.warning(0.9),
-                            colors.primary(0.9),
+                            colors.success(0.9),
+                            colors.danger(0.9),
                         ],
                         borderWidth: 2,
                         borderColor: $("html").hasClass("dark")
@@ -493,8 +549,14 @@ import Chart from "chart.js/auto";
     }
 
     if ($(".simple-line-chart-1").length) {
-        $(".simple-line-chart-1").each(function () {
+        $(".simple-line-chart-1").each(function (index) {
             let ctx = $(this)[0].getContext("2d");
+            
+            // Use dynamic data - alternate between appointments and vehicles based on index
+            let chartData = index === 0 && window.appointmentsMonthlyData 
+                ? window.appointmentsMonthlyData 
+                : (window.vehiclesMonthlyData || [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+            
             let myChart = new Chart(ctx, {
                 type: "line",
                 data: {
@@ -514,14 +576,8 @@ import Chart from "chart.js/auto";
                     ],
                     datasets: [
                         {
-                            label: "# of Votes",
-                            data:
-                                $(this).data("random") !== undefined
-                                    ? helper.randomNumbers(0, 5, 12)
-                                    : [
-                                          0, 200, 250, 200, 500, 450, 850, 1050,
-                                          950, 1100, 900, 1200,
-                                      ],
+                            label: index === 0 ? "Appointments" : "Vehicles",
+                            data: chartData,
                             borderWidth: 2,
                             borderColor:
                                 $(this).data("line-color") !== undefined
@@ -538,6 +594,20 @@ import Chart from "chart.js/auto";
                     plugins: {
                         legend: {
                             display: false,
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y;
+                                    }
+                                    return label;
+                                }
+                            }
                         },
                     },
                     scales: {
@@ -587,7 +657,7 @@ import Chart from "chart.js/auto";
                     ],
                     datasets: [
                         {
-                            label: "# of Votes",
+                            label: "Data",
                             data:
                                 $(this).data("random") !== undefined
                                     ? helper.randomNumbers(0, 5, 12)
@@ -659,7 +729,7 @@ import Chart from "chart.js/auto";
                 ],
                 datasets: [
                     {
-                        label: "# of Votes",
+                        label: "Data Series 1",
                         data: [
                             0, 200, 250, 200, 700, 550, 650, 1050, 950, 1100,
                             900, 1200,
@@ -671,7 +741,7 @@ import Chart from "chart.js/auto";
                         tension: 0.4,
                     },
                     {
-                        label: "# of Votes",
+                        label: "Data Series 2",
                         data: [
                             0, 300, 400, 560, 320, 600, 720, 850, 690, 805,
                             1200, 1010,
@@ -739,7 +809,7 @@ import Chart from "chart.js/auto";
                 ],
                 datasets: [
                     {
-                        label: "# of Votes",
+                        label: "Data Series 1",
                         data: [
                             0, 200, 250, 200, 700, 550, 650, 1050, 950, 1100,
                             900, 1200,
@@ -751,7 +821,7 @@ import Chart from "chart.js/auto";
                         tension: 0.4,
                     },
                     {
-                        label: "# of Votes",
+                        label: "Data Series 2",
                         data: [
                             0, 300, 400, 560, 320, 600, 720, 850, 690, 805,
                             1200, 1010,

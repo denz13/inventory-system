@@ -18,7 +18,7 @@ License: You must have a valid license purchased only from themeforest(the above
         <meta name="description" content="Icewall admin is super flexible, powerful, clean & modern responsive tailwind admin template with unlimited possibilities.">
         <meta name="keywords" content="admin template, Icewall Admin Template, dashboard template, flat admin template, responsive admin template, web app">
         <meta name="author" content="LEFT4CODE">
-        <title>@yield('title', 'Dashboard - Midone - Tailwind HTML Admin Template')</title>
+        <title>@yield('title', 'GCH HOA CONNECT')</title>
         <!-- BEGIN: CSS Assets-->
         @vite('resources/css/app.css')
         <link rel="stylesheet" href="{{ asset('assets/toastify/toastify.css') }}">

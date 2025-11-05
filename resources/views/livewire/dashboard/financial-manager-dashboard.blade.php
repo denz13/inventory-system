@@ -240,18 +240,15 @@
 
     <!-- Pass data to JavaScript for charts -->
     <script>
-        // Pending Payments Donut Chart
-        window.pendingPaymentsData = {
+        // Billing data for donut charts
+        window.billingStats = {
+            paid: {{ $paidBillings }},
             pending: {{ $pendingBillings }},
-            approved: {{ $paidBillings }},
-            percentage: {{ $paymentCompletionRate }}
-        };
-        
-        // Unpaid Items Donut Chart
-        window.unpaidItemsData = {
-            unpaid: {{ $unpaidBillingItems }},
-            paid: {{ $totalBillingItems - $unpaidBillingItems }},
-            percentage: {{ $itemPaymentRate }}
+            total: {{ $totalBillings }},
+            paymentRate: {{ $paymentCompletionRate }},
+            itemPaymentRate: {{ $itemPaymentRate }},
+            paidItems: {{ $totalBillingItems - $unpaidBillingItems }},
+            unpaidItems: {{ $unpaidBillingItems }}
         };
     </script>
 </div>

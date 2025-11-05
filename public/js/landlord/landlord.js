@@ -221,16 +221,17 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             if (documents && documents.length > 0) {
-                documentLinks = documents.map((doc, index) => {
+                documentLinks = '<div class="flex flex-wrap gap-2">' + documents.map((doc, index) => {
                     const fileName = doc.split('/').pop();
-                    return `<a href="${window.location.origin}/storage/${doc}" target="_blank" class="text-blue-600 hover:text-blue-800 underline inline-flex items-center mr-3 mb-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
+                    const shortFileName = fileName.length > 30 ? fileName.substring(0, 27) + '...' : fileName;
+                    return `<a href="${window.location.origin}/storage/${doc}" target="_blank" class="inline-flex items-center px-3 py-1 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 text-sm" title="${fileName}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1 flex-shrink-0">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                             <polyline points="14,2 14,8 20,8"></polyline>
                         </svg>
-                        ${fileName}
+                        <span class="truncate">${shortFileName}</span>
                     </a>`;
-                }).join('');
+                }).join('') + '</div>';
             }
         }
 
@@ -295,7 +296,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div><strong>Unit Type:</strong> ${landlord.unit_type}</div>
                             <div><strong>Floor Area:</strong> ${landlord.floor_area} SqM</div>
                             <div><strong>Unit Condition:</strong> ${landlord.unit_condition}</div>
-                            <div><strong>Supporting Document:</strong><br>${documentLink}</div>
                         </div>
                         <div class="mt-3 pt-3 border-t border-slate-200">
                             <strong>Property Address:</strong> ${landlord.property_address}
@@ -305,6 +305,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <strong>Optional Details:</strong> ${landlord.unit_condition_optional}
                             </div>
                         ` : ''}
+                        <div class="mt-3 pt-3 border-t border-slate-200">
+                            <div class="mb-2"><strong>Supporting Documents:</strong></div>
+                            ${documentLinks}
+                        </div>
                     </div>
                 </div>
                 
