@@ -221,7 +221,9 @@
             approvedComplaints: {{ $approvedServiceComplaints }},
             declinedComplaints: {{ $declinedServiceComplaints }},
             totalServiceTypes: 0,
-            totalServiceCategories: 0
+            totalServiceCategories: 0,
+            monthlyData: @json($monthlyServiceComplaintsData),
+            monthlyApprovedData: @json($monthlyApprovedComplaintsData)
         };
     </script>
 </div>

@@ -17,10 +17,12 @@ class LandlordController extends Controller
         
         // Apply search filter - comprehensive search across all fields
         if ($request->has('search') && $request->search != '') {
-            $search = $request->search;
+            $search = trim($request->search); // Trim whitespace
             $query->where(function($q) use ($search) {
-                // Personal Information fields
-                $q->where('first_name', 'like', "%{$search}%")
+                // Search full name (CONCAT first_name, middle_initial, last_name)
+                $q->whereRaw("CONCAT(first_name, ' ', COALESCE(middle_initial, ''), ' ', last_name) LIKE ?", ["%{$search}%"])
+                  // Personal Information fields
+                  ->orWhere('first_name', 'like', "%{$search}%")
                   ->orWhere('last_name', 'like', "%{$search}%")
                   ->orWhere('middle_initial', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%")

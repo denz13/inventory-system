@@ -238,5 +238,14 @@
             </div>
         </div>
     </div>
+    
+    <!-- Pass data to JavaScript for charts -->
+    <script>
+        // Appointments monthly data for simple line charts
+        window.appointmentsMonthlyData = @json($monthlyAppointmentsData);
+        
+        // Vehicles monthly data for simple line charts
+        window.vehiclesMonthlyData = @json($monthlyVehiclesData);
+    </script>
 </div>
 

@@ -288,7 +288,7 @@
                 <li>
                     <a href="{{ route('announcement.index') }}" class="side-menu">
                         <div class="side-menu__icon"> <i data-lucide="activity"></i> </div>
-                        <div class="side-menu__title"> Announcement </div>
+                        <div class="side-menu__title"> Announcements Management </div>
                     </a>
                 </li>
                 @endif

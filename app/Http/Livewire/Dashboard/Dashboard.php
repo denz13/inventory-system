@@ -195,6 +195,16 @@ class Dashboard extends Component
         $rejectedRate = $totalBillings > 0 ? round(($rejectedBillings / $totalBillings) * 100, 1) : 0;
         $unpaidItemRate = $totalBillingItems > 0 ? round(($unpaidBillingItems / $totalBillingItems) * 100, 1) : 0;
         
+        // Get monthly service complaints data for chart
+        $monthlyServiceComplaintsData = $this->getMonthlyData(tbl_service_management_complaints::class, 12);
+        $monthlyApprovedComplaintsData = $this->getMonthlyData(tbl_service_management_complaints::class, 12, ['status' => 'approved']);
+        
+        // Get monthly appointments data for charts
+        $monthlyAppointmentsData = $this->getMonthlyData(tbl_appointment::class, 12);
+        
+        // Get monthly vehicles data for charts
+        $monthlyVehiclesData = $this->getMonthlyData(vehicle_management_list::class, 12);
+        
         return view('livewire.dashboard.dashboard', compact(
             'announcements',
             'totalBillings',
@@ -226,8 +236,43 @@ class Dashboard extends Component
             'approvedServiceComplaints',
             'declinedServiceComplaints',
             'serviceComplaintApprovalRate',
-            'recentUsers'
+            'recentUsers',
+            'monthlyServiceComplaintsData',
+            'monthlyApprovedComplaintsData',
+            'monthlyAppointmentsData',
+            'monthlyVehiclesData'
         ));
+    }
+    
+    /**
+     * Get monthly count data for a given model
+     * 
+     * @param string $modelClass The model class name
+     * @param int $months Number of months to retrieve
+     * @param array $conditions Additional where conditions
+     * @return array Array of counts per month
+     */
+    private function getMonthlyData($modelClass, $months = 12, $conditions = [])
+    {
+        $data = [];
+        $now = \Carbon\Carbon::now();
+        
+        for ($i = $months - 1; $i >= 0; $i--) {
+            $date = $now->copy()->subMonths($i);
+            $startOfMonth = $date->copy()->startOfMonth();
+            $endOfMonth = $date->copy()->endOfMonth();
+            
+            $query = $modelClass::whereBetween('created_at', [$startOfMonth, $endOfMonth]);
+            
+            // Apply additional conditions
+            foreach ($conditions as $field => $value) {
+                $query->where($field, $value);
+            }
+            
+            $data[] = $query->count();
+        }
+        
+        return $data;
     }
     
     private function renderHomeownerDashboard($currentUser, $announcements)
@@ -408,6 +453,10 @@ class Dashboard extends Component
         $declinedServiceComplaints = tbl_service_management_complaints::where('status', 'declined')->count();
         $serviceComplaintApprovalRate = $totalServiceComplaints > 0 ? round(($approvedServiceComplaints / $totalServiceComplaints) * 100, 1) : 0;
         
+        // Get monthly service complaints data for chart
+        $monthlyServiceComplaintsData = $this->getMonthlyData(tbl_service_management_complaints::class, 12);
+        $monthlyApprovedComplaintsData = $this->getMonthlyData(tbl_service_management_complaints::class, 12, ['status' => 'approved']);
+        
         // Get recent service requests
         $recentServiceRequests = tbl_service_management_complaints::with(['user', 'serviceCategory.serviceType'])
             ->orderBy('created_at', 'desc')
@@ -421,6 +470,8 @@ class Dashboard extends Component
             'approvedServiceComplaints',
             'declinedServiceComplaints',
             'serviceComplaintApprovalRate',
+            'monthlyServiceComplaintsData',
+            'monthlyApprovedComplaintsData',
             'recentServiceRequests',
             'currentUser'
         ));
@@ -473,6 +524,12 @@ class Dashboard extends Component
         // Get vehicle statistics
         $totalVehicles = vehicle_management_list::count();
         
+        // Get monthly appointments data for charts
+        $monthlyAppointmentsData = $this->getMonthlyData(appointment::class, 12);
+        
+        // Get monthly vehicles data for charts
+        $monthlyVehiclesData = $this->getMonthlyData(vehicle_management_list::class, 12);
+        
         // Get recent appointments with pagination (use 'appointment' model)
         $recentAppointments = appointment::with(['appointmentCategory', 'users'])
             ->orderBy('created_at', 'desc')
@@ -483,6 +540,8 @@ class Dashboard extends Component
             'totalUsers',
             'totalAppointments',
             'totalVehicles',
+            'monthlyAppointmentsData',
+            'monthlyVehiclesData',
             'recentAppointments',
             'currentUser'
         ));
@@ -499,6 +558,9 @@ class Dashboard extends Component
         // Get appointment statistics
         $totalAppointments = appointment::count();
         
+        // Get monthly appointments data for charts
+        $monthlyAppointmentsData = $this->getMonthlyData(appointment::class, 12);
+        
         // Get recent establishments with pagination
         $recentEstablishments = business_management_list::with(['user'])
             ->orderBy('created_at', 'desc')
@@ -509,6 +571,7 @@ class Dashboard extends Component
             'totalUsers',
             'totalEstablishments',
             'totalAppointments',
+            'monthlyAppointmentsData',
             'recentEstablishments',
             'currentUser'
         ));

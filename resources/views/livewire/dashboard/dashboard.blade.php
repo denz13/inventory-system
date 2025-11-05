@@ -356,23 +356,43 @@
         <!-- END: Recent Users -->
     </div>
 
-    <!-- Pass gender data to JavaScript -->
+    <!-- Pass data to JavaScript for dynamic charts -->
     <script>
+        // Gender statistics for pie chart
         window.genderStats = @json($genderStats);
         
-        // Pass email verification data to JavaScript
+        // Email verification data for donut chart
         window.emailVerificationStats = {
             'Verified': {{ $verifiedUsers }},
             'Unverified': {{ $unverifiedUsers }}
         };
         
-        // Pass service management data to JavaScript
+        // Service management data for line chart with monthly data
         window.serviceManagementStats = {
             totalComplaints: {{ $totalServiceComplaints }},
             approvedComplaints: {{ $approvedServiceComplaints }},
             declinedComplaints: {{ $declinedServiceComplaints }},
             totalServiceTypes: {{ $totalServiceTypes }},
-            totalServiceCategories: {{ $totalServiceCategories }}
+            totalServiceCategories: {{ $totalServiceCategories }},
+            monthlyData: @json($monthlyServiceComplaintsData),
+            monthlyApprovedData: @json($monthlyApprovedComplaintsData)
+        };
+        
+        // Appointments monthly data for simple line charts
+        window.appointmentsMonthlyData = @json($monthlyAppointmentsData);
+        
+        // Vehicles monthly data for simple line charts
+        window.vehiclesMonthlyData = @json($monthlyVehiclesData);
+        
+        // Billing data for donut charts
+        window.billingStats = {
+            paid: {{ $paidBillings }},
+            pending: {{ $pendingBillings }},
+            total: {{ $totalBillings }},
+            paymentRate: {{ $paymentCompletionRate }},
+            itemPaymentRate: {{ $itemPaymentRate }},
+            paidItems: {{ $paidBillingItems }},
+            unpaidItems: {{ $unpaidBillingItems }}
         };
     </script>
 
