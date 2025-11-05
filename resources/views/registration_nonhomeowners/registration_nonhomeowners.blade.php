@@ -8,7 +8,7 @@
     <meta name="description" content="Non-Homeowner Registration">
     <meta name="keywords" content="registration, non-homeowner">
     <meta name="author" content="GCH">
-    <title>Non-Homeowner Registration</title>
+    <title>GCH HOA CONNECT</title>
     <!-- BEGIN: CSS Assets-->
     <link rel="stylesheet" href="dist/css/app.css">
     <link rel="stylesheet" href="{{ asset('assets/toastify/toastify.css') }}">
