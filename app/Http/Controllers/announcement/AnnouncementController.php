@@ -5,6 +5,7 @@ namespace App\Http\Controllers\announcement;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\tbl_announcement;
+use Illuminate\Support\Facades\Log;
 
 class AnnouncementController extends Controller
 {
@@ -13,14 +14,32 @@ class AnnouncementController extends Controller
         // Build query for announcements
         $query = tbl_announcement::query();
         
+        // Filter based on user role - Non-homeowners should NOT see private announcements
+        $currentUser = auth()->user();
+        $userRole = strtolower($currentUser->role ?? '');
+        
+        $isNonHomeowner = in_array($userRole, [
+            'non-homeowner', 
+            'non homeowner', 
+            'non-homeowners', 
+            'non home owners'
+        ]);
+        
+        if ($isNonHomeowner) {
+            // Non-homeowners can ONLY see public announcements
+            $query->where('visible_to', 'public');
+        }
+        // Homeowners and other roles can see both public and private announcements
+        
         // Apply search filter
         if ($request->has('search') && $request->search != '') {
-            $search = $request->search;
+            $search = trim($request->search);
             $query->where(function($q) use ($search) {
                 $q->where('type', 'like', "%{$search}%")
                   ->orWhere('description', 'like', "%{$search}%")
                   ->orWhere('visible_to', 'like', "%{$search}%")
-                  ->orWhere('status', 'like', "%{$search}%");
+                  ->orWhere('status', 'like', "%{$search}%")
+                  ->orWhere('created_at', 'like', "%{$search}%");
             });
         }
         
@@ -77,7 +96,7 @@ class AnnouncementController extends Controller
                 'announcement' => $announcement->fresh()
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error updating announcement: ' . $e->getMessage());
+            Log::error('Error updating announcement: ' . $e->getMessage());
             return response()->json([
                 'error' => 'Error updating announcement: ' . $e->getMessage()
             ], 500);

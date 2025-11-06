@@ -21,7 +21,7 @@ class AppointmentAllowingController extends Controller
         
         // Apply search filter - comprehensive search across all fields
         if ($request->has('search') && $request->search != '') {
-            $search = $request->search;
+            $search = trim($request->search);
             $query->where(function($q) use ($search) {
                 // Search in allow_number_of_appointment
                 $q->where('allow_number_of_appointment', 'like', "%{$search}%")
@@ -34,48 +34,64 @@ class AppointmentAllowingController extends Controller
                       // Search in dates field (YYYY-MM-DD format)
                       $dateQuery->where('dates', 'like', "%{$search}%")
                                 // Search in day name (Monday, Tuesday, etc.)
-                                ->orWhere('day', 'like', "%{$search}%")
-                                // Search in created_at
-                                ->orWhere('created_at', 'like', "%{$search}%");
+                                ->orWhere('day', 'like', "%{$search}%");
                   });
                 
-                // Also search for month names (October, Oct, etc.)
-                // Convert common month searches to numeric format
+                // Month and day name mapping
                 $monthMap = [
-                    'january' => '1', 'jan' => '1',
-                    'february' => '2', 'feb' => '2',
-                    'march' => '3', 'mar' => '3',
-                    'april' => '4', 'apr' => '4',
-                    'may' => '5',
-                    'june' => '6', 'jun' => '6',
-                    'july' => '7', 'jul' => '7',
-                    'august' => '8', 'aug' => '8',
-                    'september' => '9', 'sep' => '9', 'sept' => '9',
+                    'january' => '01', 'jan' => '01',
+                    'february' => '02', 'feb' => '02',
+                    'march' => '03', 'mar' => '03',
+                    'april' => '04', 'apr' => '04',
+                    'may' => '05',
+                    'june' => '06', 'jun' => '06',
+                    'july' => '07', 'jul' => '07',
+                    'august' => '08', 'aug' => '08',
+                    'september' => '09', 'sep' => '09', 'sept' => '09',
                     'october' => '10', 'oct' => '10',
                     'november' => '11', 'nov' => '11',
                     'december' => '12', 'dec' => '12',
                 ];
                 
                 $searchLower = strtolower($search);
-                if (isset($monthMap[$searchLower])) {
-                    $monthNum = $monthMap[$searchLower];
-                    // Search for month (e.g., -10- for October)
-                    $q->orWhereHas('scheduleDates', function($dateQuery) use ($monthNum) {
-                        $dateQuery->where('dates', 'like', "%-{$monthNum}-%")
-                                  ->orWhere('dates', 'like', "%-0{$monthNum}-%");
+                
+                // Check if search contains month name + day (e.g., "Oct 27", "October 27")
+                foreach ($monthMap as $monthName => $monthNum) {
+                    if (strpos($searchLower, $monthName) !== false) {
+                        // Extract the day number from the search string
+                        $pattern = '/' . preg_quote($monthName, '/') . '\s*(\d{1,2})/i';
+                        if (preg_match($pattern, $searchLower, $matches)) {
+                            $dayNum = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
+                            // Search for YYYY-MM-DD format: any year, specific month and day
+                            $q->orWhereHas('scheduleDates', function($dateQuery) use ($monthNum, $dayNum) {
+                                $dateQuery->where('dates', 'like', "%-{$monthNum}-{$dayNum}");
+                            });
+                        } else {
+                            // Just month name, no day specified
+                            $q->orWhereHas('scheduleDates', function($dateQuery) use ($monthNum) {
+                                $dateQuery->where('dates', 'like', "%-{$monthNum}-%");
+                            });
+                        }
+                        break; // Stop after first match
+                    }
+                }
+                
+                // If search is a pure number (1-31), search for day in dates
+                if (is_numeric($search) && $search >= 1 && $search <= 31) {
+                    $dayNum = str_pad($search, 2, '0', STR_PAD_LEFT);
+                    $q->orWhereHas('scheduleDates', function($dateQuery) use ($dayNum) {
+                        // Search for day in format -DD or -DD-
+                        $dateQuery->where('dates', 'like', "%-{$dayNum}")
+                                  ->orWhere('dates', 'like', "%-{$dayNum}-%");
                     });
                 }
                 
-                // If search is a number (1-31), search for day in dates
-                if (is_numeric($search) && $search >= 1 && $search <= 31) {
-                    $dayNum = (int)$search;
-                    $q->orWhereHas('scheduleDates', function($dateQuery) use ($dayNum) {
-                        // Search for day with or without leading zero
-                        // e.g., searching "1" will match "01", "11", "21", "31"
-                        $dateQuery->where('dates', 'like', "%-{$dayNum}")
-                                  ->orWhere('dates', 'like', "%-0{$dayNum}")
-                                  ->orWhere('dates', 'like', "%-{$dayNum}-%")
-                                  ->orWhere('dates', 'like', "%-0{$dayNum}-%");
+                // Search for date formats like "10/27", "10-27", "2024-10-27"
+                if (preg_match('/(\d{1,2})[\/-](\d{1,2})/', $search, $matches)) {
+                    $month = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
+                    $day = str_pad($matches[2], 2, '0', STR_PAD_LEFT);
+                    $q->orWhereHas('scheduleDates', function($dateQuery) use ($month, $day) {
+                        $dateQuery->where('dates', 'like', "%-{$month}-{$day}");
                     });
                 }
             });
