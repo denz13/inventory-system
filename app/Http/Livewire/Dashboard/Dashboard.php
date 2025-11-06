@@ -45,9 +45,15 @@ class Dashboard extends Component
         $isAppointmentCoordinator = $userRole === 'appointment coordinator' || $userRole === 'appointments coordinator';
         $isOccupancyManager = $userRole === 'occupancy manager' || $userRole === 'occupancies manager';
         
-        // Get active announcements
-        $announcements = tbl_announcement::where('status', 'active')
-            ->orderBy('created_at', 'desc')
+        // Get active announcements - Filter based on user role
+        $announcementsQuery = tbl_announcement::where('status', 'active');
+        
+        // Non-homeowners can ONLY see public announcements
+        if ($isNonHomeowner) {
+            $announcementsQuery->where('visible_to', 'public');
+        }
+        
+        $announcements = $announcementsQuery->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
         
