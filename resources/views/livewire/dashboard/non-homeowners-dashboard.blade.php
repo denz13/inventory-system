@@ -123,21 +123,37 @@
                 </div>
                 
                 @forelse($recentAppointments as $appointment)
-                    <div class="py-3 border-b border-slate-200">
-                        <div class="flex items-start justify-between">
-                            <div class="flex-1">
-                                <div class="font-medium">{{ $appointment->appointmentCategory->category_name ?? 'Appointment' }}</div>
-                                <div class="text-xs text-success mt-1">
-                                    @if($appointment->appointment_date)
-                                        {{ \Carbon\Carbon::parse($appointment->appointment_date)->format('M d, Y') }}
-                                        @if($appointment->time)
-                                            at {{ \Carbon\Carbon::parse($appointment->time)->format('g:i A') }}
-                                        @endif
-                                    @else
-                                        (ADD DATE AND TIME)
+                    <div class="flex items-center py-3 border-b border-slate-200">
+                        <div class="flex-1">
+                            <div class="font-medium">{{ $appointment->appointmentCategory->category_name ?? $appointment->description ?? 'Appointment' }}</div>
+                            <div class="text-xs text-slate-500 mt-0.5">
+                                @if($appointment->appointment_date)
+                                    {{ \Carbon\Carbon::parse($appointment->appointment_date)->format('M d, Y') }}
+                                    @if($appointment->time)
+                                        at {{ $appointment->time }}
                                     @endif
-                                </div>
+                                @else
+                                    <span class="text-success">ADD DATE AND TIME</span>
+                                @endif
                             </div>
+                            @if($appointment->tracking_number)
+                                <div class="text-xs text-slate-400 mt-0.5">Tracking: {{ $appointment->tracking_number }}</div>
+                            @endif
+                        </div>
+                        <div>
+                            @php
+                                $statusColor = 'bg-warning';
+                                if (strtolower($appointment->status) === 'approved') {
+                                    $statusColor = 'bg-success';
+                                } elseif (strtolower($appointment->status) === 'rejected' || strtolower($appointment->status) === 'declined' || strtolower($appointment->status) === 'cancelled') {
+                                    $statusColor = 'bg-danger';
+                                } elseif (strtolower($appointment->status) === 'completed') {
+                                    $statusColor = 'bg-primary';
+                                }
+                            @endphp
+                            <span class="px-2 py-1 rounded text-xs text-white {{ $statusColor }}">
+                                {{ ucfirst($appointment->status ?? 'Pending') }}
+                            </span>
                         </div>
                     </div>
                 @empty

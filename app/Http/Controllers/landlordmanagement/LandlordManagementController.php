@@ -53,6 +53,14 @@ class LandlordManagementController extends Controller
         try {
             $landlord = applied_landlord::with('user')->findOrFail($id);
             
+            // Get tenants for this landlord (tenants with same user_id as landlord's submitted_by)
+            $tenants = \App\Models\tbl_tenant_list::where('user_id', $landlord->submitted_by)
+                ->orderBy('created_at', 'desc')
+                ->get();
+            
+            // Add tenants to landlord data
+            $landlord->tenants = $tenants;
+            
             return response()->json([
                 'success' => true,
                 'data' => $landlord

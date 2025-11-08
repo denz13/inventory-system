@@ -235,10 +235,8 @@ class ListPaymentsController extends Controller
                 
                 <div class="content">
                     <div class="amount-section">
-                        <div style="color: #6b7280; font-size: 14px;">Payment received for</div>
-                        <div style="font-size: 18px; font-weight: bold; color: #374151; margin: 8px 0;">Property Management</div>
+                        
                         <div class="amount">₱' . $data['amount_paid'] . '</div>
-                        <div style="color: #6b7280; font-size: 14px;">using Digital Payment</div>
                         <div class="status">' . $data['status'] . '</div>
                     </div>
 

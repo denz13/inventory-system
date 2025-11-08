@@ -290,9 +290,10 @@ class Dashboard extends Component
             ->limit(5)
             ->get();
         
-        // Get recent appointments (appointments table doesn't have user_id yet)
-        // For now, show recent appointments for all users
-        $recentAppointments = tbl_appointment::orderBy('created_at', 'desc')
+        // Get recent appointments for the logged-in user
+        $recentAppointments = \App\Models\appointment::with(['appointmentCategory', 'users'])
+            ->where('users_id', $currentUser->id)
+            ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
         
@@ -352,8 +353,10 @@ class Dashboard extends Component
     
     private function renderNonHomeownerDashboard($currentUser, $announcements)
     {
-        // Get non-homeowner's appointments
-        $recentAppointments = tbl_appointment::orderBy('created_at', 'desc')
+        // Get non-homeowner's appointments for the logged-in user
+        $recentAppointments = \App\Models\appointment::with(['appointmentCategory', 'users'])
+            ->where('users_id', $currentUser->id)
+            ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
         

@@ -475,6 +475,56 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     </div>
                 ` : ''}
+                
+                <!-- Tenants Section -->
+                <div class="mb-6">
+                    <label class="form-label text-base font-semibold text-slate-700">Tenants</label>
+                    <div class="form-control mt-2 p-3 border border-slate-300 rounded-lg bg-slate-50">
+                        ${landlord.tenants && landlord.tenants.length > 0 ? `
+                            <div class="space-y-3">
+                                ${landlord.tenants.map((tenant, index) => `
+                                    <div class="p-3 bg-white rounded-lg border border-slate-200 ${index < landlord.tenants.length - 1 ? 'mb-3' : ''}">
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            <div class="flex items-center">
+                                                ${tenant.photo ? `
+                                                    <img src="${window.location.origin}/storage/${tenant.photo}" alt="${tenant.full_name}" class="w-12 h-12 rounded-full object-cover mr-3">
+                                                ` : `
+                                                    <div class="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold mr-3">
+                                                        ${tenant.full_name ? tenant.full_name.charAt(0).toUpperCase() : 'T'}
+                                                    </div>
+                                                `}
+                                                <div>
+                                                    <div class="font-medium">${tenant.full_name || 'N/A'}</div>
+                                                    <div class="text-xs text-slate-500">${tenant.relationship || 'N/A'}</div>
+                                                </div>
+                                            </div>
+                                            <div class="flex flex-col justify-center">
+                                                <div class="text-sm"><strong>Contact:</strong> ${tenant.contact_number || 'N/A'}</div>
+                                                <div class="text-sm"><strong>Email:</strong> ${tenant.email ? `<a href="mailto:${tenant.email}" class="text-blue-600 hover:underline">${tenant.email}</a>` : 'N/A'}</div>
+                                                <div class="text-sm mt-1">
+                                                    <span class="px-2 py-1 rounded text-xs font-medium ${tenant.status === 'active' ? 'bg-green-100 text-green-800' : tenant.status === 'inactive' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}">
+                                                        ${tenant.status ? tenant.status.charAt(0).toUpperCase() + tenant.status.slice(1) : 'N/A'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : `
+                            <div class="text-center py-6 text-slate-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-3 text-slate-300">
+                                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="8.5" cy="7" r="4"></circle>
+                                    <line x1="20" y1="8" x2="20" y2="14"></line>
+                                    <line x1="23" y1="11" x2="17" y2="11"></line>
+                                </svg>
+                                <div class="font-medium">No tenants registered</div>
+                                <div class="text-sm">This landlord has no registered tenants yet</div>
+                            </div>
+                        `}
+                    </div>
+                </div>
             </div>
         `;
     }
