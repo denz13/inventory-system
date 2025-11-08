@@ -505,12 +505,12 @@ const rolePermissions = {
         'dashboard',
         'message',
         'user management',
-        'announcement management',
+        'announcements management',
         'guest chatbot',
         'notification settings',
         'permission settings',
         'system settings',
-        'activity records'
+        'activity logs'
     ],
     'service manager': [
         'dashboard',
@@ -533,6 +533,7 @@ const rolePermissions = {
         'dashboard',
         'message',
         'appointment management',
+        'vehicle management',
         'vehicle sticker registration management',
         'calendar',
         'appointment category',
@@ -591,7 +592,7 @@ function handleUserRoleChange(userId, formType) {
         });
 }
 
-// Auto-check ALL permissions (for Admin role)
+// Auto-check ALL permissions (for Admin role) - excluding specific permissions
 function autoCheckAllPermissions(formType) {
     // Determine which container to use based on form type
     const container = formType === 'create' 
@@ -603,20 +604,47 @@ function autoCheckAllPermissions(formType) {
         return;
     }
     
+    // Permissions to exclude for Admin role
+    const excludedPermissions = [
+        'feedback',
+        'vehicle',
+        'apply business',
+        'apply appointment',
+        'billing payment',
+        'service request',
+        'incident report'
+    ];
+    
     // Get all permission checkboxes in the container
     const checkboxes = container.querySelectorAll('input[type="checkbox"][name="permissions[]"]');
     
     let checkedCount = 0;
     checkboxes.forEach(checkbox => {
-        checkbox.checked = true;
-        checkedCount++;
+        // Get the label text next to the checkbox
+        const label = checkbox.closest('label');
+        if (label) {
+            const labelText = label.textContent.trim().toLowerCase();
+            
+            // Check if this permission should be excluded
+            const shouldExclude = excludedPermissions.some(excluded => {
+                const excludedLower = excluded.toLowerCase();
+                // Exact match to avoid excluding "feedback management" when excluding "feedback"
+                return labelText === excludedLower;
+            });
+            
+            // Only check if not excluded
+            if (!shouldExclude) {
+                checkbox.checked = true;
+                checkedCount++;
+            }
+        }
     });
     
-    console.log(`Admin: Auto-checked ALL ${checkedCount} permissions`);
+    console.log(`Admin: Auto-checked ${checkedCount} permissions (excluded ${excludedPermissions.length} permissions)`);
     
-    // Show a notification that all permissions were auto-selected
+    // Show a notification that permissions were auto-selected
     if (checkedCount > 0) {
-        showToast('All permissions auto-selected for Admin role', 'success');
+        showToast('Permissions auto-selected for Admin role', 'success');
     }
 }
 
@@ -650,10 +678,13 @@ function autoCheckPermissionsByRole(role, formType) {
         if (label) {
             const labelText = label.textContent.trim().toLowerCase();
             
-            // Check if this permission should be auto-checked (case-insensitive comparison)
-            const shouldCheck = permissionsToCheck.some(permission => 
-                labelText.includes(permission) || permission.includes(labelText)
-            );
+            // Check if this permission should be auto-checked (exact match only to avoid substring issues)
+            // e.g., "feedback" should NOT match "feedback management"
+            const shouldCheck = permissionsToCheck.some(permission => {
+                const permissionLower = permission.toLowerCase();
+                // Exact match only - prevents "feedback" from matching "feedback management"
+                return labelText === permissionLower;
+            });
             
             if (shouldCheck) {
                 checkbox.checked = true;

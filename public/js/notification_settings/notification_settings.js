@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Role-based modules configuration
 const roleModules = {
-    'admin': 'all', // Special case - all modules
     'home owners': [
         'dashboard',
         'message',
@@ -35,12 +34,12 @@ const roleModules = {
         'dashboard',
         'message',
         'user management',
-        'announcement management',
+        'announcements management',
         'guest chatbot',
         'notification settings',
         'permission settings',
         'system settings',
-        'activity records'
+        'activity logs'
     ],
     'service manager': [
         'dashboard',
@@ -63,6 +62,7 @@ const roleModules = {
         'dashboard',
         'message',
         'appointment management',
+        'vehicle management',
         'vehicle sticker registration management',
         'calendar',
         'appointment category',
@@ -605,7 +605,7 @@ function clearAllModules(formType) {
     console.log('All', checkboxes.length, 'modules cleared');
 }
 
-// Auto-check ALL modules (for Admin role)
+// Auto-check ALL modules (for Admin role) - excluding specific modules
 function autoCheckAllModules(formType) {
     // Use more specific selector for the modules container
     let container;
@@ -626,19 +626,47 @@ function autoCheckAllModules(formType) {
         return;
     }
     
+    // Modules to exclude for Admin role
+    const excludedModules = [
+        'feedback',
+        'vehicle',
+        'apply business',
+        'apply appointment',
+        'billing payment',
+        'service request',
+        'incident report'
+    ];
+    
     const checkboxes = container.querySelectorAll('input[type="checkbox"][name="modules[]"]');
     console.log('Found', checkboxes.length, 'checkboxes for admin');
     
     let checkedCount = 0;
     checkboxes.forEach(checkbox => {
-        checkbox.checked = true;
-        checkedCount++;
+        // Get the label text next to the checkbox
+        const label = checkbox.closest('label');
+        if (label) {
+            // Normalize label text: trim, convert to lowercase, and replace multiple spaces with single space
+            const labelText = label.textContent.trim().toLowerCase().replace(/\s+/g, ' ');
+            
+            // Check if this module should be excluded
+            const shouldExclude = excludedModules.some(excluded => {
+                const excludedLower = excluded.toLowerCase().trim();
+                // Exact match to avoid excluding "feedback management" when excluding "feedback"
+                return labelText === excludedLower;
+            });
+            
+            // Only check if not excluded
+            if (!shouldExclude) {
+                checkbox.checked = true;
+                checkedCount++;
+            }
+        }
     });
     
-    console.log(`Admin: Auto-checked ALL ${checkedCount} modules`);
+    console.log(`Admin: Auto-checked ${checkedCount} modules (excluded ${excludedModules.length} modules)`);
     
     if (checkedCount > 0) {
-        showToast('All modules auto-selected for Admin role', 'success');
+        showToast('Modules auto-selected for Admin role', 'success');
     }
 }
 
@@ -691,11 +719,15 @@ function autoCheckModulesByRole(role, formType) {
     checkboxes.forEach((checkbox, index) => {
         const label = checkbox.closest('label');
         if (label) {
-            const labelText = label.textContent.trim().toLowerCase();
+            // Normalize label text: trim, convert to lowercase, and replace multiple spaces with single space
+            const labelText = label.textContent.trim().toLowerCase().replace(/\s+/g, ' ');
             
-            // Check if this module should be auto-checked
+            // Check if this module should be auto-checked (exact match only to avoid substring issues)
+            // e.g., "feedback" should NOT match "feedback management"
             const shouldCheck = modulesToCheck.some(module => {
-                const matches = labelText.includes(module) || module.includes(labelText);
+                const moduleLower = module.toLowerCase().trim();
+                // Exact match only - prevents "feedback" from matching "feedback management"
+                const matches = labelText === moduleLower;
                 if (matches) {
                     console.log(`  ✓ MATCH: "${labelText}" matches "${module}"`);
                 }

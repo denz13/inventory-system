@@ -464,7 +464,7 @@
             <div class="modal-footer px-6 py-4 bg-slate-50">
                 <div class="flex justify-end gap-3">
                     <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary px-6 py-2 mr-2">Cancel</button>
-                    <button type="submit" form="editVehicleForm" class="btn btn-primary px-6 py-2 flex items-center mr-2">
+                    <button type="button" id="updateVehicleBtn" class="btn btn-primary px-6 py-2 flex items-center mr-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
                             <polyline points="9 11 12 14 22 4"></polyline>
                             <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
@@ -504,6 +504,33 @@
     </div>
 </div>
 <!-- END: Delete Confirmation Modal -->
+
+<!-- BEGIN: Update Confirmation Modal -->
+<div id="update-confirmation-modal" class="modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body p-0">
+                <div class="p-5 text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" icon-name="alert-triangle" data-lucide="alert-triangle" class="lucide lucide-alert-triangle w-16 h-16 text-warning mx-auto mt-3">
+                        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+                        <path d="M12 9v4"></path>
+                        <path d="M12 17h.01"></path>
+                    </svg>
+                    <div class="text-3xl mt-5">Update Vehicle?</div>
+                    <div class="text-slate-500 mt-2">Updating any data on this vehicle will revert the status into "Pending".</div>
+                    <div class="text-slate-500 mt-1">Do you want to continue?</div>
+                </div>
+                <div class="px-5 pb-8 text-center">
+                    <div class="flex justify-center gap-2">
+                        <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-24 mb-2">Cancel</button>
+                        <button type="button" class="btn btn-primary w-24 mb-2" id="confirmUpdateVehicle">Update</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- END: Update Confirmation Modal -->
 
 @endsection
 

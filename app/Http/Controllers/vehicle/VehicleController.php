@@ -136,10 +136,26 @@ class VehicleController extends Controller
 
             DB::beginTransaction();
 
+            // Check if any fields are being updated (excluding empty file inputs)
+            $hasUpdates = $request->filled('type_of_vehicle') 
+                || $request->filled('plate_number')
+                || $request->filled('or_no')
+                || $request->filled('vehicle_model')
+                || $request->filled('cr_no')
+                || $request->filled('color_of_vehicle')
+                || $request->filled('owner')
+                || $request->filled('driver')
+                || $request->hasFile('supporting_documents_attachments');
+
             // Only update vehicle type if provided
             $vehicleUpdates = [];
             if ($request->filled('type_of_vehicle')) {
                 $vehicleUpdates['type_of_vehicle'] = $validated['type_of_vehicle'];
+            }
+            
+            // Reset status to 'Pending' if any update is made
+            if ($hasUpdates) {
+                $vehicleUpdates['status'] = 'Pending';
             }
             
             if (!empty($vehicleUpdates)) {
@@ -147,6 +163,12 @@ class VehicleController extends Controller
             }
 
             if ($vehicle->supportingDocuments) {
+                // Reset status to 'Pending' if any update is made
+                $supportingDocsUpdates = [];
+                if ($hasUpdates) {
+                    $supportingDocsUpdates['status'] = 'Pending';
+                }
+                
                 // Get existing files
                 $existingFiles = $vehicle->supportingDocuments->supporting_documents_attachments;
                 $existingFilePaths = $existingFiles ? json_decode($existingFiles, true) : [];
@@ -174,9 +196,12 @@ class VehicleController extends Controller
                     }
                     
                     // Update supporting documents with new files
-                    $vehicle->supportingDocuments->update([
-                        'supporting_documents_attachments' => !empty($newFilePaths) ? json_encode($newFilePaths) : null
-                    ]);
+                    $supportingDocsUpdates['supporting_documents_attachments'] = !empty($newFilePaths) ? json_encode($newFilePaths) : null;
+                }
+                
+                // Update supporting documents if there are any changes
+                if (!empty($supportingDocsUpdates)) {
+                    $vehicle->supportingDocuments->update($supportingDocsUpdates);
                 }
 
                 // Update vehicle details - only fields that are provided
@@ -205,7 +230,13 @@ class VehicleController extends Controller
                         $detailsUpdates['driver'] = $validated['driver'];
                     }
                     
-                    if (!empty($detailsUpdates)) {
+                    // Reset status to 'Pending' if any update is made
+                    if ($hasUpdates) {
+                        $detailsUpdates['status'] = 'Pending';
+                    }
+                    
+                    // Always update if there are status changes or field updates
+                    if (!empty($detailsUpdates) || $hasUpdates) {
                         $vehicle->supportingDocuments->vehicleDetails->update($detailsUpdates);
                     }
                 }

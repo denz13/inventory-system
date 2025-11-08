@@ -346,34 +346,87 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Edit form submission
-    if (editForm) {
-        editForm.addEventListener('submit', async function (e) {
+    // Function to show update confirmation modal
+    function showUpdateConfirmationModal() {
+        const updateConfirmModal = document.getElementById('update-confirmation-modal');
+        if (updateConfirmModal) {
+            // Trigger modal using the same method as other modals
+            const modalTrigger = document.createElement('button');
+            modalTrigger.setAttribute('data-tw-toggle', 'modal');
+            modalTrigger.setAttribute('data-tw-target', '#update-confirmation-modal');
+            modalTrigger.style.display = 'none';
+            document.body.appendChild(modalTrigger);
+            modalTrigger.click();
+            document.body.removeChild(modalTrigger);
+        }
+    }
+    
+    // Handle Update Vehicle button click - show confirmation modal first
+    const updateVehicleBtn = document.getElementById('updateVehicleBtn');
+    if (updateVehicleBtn) {
+        updateVehicleBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            const id = document.getElementById('editVehicleId').value;
-            const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            const formData = new FormData(editForm);
-            formData.append('_method', 'PUT');
-            
-            try {
-                const resp = await fetch('/vehicle/' + id, {
-                    method: 'POST',
-                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrf },
-                    body: formData
-                });
-                if (!resp.ok) throw new Error(await resp.text());
-                if (typeof window.showNotification_vehicle_toast_success === 'function') {
-                    window.showNotification_vehicle_toast_success();
-                }
-                setTimeout(function(){ window.location.reload(); }, 600);
-            } catch (err) {
-                console.error(err);
-                var slot = document.getElementById('vehicle-error-message-slot');
-                if (slot) slot.textContent = 'Failed to update vehicle';
-                if (typeof window.showNotification_vehicle_toast_error === 'function') {
-                    window.showNotification_vehicle_toast_error();
-                }
+            showUpdateConfirmationModal();
+        });
+    }
+    
+    // Prevent form submission on Enter key - show modal instead
+    if (editForm) {
+        editForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            showUpdateConfirmationModal();
+        });
+    }
+    
+    // Handle confirm update button in confirmation modal
+    const confirmUpdateBtn = document.getElementById('confirmUpdateVehicle');
+    if (confirmUpdateBtn && editForm) {
+        confirmUpdateBtn.addEventListener('click', async function() {
+            // Close the confirmation modal first
+            const updateConfirmModal = document.getElementById('update-confirmation-modal');
+            if (updateConfirmModal) {
+                const closeBtn = updateConfirmModal.querySelector('[data-tw-dismiss="modal"]');
+                if (closeBtn) closeBtn.click();
             }
+            
+            // Wait a bit for modal to close, then submit
+            setTimeout(async function() {
+                // Submit the form
+                const id = document.getElementById('editVehicleId').value;
+                if (!id) return;
+                
+                const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const formData = new FormData(editForm);
+                formData.append('_method', 'PUT');
+                
+                try {
+                    const resp = await fetch('/vehicle/' + id, {
+                        method: 'POST',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrf },
+                        body: formData
+                    });
+                    if (!resp.ok) throw new Error(await resp.text());
+                    
+                    // Close the edit modal on success
+                    const editModal = document.getElementById('edit-vehicle-modal');
+                    if (editModal) {
+                        const editCloseBtn = editModal.querySelector('[data-tw-dismiss="modal"]');
+                        if (editCloseBtn) editCloseBtn.click();
+                    }
+                    
+                    if (typeof window.showNotification_vehicle_toast_success === 'function') {
+                        window.showNotification_vehicle_toast_success();
+                    }
+                    setTimeout(function(){ window.location.reload(); }, 600);
+                } catch (err) {
+                    console.error(err);
+                    var slot = document.getElementById('vehicle-error-message-slot');
+                    if (slot) slot.textContent = 'Failed to update vehicle';
+                    if (typeof window.showNotification_vehicle_toast_error === 'function') {
+                        window.showNotification_vehicle_toast_error();
+                    }
+                }
+            }, 300);
         });
     }
 
