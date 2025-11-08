@@ -272,7 +272,12 @@ class Dashboard extends Component
             
             // Apply additional conditions
             foreach ($conditions as $field => $value) {
-                $query->where($field, $value);
+                // Use case-insensitive matching for status field
+                if ($field === 'status') {
+                    $query->whereRaw('LOWER(' . $field . ') = ?', [strtolower($value)]);
+                } else {
+                    $query->where($field, $value);
+                }
             }
             
             $data[] = $query->count();
@@ -389,8 +394,9 @@ class Dashboard extends Component
             ->limit(5)
             ->get();
         
-        // Get recent incident reports
-        $recentIncidents = tbl_incident_report::orderBy('created_at', 'desc')
+        // Get recent incident reports with user relationship
+        $recentIncidents = tbl_incident_report::with('user')
+            ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
         
@@ -456,10 +462,10 @@ class Dashboard extends Component
         // Get user statistics
         $totalUsers = User::count();
         
-        // Get service complaints statistics
+        // Get service complaints statistics - case-insensitive matching
         $totalServiceComplaints = tbl_service_management_complaints::count();
-        $approvedServiceComplaints = tbl_service_management_complaints::where('status', 'approved')->count();
-        $declinedServiceComplaints = tbl_service_management_complaints::where('status', 'declined')->count();
+        $approvedServiceComplaints = tbl_service_management_complaints::whereRaw('LOWER(status) = ?', ['approved'])->count();
+        $declinedServiceComplaints = tbl_service_management_complaints::whereRaw('LOWER(status) = ?', ['declined'])->count();
         $serviceComplaintApprovalRate = $totalServiceComplaints > 0 ? round(($approvedServiceComplaints / $totalServiceComplaints) * 100, 1) : 0;
         
         // Get monthly service complaints data for chart
@@ -491,16 +497,29 @@ class Dashboard extends Component
         // Get user statistics
         $totalUsers = User::count();
         
-        // Get billing statistics
+        // Get billing statistics - case-insensitive matching
         $totalBillings = tbl_billing_management::count();
         $totalBillingItems = tbl_billing_management_list::count();
-        $paidBillings = tbl_billing_management::where('status', 'approved')->count();
-        $pendingBillings = tbl_billing_management::where('status', 'under review')->count();
-        $unpaidBillingItems = tbl_billing_management_list::where('is_pay', 'No')->count();
+        $paidBillings = tbl_billing_management::whereRaw('LOWER(status) = ?', ['approved'])->count();
+        
+        // Count all pending billings (under review, sent to owners, pending, NULL, etc.)
+        // Everything that's not approved/rejected is considered pending
+        $pendingBillings = tbl_billing_management::where(function($query) {
+            $query->whereNull('status')
+                  ->orWhere(function($q) {
+                      $q->whereNotNull('status')
+                        ->whereRaw('LOWER(status) != ?', ['approved'])
+                        ->whereRaw('LOWER(status) != ?', ['rejected']);
+                  });
+        })->count();
+        
+        $unpaidBillingItems = tbl_billing_management_list::whereRaw('LOWER(is_pay) = ? OR is_pay IS NULL', ['no'])->count();
         
         // Calculate percentages
         $paymentCompletionRate = $totalBillings > 0 ? round(($paidBillings / $totalBillings) * 100, 1) : 0;
+        $pendingPaymentRate = $totalBillings > 0 ? round(($pendingBillings / $totalBillings) * 100, 1) : 0;
         $itemPaymentRate = $totalBillingItems > 0 ? round((($totalBillingItems - $unpaidBillingItems) / $totalBillingItems) * 100, 1) : 0;
+        $unpaidItemRate = $totalBillingItems > 0 ? round(($unpaidBillingItems / $totalBillingItems) * 100, 1) : 0;
         
         // Get recent billings with pagination
         $recentBillings = tbl_billing_management::with(['user', 'billingItems'])
@@ -516,7 +535,9 @@ class Dashboard extends Component
             'pendingBillings',
             'unpaidBillingItems',
             'paymentCompletionRate',
+            'pendingPaymentRate',
             'itemPaymentRate',
+            'unpaidItemRate',
             'recentBillings',
             'currentUser'
         ));

@@ -198,10 +198,6 @@
                                 </select>
                             </div>
                             <div class="mb-5">
-                                <label class="form-label font-medium">Number of Months Stay</label>
-                                <input type="text" name="number_of_months_stay" class="form-control" value="{{ $user->number_of_months_stay ?? '' }}" placeholder="Enter months">
-                            </div>
-                            <div class="mb-5">
                                 <label class="form-label font-medium">Telephone Number</label>
                                 <input type="text" name="telephone_number" class="form-control" value="{{ $user->telephone_number ?? '' }}" placeholder="Enter telephone number">
                             </div>
@@ -212,10 +208,6 @@
                             <div class="mb-5">
                                 <label class="form-label font-medium">Messenger Account</label>
                                 <input type="text" name="messenger_account" class="form-control" value="{{ $user->messenger_account ?? '' }}" placeholder="Enter Messenger account">
-                            </div>
-                            <div class="mb-5">
-                                <label class="form-label font-medium">Prepared Contact</label>
-                                <input type="text" name="prepared_contact" class="form-control" value="{{ $user->prepared_contact ?? '' }}" placeholder="Enter prepared contact">
                             </div>
                             <div class="mb-5">
                                 <label class="form-label font-medium">Caretaker Name</label>
@@ -329,11 +321,6 @@
                                 <label class="form-label font-medium">Civil Status</label>
                                 <div class="mt-1 text-slate-600" data-field="civil_status">{{ ucfirst($user->civil_status ?? 'Not provided') }}</div>
                             </div>
-                            <!-- Number of Months Stay -->
-                            <div class="mb-5">
-                                <label class="form-label font-medium">Number of Months Stay</label>
-                                <div class="mt-1 text-slate-600" data-field="number_of_months_stay">{{ $user->number_of_months_stay ?? 'Not provided' }}</div>
-                            </div>
                             <!-- Telephone Number -->
                             <div class="mb-5">
                                 <label class="form-label font-medium">Telephone Number</label>
@@ -348,11 +335,6 @@
                             <div class="mb-5">
                                 <label class="form-label font-medium">Messenger Account</label>
                                 <div class="mt-1 text-slate-600" data-field="messenger_account">{{ $user->messenger_account ?? 'Not provided' }}</div>
-                            </div>
-                            <!-- Prepared Contact -->
-                            <div class="mb-5">
-                                <label class="form-label font-medium">Prepared Contact</label>
-                                <div class="mt-1 text-slate-600" data-field="prepared_contact">{{ $user->prepared_contact ?? 'Not provided' }}</div>
                             </div>
                             <!-- Caretaker Name -->
                             <div class="mb-5">

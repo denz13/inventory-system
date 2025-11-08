@@ -127,7 +127,10 @@
                     <div class="py-3 border-b border-slate-200">
                         <div class="flex items-start justify-between">
                             <div class="flex-1">
-                                <div class="font-medium">{{ $incident->designation ?? 'Incident Report' }} #{{ $incident->id }}</div>
+                                <div class="font-medium">{{ $incident->user ? $incident->user->name : 'Unknown User' }}</div>
+                                <div class="text-xs text-slate-500 mt-0.5">
+                                    Location: {{ $incident->location_of_incident ?? 'Not specified' }}
+                                </div>
                                 <div class="text-xs text-slate-500 mt-1">
                                     @if($incident->datetime_of_incident)
                                         {{ \Carbon\Carbon::parse($incident->datetime_of_incident)->format('M d, Y g:i A') }}

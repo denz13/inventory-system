@@ -356,7 +356,7 @@
                                  data-type-id="other" data-type-name="Other">
                                 <div class="flex items-center justify-between">
                                     <div>
-                                        <div class="font-medium text-lg">Other</div>
+                                        <div class="font-medium text-lg">Others (Compaint, etc..)</div>
                                         <div class="text-slate-500 text-sm mt-1">Custom service request</div>
                                     </div>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-slate-400">

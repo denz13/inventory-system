@@ -112,7 +112,7 @@
                             <div class="w-[90px] h-[90px]">
                                 <canvas id="report-donut-chart-1" width="90" height="90"></canvas>
                             </div>
-                            <div class="font-medium absolute w-full h-full flex items-center justify-center top-0 left-0">{{ $paymentCompletionRate }}%</div>
+                            <div class="font-medium absolute w-full h-full flex items-center justify-center top-0 left-0">{{ $pendingPaymentRate }}%</div>
                         </div>
                     </div>
                 </div>
@@ -130,7 +130,7 @@
                             <div class="w-[90px] h-[90px]">
                                 <canvas id="report-donut-chart-2" width="90" height="90"></canvas>
                             </div>
-                            <div class="font-medium absolute w-full h-full flex items-center justify-center top-0 left-0">{{ $itemPaymentRate }}%</div>
+                            <div class="font-medium absolute w-full h-full flex items-center justify-center top-0 left-0">{{ $unpaidItemRate }}%</div>
                         </div>
                     </div>
                 </div>
@@ -246,7 +246,9 @@
             pending: {{ $pendingBillings }},
             total: {{ $totalBillings }},
             paymentRate: {{ $paymentCompletionRate }},
+            pendingPaymentRate: {{ $pendingPaymentRate }},
             itemPaymentRate: {{ $itemPaymentRate }},
+            unpaidItemRate: {{ $unpaidItemRate }},
             paidItems: {{ $totalBillingItems - $unpaidBillingItems }},
             unpaidItems: {{ $unpaidBillingItems }}
         };

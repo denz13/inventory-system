@@ -619,11 +619,9 @@ function resetEditProfileForm() {
         const block = profileDisplay.querySelector('[data-field="block"]')?.textContent || '';
         const dateOfBirth = profileDisplay.querySelector('[data-field="date_of_birth"]')?.textContent || '';
         const civilStatus = profileDisplay.querySelector('[data-field="civil_status"]')?.textContent || '';
-        const monthsStay = profileDisplay.querySelector('[data-field="number_of_months_stay"]')?.textContent || '';
         const telephoneNumber = profileDisplay.querySelector('[data-field="telephone_number"]')?.textContent || '';
         const fbAccount = profileDisplay.querySelector('[data-field="fb_account"]')?.textContent || '';
         const messengerAccount = profileDisplay.querySelector('[data-field="messenger_account"]')?.textContent || '';
-        const preparedContact = profileDisplay.querySelector('[data-field="prepared_contact"]')?.textContent || '';
         const caretakerName = profileDisplay.querySelector('[data-field="caretaker_name"]')?.textContent || '';
         const caretakerAddress = profileDisplay.querySelector('[data-field="caretaker_address"]')?.textContent || '';
         const caretakerContact = profileDisplay.querySelector('[data-field="caretaker_contact_number"]')?.textContent || '';
@@ -641,11 +639,9 @@ function resetEditProfileForm() {
         form.querySelector('[name="block"]').value = block;
         form.querySelector('[name="date_of_birth"]').value = dateOfBirth ? formatDateForInput(dateOfBirth) : '';
         form.querySelector('[name="civil_status"]').value = civilStatus.toLowerCase();
-        form.querySelector('[name="number_of_months_stay"]').value = monthsStay;
         form.querySelector('[name="telephone_number"]').value = telephoneNumber;
         form.querySelector('[name="fb_account"]').value = fbAccount;
         form.querySelector('[name="messenger_account"]').value = messengerAccount;
-        form.querySelector('[name="prepared_contact"]').value = preparedContact;
         form.querySelector('[name="caretaker_name"]').value = caretakerName;
         form.querySelector('[name="caretaker_address"]').value = caretakerAddress;
         form.querySelector('[name="caretaker_contact_number"]').value = caretakerContact;
@@ -700,11 +696,9 @@ function updateProfileDisplayFromForm(formData) {
     const block = formData.get('block') || 'Not provided';
     const dateOfBirth = formData.get('date_of_birth') || 'Not provided';
     const civilStatus = formData.get('civil_status') || 'Not provided';
-    const monthsStay = formData.get('number_of_months_stay') || 'Not provided';
     const telephoneNumber = formData.get('telephone_number') || 'Not provided';
     const fbAccount = formData.get('fb_account') || 'Not provided';
     const messengerAccount = formData.get('messenger_account') || 'Not provided';
-    const preparedContact = formData.get('prepared_contact') || 'Not provided';
     const caretakerName = formData.get('caretaker_name') || 'Not provided';
     const caretakerAddress = formData.get('caretaker_address') || 'Not provided';
     const caretakerContact = formData.get('caretaker_contact_number') || 'Not provided';
@@ -746,9 +740,6 @@ function updateProfileDisplayFromForm(formData) {
             case 'civil_status':
                 value = civilStatus !== 'Not provided' ? civilStatus.charAt(0).toUpperCase() + civilStatus.slice(1) : 'Not provided';
                 break;
-            case 'number_of_months_stay':
-                value = monthsStay !== 'Not provided' ? monthsStay : 'Not provided';
-                break;
             case 'telephone_number':
                 value = telephoneNumber;
                 break;
@@ -757,9 +748,6 @@ function updateProfileDisplayFromForm(formData) {
                 break;
             case 'messenger_account':
                 value = messengerAccount;
-                break;
-            case 'prepared_contact':
-                value = preparedContact;
                 break;
             case 'caretaker_name':
                 value = caretakerName;

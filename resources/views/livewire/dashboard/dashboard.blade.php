@@ -192,7 +192,7 @@
         </div>
         <!-- END: User Demographics -->
             <!-- BEGIN: Email Verification -->
-            <div class="col-span-12 sm:col-span-6 lg:col-span-3 mt-8">
+            <!-- <div class="col-span-12 sm:col-span-6 lg:col-span-3 mt-8">
                 <div class="intro-y flex items-center h-10">
                     <h2 class="text-lg font-medium truncate mr-5">
                         Email Verification
@@ -216,7 +216,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> -->
             <!-- END: Email Verification -->
         
         <!-- BEGIN: General Report -->

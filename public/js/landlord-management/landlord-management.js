@@ -557,7 +557,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('edit_first_name').value = landlord.first_name || '';
         document.getElementById('edit_last_name').value = landlord.last_name || '';
         document.getElementById('edit_middle_initial').value = landlord.middle_initial || '';
-        document.getElementById('edit_date_of_birth').value = landlord.date_of_birth || '';
+        document.getElementById('edit_date_of_birth').value = formatDateForInput(landlord.date_of_birth) || '';
         document.getElementById('edit_years_of_residency').value = landlord.years_of_residency || '';
         document.getElementById('edit_address').value = landlord.address || '';
         document.getElementById('edit_civil_status').value = landlord.civil_status || '';
@@ -663,6 +663,27 @@ document.addEventListener('DOMContentLoaded', function() {
             month: 'short',
             day: 'numeric'
         });
+    }
+
+    // Helper function to format date for input field (YYYY-MM-DD)
+    function formatDateForInput(dateString) {
+        if (!dateString) return '';
+        
+        // If already in YYYY-MM-DD format, return as is
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+            return dateString;
+        }
+        
+        // Try to parse the date string
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return '';
+        
+        // Format as YYYY-MM-DD for input field
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        
+        return `${year}-${month}-${day}`;
     }
 
     // File input change handler for business clearance
