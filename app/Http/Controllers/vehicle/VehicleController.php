@@ -19,11 +19,13 @@ class VehicleController extends Controller
         $perPage = $request->input('per_page', 10);
         
         $vehicles = vehicle_homeowners::with(['user', 'supportingDocuments.vehicleDetails'])
+            ->where('user_id', Auth::id())
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
             
-        // Get unique status values from the database
+        // Get unique status values from the database for current user only
         $statuses = vehicle_homeowners::select('status')
+            ->where('user_id', Auth::id())
             ->distinct()
             ->whereNotNull('status')
             ->pluck('status')
@@ -107,6 +109,7 @@ class VehicleController extends Controller
     public function show($id)
     {
         $vehicle = vehicle_homeowners::with(['user', 'supportingDocuments.vehicleDetails'])
+            ->where('user_id', Auth::id())
             ->findOrFail($id);
             
         return response()->json([
@@ -117,7 +120,8 @@ class VehicleController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            $vehicle = vehicle_homeowners::findOrFail($id);
+            $vehicle = vehicle_homeowners::where('user_id', Auth::id())
+                ->findOrFail($id);
             
             // Get current vehicle details ID for unique validation
             $vehicleDetailsId = $vehicle->supportingDocuments?->vehicleDetails?->id;
@@ -262,7 +266,8 @@ class VehicleController extends Controller
         try {
             DB::beginTransaction();
             
-            $vehicle = vehicle_homeowners::findOrFail($id);
+            $vehicle = vehicle_homeowners::where('user_id', Auth::id())
+                ->findOrFail($id);
             
             // Soft delete the vehicle and all related records
             if ($vehicle->supportingDocuments) {
@@ -299,7 +304,9 @@ class VehicleController extends Controller
         try {
             DB::beginTransaction();
             
-            $vehicle = vehicle_homeowners::withTrashed()->findOrFail($id);
+            $vehicle = vehicle_homeowners::withTrashed()
+                ->where('user_id', Auth::id())
+                ->findOrFail($id);
             
             // Restore the main vehicle record
             $vehicle->restore();
@@ -332,7 +339,9 @@ class VehicleController extends Controller
         try {
             DB::beginTransaction();
             
-            $vehicle = vehicle_homeowners::withTrashed()->findOrFail($id);
+            $vehicle = vehicle_homeowners::withTrashed()
+                ->where('user_id', Auth::id())
+                ->findOrFail($id);
             
             // Delete associated files before force deleting
             if ($vehicle->supportingDocuments && $vehicle->supportingDocuments->supporting_documents_attachments) {
@@ -385,6 +394,7 @@ class VehicleController extends Controller
         $perPage = $request->input('per_page', 10);
         
         $deletedVehicles = vehicle_homeowners::with(['user', 'supportingDocuments.vehicleDetails'])
+            ->where('user_id', Auth::id())
             ->onlyTrashed()
             ->orderBy('deleted_at', 'desc')
             ->paginate($perPage);

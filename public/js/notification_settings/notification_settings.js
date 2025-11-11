@@ -631,6 +631,7 @@ function autoCheckAllModules(formType) {
         'feedback',
         'vehicle',
         'apply business',
+        'apply landlord',
         'apply appointment',
         'billing payment',
         'service request',
