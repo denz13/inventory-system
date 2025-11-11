@@ -7,9 +7,7 @@ use Livewire\WithPagination;
 use App\Models\tbl_billing_management;
 use App\Models\tbl_billing_management_list;
 use App\Models\User;
-use App\Models\tbl_appointment;
 use App\Models\appointment;
-use App\Models\vehicle_management_list;
 use App\Models\tbl_incident_report;
 use App\Models\tbl_service_management_type;
 use App\Models\tbl_service_management_category;
@@ -155,10 +153,10 @@ class Dashboard extends Component
             }
         }
         
-        // Get other statistics
+        // Get other statistics (filtered by current user for non-admin roles)
         $totalUsers = User::count();
-        $totalAppointments = tbl_appointment::count();
-        $totalVehicles = vehicle_management_list::count();
+        $totalAppointments = appointment::where('users_id', $currentUser->id)->count();
+        $totalVehicles = vehicle_homeowners::where('user_id', $currentUser->id)->count();
         
         // Get recent users with pagination
         $recentUsers = User::orderBy('created_at', 'desc')->paginate($this->perPage);
@@ -205,11 +203,11 @@ class Dashboard extends Component
         $monthlyServiceComplaintsData = $this->getMonthlyData(tbl_service_management_complaints::class, 12);
         $monthlyApprovedComplaintsData = $this->getMonthlyData(tbl_service_management_complaints::class, 12, ['status' => 'approved']);
         
-        // Get monthly appointments data for charts
-        $monthlyAppointmentsData = $this->getMonthlyData(tbl_appointment::class, 12);
+        // Get monthly appointments data for charts (filtered by current user)
+        $monthlyAppointmentsData = $this->getMonthlyData(appointment::class, 12, ['users_id' => $currentUser->id]);
         
-        // Get monthly vehicles data for charts
-        $monthlyVehiclesData = $this->getMonthlyData(vehicle_management_list::class, 12);
+        // Get monthly vehicles data for charts (filtered by current user)
+        $monthlyVehiclesData = $this->getMonthlyData(vehicle_homeowners::class, 12, ['user_id' => $currentUser->id]);
         
         return view('livewire.dashboard.dashboard', compact(
             'announcements',
@@ -303,7 +301,7 @@ class Dashboard extends Component
             ->get();
         
         // Get homeowner's vehicles
-        $userVehicles = vehicle_management_list::where('user_id', $currentUser->id)
+        $userVehicles = vehicle_homeowners::where('user_id', $currentUser->id)
             ->count();
         
         // Get approved vehicle registrations for alerts
@@ -366,7 +364,7 @@ class Dashboard extends Component
             ->get();
         
         // Get non-homeowner's vehicles
-        $userVehicles = vehicle_management_list::where('user_id', $currentUser->id)
+        $userVehicles = vehicle_homeowners::where('user_id', $currentUser->id)
             ->count();
         
         // Get approved vehicle registrations for alerts
@@ -401,7 +399,7 @@ class Dashboard extends Component
             ->get();
         
         // Get total vehicles for monitoring
-        $totalVehicles = vehicle_management_list::count();
+        $totalVehicles = vehicle_homeowners::count();
         
         return view('livewire.dashboard.security-personnel-dashboard', compact(
             'announcements',
@@ -548,20 +546,21 @@ class Dashboard extends Component
         // Get user statistics
         $totalUsers = User::count();
         
-        // Get appointment statistics (use 'appointment' model with relationships)
-        $totalAppointments = appointment::count();
+        // Get appointment statistics (use 'appointment' model with relationships) - filtered by current user
+        $totalAppointments = appointment::where('users_id', $currentUser->id)->count();
         
-        // Get vehicle statistics
-        $totalVehicles = vehicle_management_list::count();
+        // Get vehicle statistics - filtered by current user
+        $totalVehicles = vehicle_homeowners::where('user_id', $currentUser->id)->count();
         
-        // Get monthly appointments data for charts
-        $monthlyAppointmentsData = $this->getMonthlyData(appointment::class, 12);
+        // Get monthly appointments data for charts - filtered by current user
+        $monthlyAppointmentsData = $this->getMonthlyData(appointment::class, 12, ['users_id' => $currentUser->id]);
         
-        // Get monthly vehicles data for charts
-        $monthlyVehiclesData = $this->getMonthlyData(vehicle_management_list::class, 12);
+        // Get monthly vehicles data for charts - filtered by current user
+        $monthlyVehiclesData = $this->getMonthlyData(vehicle_homeowners::class, 12, ['user_id' => $currentUser->id]);
         
-        // Get recent appointments with pagination (use 'appointment' model)
+        // Get recent appointments with pagination (use 'appointment' model) - filtered by current user
         $recentAppointments = appointment::with(['appointmentCategory', 'users'])
+            ->where('users_id', $currentUser->id)
             ->orderBy('created_at', 'desc')
             ->paginate($this->perPage);
         
